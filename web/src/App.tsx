@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import CheckPage from "@/routes/CheckPage";
 import ResultPage from "@/routes/ResultPage";
+import ComplaintPage from "@/routes/ComplaintPage";
 import AboutPage from "@/routes/AboutPage";
 import ComingSoonPage from "@/routes/ComingSoonPage";
 import NotFoundPage from "@/routes/NotFoundPage";
@@ -27,6 +28,7 @@ export default function App() {
           <Route element={<AppShell />}>
             <Route path="/" element={<CheckPage />} />
             <Route path="/result/:id" element={<ResultPage />} />
+            <Route path="/complaint/:id" element={<ComplaintPage />} />
             <Route path="/trends" element={<ComingSoonPage titleKey="trends.title" />} />
             <Route path="/history" element={<ComingSoonPage titleKey="history.title" />} />
             <Route path="/about" element={<AboutPage />} />

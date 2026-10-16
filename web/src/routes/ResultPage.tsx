@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { FileText, Flag, Share2 } from "lucide-react";
+import { FileText, Flag } from "lucide-react";
 import type { CheckResult } from "@scam-shield/shared";
 import { Button } from "@/components/ui/button";
 import { VerdictBanner } from "@/components/VerdictBanner";
@@ -10,6 +10,8 @@ import { EntityHits } from "@/components/EntityHits";
 import { LinkScanCard } from "@/components/LinkScanCard";
 import { Disclaimer } from "@/components/Disclaimer";
 import { QrCard } from "@/components/QrCard";
+import { ReportDialog } from "@/components/ReportDialog";
+import { ShareWarning } from "@/components/ShareWarning";
 import { scamTypeKey, useLang, useT } from "@/i18n";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -51,6 +53,7 @@ export default function ResultPage() {
   // A Firestore read for results that are not in router state comes in a later task.
   const result = resultFromState(location.state, id);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const [reportOpen, setReportOpen] = useState(false);
   const shownId = result?.id;
   useEffect(() => {
     // After navigating here, announce the verdict to screen readers.
@@ -123,22 +126,26 @@ export default function ResultPage() {
         </Section>
       )}
 
-      {/* Wired up in a later task (report, complaint draft, share). */}
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <Button variant="outline" disabled title={t("action.soon")}>
-          <Flag />
-          {t("action.report")}
-        </Button>
-        <Button variant="outline" disabled title={t("action.soon")}>
-          <FileText />
-          {t("action.complaint")}
-        </Button>
-        <Button variant="outline" disabled title={t("action.soon")}>
-          <Share2 />
-          {t("action.share")}
-        </Button>
-      </div>
-      <p className="mt-2 text-sm text-muted-foreground">{t("action.soon")}</p>
+      {result.verdict !== "no_signs" && (
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {result.entityKeys.length > 0 && (
+            <Button variant="outline" onClick={() => setReportOpen(true)}>
+              <Flag aria-hidden />
+              {t("action.report")}
+            </Button>
+          )}
+          <Button asChild variant="outline">
+            <Link to={`/complaint/${result.id}`} state={{ result }}>
+              <FileText aria-hidden />
+              {t("action.complaint")}
+            </Link>
+          </Button>
+          <ShareWarning result={result} />
+        </div>
+      )}
+      {result.verdict !== "no_signs" && result.entityKeys.length > 0 && (
+        <ReportDialog result={result} open={reportOpen} onOpenChange={setReportOpen} />
+      )}
 
       <div className="mt-8">
         <Disclaimer />

@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => {
   return {
     fakeAuth,
     signInAnonymously: vi.fn(),
+    linkWithPopup: vi.fn(),
+    signInWithPopup: vi.fn(),
     initializeApp: vi.fn(() => ({ name: "app" })),
     getAuth: vi.fn(() => fakeAuth),
     getFirestore: vi.fn(() => ({ kind: "db" })),
@@ -16,7 +18,13 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("firebase/app", () => ({ initializeApp: mocks.initializeApp }));
-vi.mock("firebase/auth", () => ({ getAuth: mocks.getAuth, signInAnonymously: mocks.signInAnonymously }));
+vi.mock("firebase/auth", () => ({
+  getAuth: mocks.getAuth,
+  signInAnonymously: mocks.signInAnonymously,
+  linkWithPopup: mocks.linkWithPopup,
+  signInWithPopup: mocks.signInWithPopup,
+  GoogleAuthProvider: class GoogleAuthProvider {},
+}));
 vi.mock("firebase/firestore", () => ({ getFirestore: mocks.getFirestore }));
 vi.mock("firebase/storage", () => ({ getStorage: mocks.getStorage }));
 
@@ -110,5 +118,51 @@ describe("ensureAnonymousUser", () => {
     await expect(ensureAnonymousUser()).rejects.toThrow("offline");
     await expect(ensureAnonymousUser()).resolves.toEqual({ uid: "anon-2" });
     expect(mocks.signInAnonymously).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("signInWithGoogle", () => {
+  const getIdToken = vi.fn(async () => "token");
+  beforeEach(() => {
+    vi.resetModules();
+    getIdToken.mockClear();
+    mocks.fakeAuth.currentUser = { uid: "anon-1" };
+    mocks.linkWithPopup.mockReset();
+    mocks.signInWithPopup.mockReset();
+    mocks.getAuth.mockImplementation(() => mocks.fakeAuth);
+  });
+
+  it("links the anonymous user to Google when possible", async () => {
+    const linked = { uid: "anon-1", getIdToken };
+    mocks.linkWithPopup.mockResolvedValue({ user: linked });
+    const { signInWithGoogle } = await import("./firebase");
+    await expect(signInWithGoogle()).resolves.toBe(linked);
+    expect(mocks.linkWithPopup).toHaveBeenCalledTimes(1);
+    expect(mocks.signInWithPopup).not.toHaveBeenCalled();
+    // A fresh ID token, so the API sees the google.com provider.
+    expect(getIdToken).toHaveBeenCalledWith(true);
+  });
+
+  it("falls back to signInWithPopup on auth/credential-already-in-use", async () => {
+    const existing = { uid: "google-9", getIdToken };
+    mocks.linkWithPopup.mockRejectedValue(Object.assign(new Error("in use"), { code: "auth/credential-already-in-use" }));
+    mocks.signInWithPopup.mockResolvedValue({ user: existing });
+    const { signInWithGoogle } = await import("./firebase");
+    await expect(signInWithGoogle()).resolves.toBe(existing);
+    expect(mocks.signInWithPopup).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not hide other errors such as a closed popup", async () => {
+    mocks.linkWithPopup.mockRejectedValue(Object.assign(new Error("closed"), { code: "auth/popup-closed-by-user" }));
+    const { signInWithGoogle } = await import("./firebase");
+    await expect(signInWithGoogle()).rejects.toMatchObject({ code: "auth/popup-closed-by-user" });
+    expect(mocks.signInWithPopup).not.toHaveBeenCalled();
+  });
+
+  it("recognises a Google user", async () => {
+    const { isGoogleUser } = await import("./firebase");
+    expect(isGoogleUser({ providerData: [{ providerId: "google.com" }] as never })).toBe(true);
+    expect(isGoogleUser({ providerData: [] })).toBe(false);
+    expect(isGoogleUser(null)).toBe(false);
   });
 });

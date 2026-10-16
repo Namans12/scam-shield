@@ -46,10 +46,9 @@ describe("ResultPage", () => {
     expect(call).toHaveAttribute("href", "tel:1930");
     expect(call.closest("p")).toHaveTextContent("Guidance only. If you've lost money, call 1930 immediately.");
 
-    // Report / complaint / share are disabled placeholders until a later task.
-    for (const name of ["Report this scam", "Draft a complaint", "Share a warning"]) {
-      expect(screen.getByRole("button", { name })).toBeDisabled();
-    }
+    expect(screen.getByRole("button", { name: "Report this scam" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: "Draft a complaint" })).toHaveAttribute("href", "/complaint/chk_123");
+    expect(screen.getByRole("button", { name: "Share a warning" })).toBeEnabled();
   });
 
   it("moves focus to the verdict heading so it is announced", () => {
@@ -65,9 +64,17 @@ describe("ResultPage", () => {
     expect(screen.getByText("Your account will be blocked today").closest("blockquote")).toHaveAttribute("lang", "hi");
   });
 
-  it("captions the placeholder action buttons as coming soon", () => {
-    renderResult(makeResult());
-    expect(screen.getByText("Coming soon")).toBeVisible();
+  it("offers no report, complaint or share actions when no scam signs were found", () => {
+    renderResult(makeResult({ verdict: "no_signs", risk_score: 6, scam_type: "none", red_flags: [], hits: [], hardSignals: [] }));
+    expect(screen.queryByRole("button", { name: "Report this scam" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Draft a complaint" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Share a warning" })).toBeNull();
+  });
+
+  it("hides the report button when there is nothing to add to the list", () => {
+    renderResult(makeResult({ entityKeys: [] }));
+    expect(screen.queryByRole("button", { name: "Report this scam" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Draft a complaint" })).toBeInTheDocument();
   });
 
   it("never uses the word safe, even for no_signs", () => {
