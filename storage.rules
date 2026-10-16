@@ -4,11 +4,17 @@ service firebase.storage {
   match /b/{bucket}/o {
     match /uploads/{uid}/{file} {
       allow create: if request.auth != null && request.auth.uid == uid
-        && request.resource.size < 15 * 1024 * 1024
-        && (request.resource.contentType.matches('image/(png|jpeg|webp)')
-            || request.resource.contentType.matches('audio/(mpeg|mp4|aac|ogg|wav|webm)'));
+        && ((request.resource.contentType.matches('image/(png|jpeg|webp)')
+             && request.resource.size <= 10 * 1024 * 1024)
+            || (request.resource.contentType.matches('audio/(mpeg|mp4|aac|ogg|wav|webm)')
+                && request.resource.size <= 15 * 1024 * 1024));
       allow read, delete: if request.auth != null && request.auth.uid == uid;
       allow update: if false;
+    }
+    // Link-scan screenshots are written by the API only; the owner may read them.
+    match /screenshots/{uid}/{file} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
     }
     match /linkscans/{uid}/{file} {
       allow read: if request.auth != null && request.auth.uid == uid;
