@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { GEMINI_RESPONSE_JSON_SCHEMA, geminiVerdictSchema } from "@scam-shield/shared";
 import type { EntityHit, GeminiVerdict, Lang, LinkScan, QrInfo } from "@scam-shield/shared";
 import type { ExtractedEntities } from "./extract";
-import { buildGroundingPrompt, buildVerdictPrompt } from "./prompt";
+import { buildGroundingPrompt, buildVerdictPrompt, JPEG_SHOT_RE } from "./prompt";
 
 export interface AnalyzeInput {
   text?: string;
@@ -50,7 +50,7 @@ const RETRY_DELAY_MS = 300;
 function buildParts(prompt: string, input: AnalyzeInput): Array<Record<string, unknown>> {
   const parts: Array<Record<string, unknown>> = [{ text: prompt }];
   if (input.media) parts.push({ fileData: { fileUri: input.media.gcsUri, mimeType: input.media.mimeType } });
-  const shot = input.linkScan?.screenshotDataUrl?.match(/^data:(image\/jpeg);base64,(.+)$/s);
+  const shot = input.linkScan?.screenshotDataUrl?.match(JPEG_SHOT_RE);
   if (shot) parts.push({ inlineData: { mimeType: shot[1], data: shot[2] } });
   return parts;
 }

@@ -2,7 +2,7 @@ import type { EntityHit, GeminiVerdict, HardSignal, QrInfo } from "@scam-shield/
 
 export interface HardSignalContext { hits: EntityHit[]; qr?: QrInfo; text?: string }
 
-const RECEIVE_WORDS = /receive|refund|cashback|prize|\bwon\b|credited|मिलेगा|प्राप्त|milega/i;
+const RECEIVE_WORDS = /receive|refund|cashback|prize|reward|\bwon\b(?!['’]t)|credited|मिलेगा|मिलेंगे|प्राप्त|जीत|इनाम|कैशबैक|रिफंड|जमा|milega|milenge|jeet|inaam/i;
 
 /**
  * Deterministic overrides applied after the model verdict. They can only raise

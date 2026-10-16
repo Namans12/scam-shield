@@ -44,6 +44,15 @@ describe("applyHardSignals", () => {
     const r = applyHardSignals({ ...base, scam_type: "lottery_prize" }, { hits: [], qr: { raw: "x", upi: { pa: "a@ybl" } }, text: "prize won" });
     expect(r.verdict.scam_type).toBe("lottery_prize");
   });
+  it("recognises Hindi and Hinglish receive-words, and a reward", () => {
+    const qr = { raw: "upi://pay?pa=a@ybl", upi: { pa: "a@ybl" } };
+    for (const text of ["Aapko 5000 rupaye milenge, QR scan karein", "इनाम पाने के लिए QR स्कैन करें", "कैशबैक जमा होगा", "You won a reward"]) {
+      expect(applyHardSignals(base, { hits: [], qr, text }).hardSignals, text).toEqual(["qr_pay_disguised_as_receive"]);
+    }
+  });
+  it("does not treat \"won't\" as a receive-word", () => {
+    expect(applyHardSignals(base, { hits: [], qr: { raw: "upi://pay?pa=a@ybl", upi: { pa: "a@ybl" } }, text: "I won't pay this" }).hardSignals).toEqual([]);
+  });
   it("does not fire without receive-words or without a UPI QR", () => {
     expect(applyHardSignals(base, { hits: [], qr: { raw: "x", upi: { pa: "a@ybl" } }, text: "pay the shopkeeper" }).hardSignals).toEqual([]);
     expect(applyHardSignals(base, { hits: [], qr: { raw: "https://x" }, text: "receive cashback" }).hardSignals).toEqual([]);

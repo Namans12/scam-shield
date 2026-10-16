@@ -839,6 +839,20 @@ describe("stored check hygiene", () => {
     expect(body.entities.phones).toEqual(["70000 22222"]);
   });
 
+  it("redacts the stored QR payload and link-scan page text, and caps the QR evidence", async () => {
+    const c = setup();
+    c.uploads.set("uploads/u1/qr.png", { bytes: await QRCode.toBuffer("upi://pay?pa=bnbreward.cashback@ybl&pn=Share%20OTP%20482913&am=5000&tn=Pin%20482913&cu=INR", { width: 400 }), mimeType: "image/png" });
+    c.scan.mockResolvedValue({ requestedUrl: "https://bnb-kyc.example", redirects: [], title: "Enter OTP 482913", text: "Your OTP is 482913. Aadhaar 2345 6789 0124" });
+    c.analyze.mockResolvedValue(verdict({ verdict: "no_signs", risk_score: 5, scam_type: "none" }));
+    const body = await (await check(c, { storagePath: "uploads/u1/qr.png", text: "Scan to receive your refund https://bnb-kyc.example", lang: "en" })).json();
+    const stored = (await c.store.getCheck(body.id)) as StoredCheck;
+    const raw = JSON.stringify(stored);
+    expect(raw).not.toContain("482913");
+    expect(raw).not.toContain("2345 6789 0124");
+    expect(stored.qr?.upi?.pa).toBe("bnbreward.cashback@ybl");
+    expect(stored.linkScan?.requestedUrl).toBe("https://bnb-kyc.example");
+  });
+
   it("stores empty entity lists when no identifiers were found", async () => {
     const c = setup();
     c.analyze.mockResolvedValue(verdict({ entities: { phones: [], upi_ids: [], urls: [], bank_accounts: ["4111 1111 1111 1111"], brands_impersonated: [] } }));

@@ -192,7 +192,8 @@ describe("scan lifecycle", () => {
     const prev = process.env.MAX_CONCURRENT_SCANS;
     process.env.MAX_CONCURRENT_SCANS = "1";
     try {
-      const slow = scanUrl("http://hold.test/", { timeoutMs: 1500, lookup: async () => { await sleep(1000); return ["8.8.8.8"]; } });
+      // Holds the slot, then fails DNS: no real network connection is ever attempted.
+      const slow = scanUrl("http://hold.test/", { timeoutMs: 1500, lookup: async () => { await sleep(1000); throw new Error("ENOTFOUND hold.test"); } });
       const second = await scanUrl("http://other.test/", { lookup: async () => ["8.8.8.8"] });
       expect(second).toMatchObject({ blockedReason: "scan_failed", redirects: [] });
       await slow;

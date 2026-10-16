@@ -51,6 +51,16 @@ beforeEach(() => {
 });
 
 describe("CheckPage", () => {
+  it("links the message box to its character count and, at the limit, to the limit note", async () => {
+    renderCheck();
+    const box = screen.getByLabelText("The message");
+    expect(box.getAttribute("aria-describedby")).toMatch(/-count$/);
+    fireEvent.change(box, { target: { value: "x".repeat(5000) } });
+    const ids = box.getAttribute("aria-describedby")!.split(" ");
+    expect(ids).toHaveLength(2);
+    expect(document.getElementById(ids[1]!)).toHaveTextContent("first 5,000 characters");
+  });
+
   it("checks what was shared to the app, then opens the result", async () => {
     vi.stubGlobal("caches", {});
     takeSharedPayload.mockResolvedValue({ text: "KYC pending https://bnb-kyc-update.web.app", url: "https://bnb-kyc-update.web.app" });

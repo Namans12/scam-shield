@@ -231,7 +231,7 @@ function reconcile(model: GeminiVerdict, out: GeminiVerdict, lang: Lang, hardSig
   const flags: RedFlag[] = [];
   if (qrSignal && qr?.upi) {
     sentences.push(t.qr);
-    flags.push({ flag: t.flagQr, evidence: t.evQr(qr.upi.pa, qr.upi.am), why_it_matters: t.whyQr });
+    flags.push({ flag: t.flagQr, evidence: t.evQr(qr.upi.pa.slice(0, 100), qr.upi.am?.slice(0, 20)), why_it_matters: t.whyQr });
   }
   const top = hits.reduce<EntityHit | undefined>((m, h) => (!m || h.reportCount > m.reportCount ? h : m), undefined);
   if (reportedSignal && top) {
@@ -268,9 +268,18 @@ function storedCopy(result: CheckResult, uid: string, keys: EntityKey[], text: s
   if (text) stored.redactedText = r(text);
   if (storagePath) stored.storagePath = storagePath;
   if (screenshotPath) stored.screenshotPath = screenshotPath;
+  if (result.qr) {
+    // The decoded payload is attacker-controlled text: keep the payee (a kept identifier) but redact the rest.
+    const { raw, upi } = result.qr;
+    stored.qr = { raw: r(raw).slice(0, 500), ...(upi && { upi: { ...upi, ...(upi.pn !== undefined && { pn: r(upi.pn) }), ...(upi.tn !== undefined && { tn: r(upi.tn) }) } }) };
+  }
   if (linkScan) {
     const { screenshotDataUrl: _drop, ...ls } = linkScan;
-    stored.linkScan = ls.text ? { ...ls, text: ls.text.slice(0, STORED_PAGE_TEXT_CHARS) } : ls;
+    stored.linkScan = {
+      ...ls,
+      ...(ls.title !== undefined && { title: r(ls.title) }),
+      ...(ls.text !== undefined && { text: r(ls.text.slice(0, STORED_PAGE_TEXT_CHARS)) }),
+    };
   }
   return stored;
 }

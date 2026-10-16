@@ -200,14 +200,15 @@ export default function CheckPage() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             maxLength={MAX_TEXT}
+            aria-describedby={`${ids}-count${text.length >= MAX_TEXT ? ` ${ids}-limit` : ""}`}
             placeholder={t("check.textPlaceholder")}
             readOnly={loading}
           />
-          <p className="mt-1 text-right text-sm text-muted-foreground">
+          <p id={`${ids}-count`} className="mt-1 text-right text-sm text-muted-foreground">
             {t("check.charCount", { n: text.length, max: MAX_TEXT })}
           </p>
           {text.length >= MAX_TEXT && (
-            <p className="mt-1 text-sm font-medium text-suspicious-fg">{t("check.limitNote")}</p>
+            <p id={`${ids}-limit`} className="mt-1 text-sm font-medium text-suspicious-fg">{t("check.limitNote")}</p>
           )}
         </div>
 

@@ -59,6 +59,9 @@ export function todayIst(now: Date = new Date()): string {
   return new Date(now.getTime() + 5.5 * 3600_000).toISOString().slice(0, 10);
 }
 
+/** The only screenshot format that is attached to the model call (and so the only one the prompt may mention). */
+export const JPEG_SHOT_RE = /^data:(image\/jpeg);base64,(.+)$/s;
+
 export function buildVerdictPrompt(input: AnalyzeInput, groundingNotes?: string, now: Date = new Date()): string {
   const parts: string[] = [RULES, "", `Today's date in India is ${todayIst(now)}. Dates up to and including today are in the past, not the future; only call a date suspicious if it is after today or cannot exist (for example 31 September).`, "", LANG_LINE[input.lang], "The \"language\" field of your answer must be exactly that language code, and all free-text fields must be in that language."];
 
@@ -91,7 +94,7 @@ export function buildVerdictPrompt(input: AnalyzeInput, groundingNotes?: string,
 
   const ls = input.linkScan;
   if (ls) {
-    parts.push("", "LINK SCAN (the page was opened safely by our server):");
+    parts.push("", "LINK SCAN (the page was loaded in an isolated browser by our server):");
     if (ls.blockedReason) {
       parts.push(`The page could not be scanned: ${ls.blockedReason}. Judge the link from its address alone.`);
     }
@@ -102,7 +105,7 @@ export function buildVerdictPrompt(input: AnalyzeInput, groundingNotes?: string,
     );
     if (ls.httpStatus !== undefined) parts.push(`HTTP status: ${ls.httpStatus}`);
     if (ls.title || ls.text) parts.push(block("PAGE", `Title: ${ls.title ?? ""}\n\n${ls.text ?? ""}`, MAX_PAGE_TEXT));
-    if (ls.screenshotDataUrl) parts.push("A screenshot of the page is attached.");
+    if (ls.screenshotDataUrl && JPEG_SHOT_RE.test(ls.screenshotDataUrl)) parts.push("A screenshot of the page is attached.");
   }
 
   if (groundingNotes?.trim()) {
@@ -120,7 +123,7 @@ export function buildGroundingPrompt(input: AnalyzeInput): string | null {
   for (const u of input.entities.urls) targets.add(u);
   if (input.linkScan?.finalUrl) targets.add(input.linkScan.finalUrl);
   else if (input.linkScan?.requestedUrl) targets.add(input.linkScan.requestedUrl);
-  if (input.qr?.upi?.pn) targets.add(input.qr.upi.pn);
+  if (input.qr?.upi?.pn) targets.add(JSON.stringify(input.qr.upi.pn.replace(/\s+/g, " ").trim().slice(0, 80)));
   if (targets.size === 0) return null;
 
   const lines = [

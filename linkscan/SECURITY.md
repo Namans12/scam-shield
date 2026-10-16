@@ -7,7 +7,7 @@ linkscan opens attacker-chosen URLs in headless Chromium. Assume the page is hos
 - Every connection (document, each redirect hop, subresources, HTTPS CONNECT) goes through a per-scan validating proxy that pins DNS to the validated addresses. Chromium's loopback proxy bypass is disabled.
 - WebRTC/WebTransport removed from pages, `--force-webrtc-ip-handling-policy=disable_non_proxied_udp`, `--disable-quic`.
 - One fresh browser context per scan: no cookies/storage carry over, downloads off, service workers blocked, permissions denied, popups/dialogs closed.
-- Caps: 15 s hard deadline (all resources closed, slot released only after cleanup), 25 MB through the proxy, 150 requests, 8000 chars of text, `MAX_CONCURRENT_SCANS` (default 4; overflow = HTTP 503 + `Retry-After`), V8 heap 256 MB, `--jitless`, 2 renderer processes.
+- Caps: 15 s hard deadline (all resources closed, slot released only after cleanup), 25 MB through the proxy, 150 requests, 8000 chars of text, `MAX_CONCURRENT_SCANS` (default 4; overflow = HTTP 503 + `Retry-After`), V8 heap 256 MB, `--jitless`, a renderer-process-limit hint of 2 (a soft limit: Chromium may still start more).
 - `allowPrivateForTests` / `testAllowedOrigins` exist only for tests; `server.ts` never passes options (asserted by a test).
 
 ## Chromium sandbox
