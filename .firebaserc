@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "project-91260b43-6705-4176-b71"
+  },
+  "targets": {
+    "project-91260b43-6705-4176-b71": {
+      "hosting": {
+        "app": [
+          "project-91260b43-6705-4176-b71"
+        ],
+        "demo-bank": [
+          "bnb-kyc-update"
+        ]
+      }
+    }
   }
 }

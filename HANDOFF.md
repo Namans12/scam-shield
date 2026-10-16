@@ -75,7 +75,7 @@ Required Google tech (judges check the submission description): **Gemini on Vert
 | 9 Web shell + text check | ✅ reviewed (1 fix round) | lazy Firebase, subpath exports from shared. |
 | 10 Deploy pipeline + first deploy | 🟡 **mostly done, unfinished** | rules/indexes/lifecycle + both services + Hosting are live; smoke test, sandbox finding, XFF finding, storage.rules fix deploy, setup-notes update **not confirmed**. Agent stopped by the owner's request. |
 | 11 Uploads (image/QR/audio) | 🟡 built + fix round committed (`4cd8c6d`); **re-review was stopped**, not yet approved | review: fix verify stall-based 60 s upload deadline, Cancel button, abort on unmount, camera button, window drag guard. |
-| 12 Example scams + demo phishing site + seed data | ⬜ not started | |
+| 12 Example scams + demo phishing site + seed data | ✅ built, deployed, seeded (16 Oct, second machine) | Examples verified live: kyc_sms scam 98 ("Reported 3 times", demo-bank scan), qr_receive scam 98 (hard signal), digital_arrest scam 100, fake_payment scam 98 (one 502 `analysis_failed` at 31 s on first try, passed on 2 retries; API logs only the code, not the cause: add cause logging + one retry in the polish batch). Demo site: https://bnb-kyc-update.web.app (Hosting target `demo-bank`). Re-seed: `npx tsx scripts/seed.ts`. |
 | 13 Reporting, complaint draft, share warning | ⬜ not started | Google sign-in is enabled. |
 | 14 Trends, history, About, PWA share target | ⬜ not started | also Firestore read for `/result/:id`. |
 | 15 Hindi pass + polish + screenshots | ⬜ not started | |

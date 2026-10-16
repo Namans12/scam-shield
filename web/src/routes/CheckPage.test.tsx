@@ -48,6 +48,54 @@ beforeEach(() => {
 });
 
 describe("CheckPage", () => {
+  it("runs the text example in one tap", async () => {
+    const user = userEvent.setup();
+    checkContent.mockResolvedValue(makeResult({ id: "ex1" }));
+    renderCheck();
+    await user.click(screen.getByRole("button", { name: "Fake KYC SMS with a bank link" }));
+    expect(checkContent).toHaveBeenCalledWith(
+      expect.objectContaining({ text: expect.stringContaining("bnb-kyc-update.web.app"), lang: "en" }),
+    );
+    await waitFor(() => expect(screen.getByText(/result page \/result\/ex1/)).toBeInTheDocument());
+  });
+
+  it("fetches, uploads and checks the image example with its caption", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue(new Response(new Blob(["png"], { type: "image/png" })));
+    vi.stubGlobal("fetch", fetchMock);
+    uploadForCheck.mockResolvedValue({ storagePath: "uploads/u/x.png", mimeType: "image/png" });
+    checkContent.mockResolvedValue(makeResult({ id: "ex2" }));
+    try {
+      renderCheck();
+      await user.click(screen.getByRole("button", { name: /QR code to/ }));
+      await waitFor(() => expect(checkContent).toHaveBeenCalled());
+      expect(fetchMock).toHaveBeenCalledWith("/examples/qr-receive.png");
+      expect(uploadForCheck.mock.calls[0]![0]).toMatchObject({ name: "qr-receive.png", type: "image/png" });
+      expect(checkContent).toHaveBeenCalledWith({
+        storagePath: "uploads/u/x.png",
+        mimeType: "image/png",
+        text: "Scan this QR to receive your ₹5,000 cashback",
+        url: undefined,
+        lang: "en",
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("shows an error when an example file cannot be fetched", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("offline")));
+    try {
+      renderCheck();
+      await user.click(screen.getByRole("button", { name: /Fake payment screenshot/ }));
+      expect(await screen.findByRole("alert")).toBeInTheDocument();
+      expect(checkContent).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("disables Check until there is a message or a link", async () => {
     const user = userEvent.setup();
     renderCheck();

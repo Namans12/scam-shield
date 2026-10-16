@@ -32,6 +32,13 @@ export const en = {
   "check.uploading": "Uploading your file… {pct}%",
   "check.cancelUpload": "Cancel upload",
 
+  "examples.title": "No message handy? Try an example",
+  "examples.hint": "These are made-up scams. Tap one to see how a check works.",
+  "example.kyc_sms": "Fake KYC SMS with a bank link",
+  "example.fake_payment": "Fake payment screenshot",
+  "example.qr_receive": "QR code to \"receive\" money",
+  "example.digital_arrest": "Voice note: \"digital arrest\" call",
+
   "dropzone.label": "Or add a screenshot, QR code or voice note",
   "dropzone.choose": "Choose a file or photo",
   "dropzone.camera": "Take a photo",

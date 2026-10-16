@@ -32,6 +32,13 @@ export const hi: Record<MessageKey, string> = {
   "check.uploading": "आपकी फ़ाइल अपलोड हो रही है… {pct}%",
   "check.cancelUpload": "अपलोड रद्द करें",
 
+  "examples.title": "कोई संदेश नहीं है? एक उदाहरण आज़माएँ",
+  "examples.hint": "ये बनावटी धोखाधड़ी के उदाहरण हैं। जाँच कैसे काम करती है, यह देखने के लिए किसी एक पर टैप करें।",
+  "example.kyc_sms": "बैंक लिंक वाला नकली KYC SMS",
+  "example.fake_payment": "नकली पेमेंट स्क्रीनशॉट",
+  "example.qr_receive": "पैसे \"पाने\" वाला QR कोड",
+  "example.digital_arrest": "वॉइस नोट: \"डिजिटल अरेस्ट\" कॉल",
+
   "dropzone.label": "या स्क्रीनशॉट, QR कोड या वॉइस नोट जोड़ें",
   "dropzone.choose": "फ़ाइल या फ़ोटो चुनें",
   "dropzone.camera": "फ़ोटो खींचें",

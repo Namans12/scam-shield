@@ -8,6 +8,8 @@ import { DropZone } from "@/components/DropZone";
 import { ApiError, checkContent, errorMessageKey } from "@/api";
 import { useLang, useT, type MessageKey } from "@/i18n";
 import { uploadForCheck, validateFile } from "@/upload";
+import { ExampleRow } from "@/components/ExampleRow";
+import type { Example } from "@/examples";
 
 const MAX_TEXT = 5000;
 /** After this long we tell the person it is slower than usual (the API itself allows up to 45 s). */
@@ -73,15 +75,49 @@ export default function CheckPage() {
     setFile(next);
   }
 
-  async function onSubmit(e: React.FormEvent) {
+  function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!hasInput || loading || busy.current) return;
+    if (!hasInput) return;
+    void run({ text, url, file });
+  }
+
+  /** Fills the form with an example and runs it through the normal pipeline (assets are uploaded like any file). */
+  function onExample(ex: Example) {
+    if (loading || busy.current) return;
+    const caption = ex.text ?? "";
+    setText(caption);
+    setUrl("");
+    setFile(null);
+    uploaded.current = null;
+    const asset = ex.asset;
+    void run(
+      { text: caption, url: "", file: null },
+      asset
+        ? async () => {
+            const res = await fetch(asset).catch(() => null);
+            if (!res?.ok) throw new ApiError("network", 0);
+            const blob = await res.blob();
+            return new File([blob], asset.split("/").pop()!, { type: ex.mimeType ?? blob.type });
+          }
+        : undefined,
+    );
+  }
+
+  async function run(input: { text: string; url: string; file: File | null }, loadFile?: () => Promise<File>) {
+    if (loading || busy.current) return;
     busy.current = true;
     const controller = new AbortController();
     uploadAbort.current = controller;
     setErrorKey(null);
     setProgress(0);
     try {
+      let file = input.file;
+      if (loadFile) {
+        setPhase("uploading");
+        file = await loadFile();
+        if (!mounted.current) return;
+        setFile(file);
+      }
       let attachment: { storagePath: string; mimeType: string } | undefined;
       if (file) {
         const valid = validateFile(file);
@@ -106,8 +142,8 @@ export default function CheckPage() {
       setPhase("checking");
       const result = await checkContent({
         ...(attachment && { storagePath: attachment.storagePath, mimeType: attachment.mimeType }),
-        text: text.trim() || undefined,
-        url: url.trim() || undefined,
+        text: input.text.trim() || undefined,
+        url: input.url.trim() || undefined,
         lang,
       });
       if (mounted.current) {
@@ -222,6 +258,8 @@ export default function CheckPage() {
           {t("check.submit")}
         </Button>
       </form>
+
+      <ExampleRow onPick={onExample} disabled={loading} />
     </div>
   );
 }
