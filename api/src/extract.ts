@@ -29,11 +29,12 @@ const TRAILING_PUNCT = /[.,;:!?)\]}'"]+$/;
 
 const URL_RE = /\bhttps?:\/\/[^\s<>"'`()[\]{}]+/gi;
 const UPI_RE = /(?<![\w.\-@])[\w.\-]{2,256}@[a-zA-Z]{2,64}(?!\w|\.\w)/g;
-const AT_TOKEN_RE = /[^\s@]*@[^\s]*/g;
+// Anchored at a token start so a long '@'-free token is scanned once, not once per character.
+const AT_TOKEN_RE = /(?<!\S)\S*@\S*/g;
 const PHONE_RE = /(?<![\w@])(?:\+\s?91[\s-]?|91[\s-]|0)?[6-9](?:[\s-]?\d){9}(?![\w@])|(?<![\w@])1(?:800|860)(?:[\s-]?\d){6,7}(?![\w@])/g;
 const ACCT_RE = /(?<!\d)\d{9,18}(?!\d)/g;
 const ACCT_CTX = /a\/c|account|acct|a\.c|खाता/i;
-const AADHAAR_CTX = /aadhaar|aadhar|आधार|uid/i;
+const AADHAAR_CTX = /\b(?:aadhaa?r|uid)\b|आधार/i;
 const NOT_ACCT_CTX = /(?:utr|ref|txn|rrn|transaction|order|trans)\W{0,4}(?:no|id|number)?\W{0,4}$/i;
 const BARE_DOMAIN_RE = /(?<![\w@.\-/])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?![\w@-])(?:\/[^\s<>"'`]*)?/gi;
 

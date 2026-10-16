@@ -73,3 +73,42 @@ describe("redact: other behaviour", () => {
     }
   });
 });
+
+describe("redact: kept phone in every spelling (round 2)", () => {
+  const spellings = ["+919876543210", "919876543210", "09876543210", "9876543210", "+91 98765 43210", "+91-98765-43210", "98765 43210"];
+  for (const keep of [["+919876543210"], ["phone:+919876543210"]]) {
+    for (const s of spellings) {
+      it(`keeps "${s}" with keep=${JSON.stringify(keep)}`, () => {
+        expect(redact(`call ${s} now`, keep)).toBe(`call ${s} now`);
+      });
+    }
+  }
+  it("still redacts an unkept contiguous Aadhaar-like run next to a kept phone", () => {
+    expect(redact("call +919876543210 aadhaar 234567890123", ["+919876543210"])).toBe("call +919876543210 aadhaar [aadhaar]");
+  });
+});
+
+describe("redact: OTP in longer bank messages (round 2)", () => {
+  const cases: [string, string][] = [
+    ["OTP for txn of INR 2,500 at XYZ is 482913", "OTP for txn of INR 2,500 at XYZ is [otp]"],
+    ["Your one time password, valid for 3 minutes, is 482913", "Your one time password, valid for 3 minutes, is [otp]"],
+    ["OTP for order 12345678 is 482913", "OTP for order 12345678 is [otp]"],
+    ["आपका ओटीपी order 12345678 है 482913", "आपका ओटीपी order 12345678 है [otp]"],
+    ["Dear customer, your OTP for payment of Rs 1,250.50 to ABC Stores is 482913. Do not share.", "Dear customer, your OTP for payment of Rs 1,250.50 to ABC Stores is [otp]. Do not share."],
+  ];
+  for (const [input, expected] of cases) {
+    it(`redacts: ${input}`, () => {
+      expect(redact(input, [])).toBe(expected);
+    });
+  }
+});
+
+describe("redact: scaling", () => {
+  it("is fast on 50,000-char adversarial input", () => {
+    for (const s of ["a".repeat(50000), "a@".repeat(25000), "1 ".repeat(25000), "1".repeat(50000), "OTP ".repeat(12500), "1-".repeat(25000)]) {
+      const t = performance.now();
+      redact(s, ["+919876543210", "ab@ybl"]);
+      expect(performance.now() - t).toBeLessThan(200);
+    }
+  });
+});

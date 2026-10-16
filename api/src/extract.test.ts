@@ -91,3 +91,17 @@ describe("extractEntities hardening", () => {
     }
   });
 });
+
+describe("extractEntities round 2", () => {
+  it("is fast on 50,000-char adversarial input", () => {
+    for (const s of ["a".repeat(50000), "a@".repeat(25000), "a.".repeat(25000), "1 ".repeat(25000), "1".repeat(50000), "1-".repeat(25000)]) {
+      const t = performance.now();
+      extractEntities(s);
+      expect(performance.now() - t).toBeLessThan(200);
+    }
+  });
+  it("uid inside a word does not suppress an account number", () => {
+    expect(extractEntities("see the guide a/c 123456789012").bankAccounts).toEqual(["123456789012"]);
+    expect(extractEntities("UID 123456789012 a/c").bankAccounts).toEqual([]);
+  });
+});
