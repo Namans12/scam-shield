@@ -6,3 +6,4 @@ dist/
 !.env.example
 !web/.env.production
 eval/results/*.raw.json
+.firebase/

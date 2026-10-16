@@ -36,3 +36,9 @@ Decision: `GEMINI_MODEL=gemini-3.8-flash`, `GEMINI_COMBINED_GROUNDING=true` (sin
 - Services: `scam-shield-api` (public, gen2, 1 CPU / 1 GiB, concurrency 20, min 1 / max 5, runs as the default compute SA) and `scam-shield-linkscan` (private, gen2, 2 CPU / 2 GiB, concurrency 4, min 0 / max 3, dedicated zero-role SA `linkscan-sa@project-91260b43-6705-4176-b71.iam.gserviceaccount.com`, no VPC; `run.invoker` on that service granted to the API's SA).
 - The API image bundles `api/src/index.ts` with esbuild; `@scam-shield/shared` is inlined with `--alias:@scam-shield/shared=./shared/src/index.ts`, everything else stays external and comes from `npm ci --omit=dev -w api`.
 - Cloud Build runs as the default compute SA, which needs `roles/artifactregistry.writer` (on the `scam-shield` repo) and `roles/logging.logWriter` to push images / write build logs. Both are missing: see the Task 10 report. Status of the first deploy is recorded below once images can be pushed.
+
+## Deploy status, 16 Oct 2026 (evening, redeploy from a second machine)
+- Redeployed `linkscan`, `api` (both from `dfbe36f`, clean tree), Hosting, and rules (Storage audio <= 15 MB / image <= 10 MB, `screenshots/{uid}` owner-read, lifecycle verified). `scripts/smoke.sh` against the Hosting URL: SMOKE OK (scam text -> scam in ~14-20 s).
+- Chromium sandbox: a real URL scan (`https://example.com/`) through Hosting returns title and text on Cloud Run gen2 **without** `LINKSCAN_NO_SANDBOX`. Keep it off.
+- Still open: X-Forwarded-For hop count (`TRUSTED_PROXY_HOPS=2` assumed, not measured), budget alert (owner), polish batch in HANDOFF.md section 5.
+- Mac setup: `brew install --cask gcloud-cli` (add `/opt/homebrew/share/google-cloud-sdk/bin` to PATH), `npm i -g firebase-tools`, `npx playwright install chromium` in `linkscan/` (Playwright 1.55.0 needs chromium build 1187).
