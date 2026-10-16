@@ -28,6 +28,8 @@ export class AnalysisError extends Error {
 
 export interface GeminiConfig {
   project: string; location: string; model: string; combinedGrounding: boolean;
+  /** Google Search grounding for inputs with a link (off by default: quota 429s and hangs, see HANDOFF section 10). */
+  search?: boolean;
   /** Gemini 3 thinking level; unset leaves the model default (slower, ~3x). */
   thinkingLevel?: "MINIMAL" | "LOW" | "MEDIUM" | "HIGH";
 }
@@ -57,7 +59,7 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
   const ai: GenAiClient = client ?? (new GoogleGenAI({ vertexai: true, project: cfg.project, location: cfg.location }) as unknown as GenAiClient);
 
   async function run(input: AnalyzeInput, signal: AbortSignal, grounded: boolean): Promise<GeminiVerdict> {
-    const groundingPrompt = grounded ? buildGroundingPrompt(input) : undefined;
+    const groundingPrompt = grounded && cfg.search ? buildGroundingPrompt(input) : undefined;
     let notes: string | undefined;
     const config: Record<string, unknown> = {
       abortSignal: signal,

@@ -2,6 +2,7 @@
 # Scam Shield deploy pipeline (Git Bash / Linux). Usage: scripts/deploy.sh [api|linkscan|web|rules|all]
 # Builds images with Cloud Build (no local Docker), deploys to Cloud Run / Firebase Hosting. Prints no secrets.
 #   LINKSCAN_NO_SANDBOX=1   deploy linkscan with Chromium's sandbox off (only if the sandbox fails on the runtime)
+#   GEMINI_SEARCH=true      deploy api with Google Search grounding on (default off: quota 429s and hangs)
 #   DEBUG_XFF=1             deploy api with /api/health reporting the X-Forwarded-For entry count (diagnostic)
 set -euo pipefail
 
@@ -70,7 +71,7 @@ deploy_api() {
   build_image api
   local scan_url; scan_url="$(service_url scam-shield-linkscan)"
   [ -n "$scan_url" ] || { echo "linkscan is not deployed yet; run: scripts/deploy.sh linkscan" >&2; exit 1; }
-  local env="GOOGLE_CLOUD_PROJECT=$PROJECT,GEMINI_MODEL=gemini-3.8-flash,GEMINI_LOCATION=global,GEMINI_COMBINED_GROUNDING=true,LINKSCAN_URL=$scan_url,STORAGE_BUCKET=$BUCKET,TRUSTED_PROXY_HOPS=${TRUSTED_PROXY_HOPS:-2}"
+  local env="GOOGLE_CLOUD_PROJECT=$PROJECT,GEMINI_MODEL=gemini-3.8-flash,GEMINI_LOCATION=global,GEMINI_COMBINED_GROUNDING=true,GEMINI_SEARCH=${GEMINI_SEARCH:-false},LINKSCAN_URL=$scan_url,STORAGE_BUCKET=$BUCKET,TRUSTED_PROXY_HOPS=${TRUSTED_PROXY_HOPS:-2}"
   if [ "${DEBUG_XFF:-}" = "1" ]; then env="$env,DEBUG_XFF=1"; fi
   echo "== Deploying scam-shield-api"
   gc run deploy scam-shield-api --region "$REGION" --image "$REGISTRY/api:$TAG" \

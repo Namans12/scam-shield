@@ -9,7 +9,7 @@ const good: GeminiVerdict = {
   red_flags: [{ flag: "urgency", evidence: "BLOCKED today", why_it_matters: "pressure" }], next_steps: ["Do not click"],
   entities: { phones: [], upi_ids: [], urls: [], bank_accounts: [], brands_impersonated: [] }, language: "en",
 };
-const cfg = { project: "p", location: "global", model: "m", combinedGrounding: true };
+const cfg = { project: "p", location: "global", model: "m", combinedGrounding: true, search: true };
 const input: AnalyzeInput = { text: "hello", lang: "en", entities: empty, hits: [] };
 const urlInput: AnalyzeInput = { text: "see x.web.app", lang: "en", entities: { ...empty, domains: ["x.web.app"] }, hits: [] };
 
@@ -149,6 +149,12 @@ describe("createGeminiModel.analyze", () => {
     expect(await createGeminiModel(cfg, client).analyze(urlInput)).toEqual(good);
     expect(generateContent.mock.calls[0]![0].config.tools).toBeDefined();
     expect(generateContent.mock.calls[1]![0].config.tools).toBeUndefined();
+  });
+  it("never attaches the search tool unless search is switched on", async () => {
+    const { client, generateContent } = fake(async () => ({ text: JSON.stringify(good) }));
+    await createGeminiModel({ ...cfg, search: false }, client).analyze(urlInput);
+    await createGeminiModel({ project: "p", location: "global", model: "m", combinedGrounding: true }, client).analyze(urlInput);
+    for (const call of generateContent.mock.calls) expect(call[0].config.tools).toBeUndefined();
   });
   it("logs the failure without user content", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
