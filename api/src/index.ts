@@ -9,6 +9,7 @@ import { createApp, DEFAULT_TRUSTED_PROXY_HOPS, MAX_UPLOAD_BYTES, UploadNotFound
 import type { AppDeps } from "./app";
 import { FirestoreStore } from "./firestoreStore";
 import { createGeminiModel } from "./gemini";
+import type { GeminiConfig } from "./gemini";
 import { createLinkScanClient } from "./linkscanClient";
 
 export const DEFAULT_LIMITS = { perUidPerDay: 30, globalPerDay: 3000, perIpPerMinute: 10, perIpReportPerMinute: 60 } as const;
@@ -20,6 +21,13 @@ function required(env: NodeJS.ProcessEnv, name: string): string {
   const v = env[name]?.trim();
   if (!v) throw new Error(`Missing required environment variable ${name}`);
   return v;
+}
+
+/** GEMINI_THINKING_LEVEL: LOW unless set to MINIMAL/MEDIUM/HIGH, or "default" to leave the model's own setting. */
+export function parseThinking(v: string | undefined): GeminiConfig["thinkingLevel"] {
+  const x = (v ?? "").trim().toUpperCase();
+  if (x === "DEFAULT") return undefined;
+  return x === "MINIMAL" || x === "MEDIUM" || x === "HIGH" ? x : "LOW";
 }
 
 /** Only "false"/"0"/"no"/"off" (any case) turn a flag off; unset or empty uses the default; anything else is on. */
@@ -96,6 +104,8 @@ export function buildDeps(env: NodeJS.ProcessEnv = process.env): AppDeps {
       location: env.GEMINI_LOCATION?.trim() || "global",
       model: env.GEMINI_MODEL?.trim() || "gemini-3.8-flash",
       combinedGrounding: parseBool(env.GEMINI_COMBINED_GROUNDING, true),
+      // LOW cuts latency about 3x with the same verdicts on the examples (measured 16 Oct); "default" keeps the model's own setting.
+      thinkingLevel: parseThinking(env.GEMINI_THINKING_LEVEL),
     }),
     scanner: createLinkScanClient(linkscanUrl, LINKSCAN_TIMEOUT_MS),
     async verifyToken(idToken) {

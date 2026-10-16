@@ -132,6 +132,14 @@ describe("createGeminiModel.analyze", () => {
       expect(generateContent.mock.calls[1]![0].config.tools).toBeUndefined();
     } finally { vi.useRealTimers(); }
   });
+  it("sets the thinking level only when configured", async () => {
+    const a = fake(async () => ({ text: JSON.stringify(good) }));
+    await createGeminiModel({ ...cfg, thinkingLevel: "LOW" }, a.client).analyze(input);
+    expect(a.generateContent.mock.calls[0]![0].config.thinkingConfig).toEqual({ thinkingLevel: "LOW" });
+    const b = fake(async () => ({ text: JSON.stringify(good) }));
+    await createGeminiModel(cfg, b.client).analyze(input);
+    expect(b.generateContent.mock.calls[0]![0].config.thinkingConfig).toBeUndefined();
+  });
   it("logs the failure without user content", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     try {

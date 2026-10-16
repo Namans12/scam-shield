@@ -26,7 +26,11 @@ export class AnalysisError extends Error {
   }
 }
 
-export interface GeminiConfig { project: string; location: string; model: string; combinedGrounding: boolean }
+export interface GeminiConfig {
+  project: string; location: string; model: string; combinedGrounding: boolean;
+  /** Gemini 3 thinking level; unset leaves the model default (slower, ~3x). */
+  thinkingLevel?: "MINIMAL" | "LOW" | "MEDIUM" | "HIGH";
+}
 
 /** The slice of the @google/genai client we use; lets tests inject a fake. */
 export interface GenAiClient {
@@ -60,6 +64,7 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
       temperature: 0.2,
       responseMimeType: "application/json",
       responseJsonSchema: GEMINI_RESPONSE_JSON_SCHEMA,
+      ...(cfg.thinkingLevel && { thinkingConfig: { thinkingLevel: cfg.thinkingLevel } }),
     };
 
     if (groundingPrompt) {

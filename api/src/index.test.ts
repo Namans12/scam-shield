@@ -1,6 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { UploadNotFoundError } from "./app";
-import { buildDeps, createStorageOps, parseBool, parseHops } from "./index";
+import { buildDeps, createStorageOps, parseBool, parseHops, parseThinking } from "./index";
+
+describe("parseThinking", () => {
+  it("defaults to LOW, accepts other levels, and lets 'default' leave the model setting", () => {
+    expect(parseThinking(undefined)).toBe("LOW");
+    expect(parseThinking("garbage")).toBe("LOW");
+    expect(parseThinking(" high ")).toBe("HIGH");
+    expect(parseThinking("minimal")).toBe("MINIMAL");
+    expect(parseThinking("default")).toBeUndefined();
+  });
+});
 
 describe("parseBool", () => {
   it("disables only on false/0/no/off (case-insensitive, trimmed); everything else uses the default or true", () => {
