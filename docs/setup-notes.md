@@ -26,3 +26,5 @@ Decision: `GEMINI_MODEL=gemini-3.8-flash`, `GEMINI_COMBINED_GROUNDING=true` (sin
 - Auth initialised via API; **Anonymous provider enabled**. Google provider: see below.
 - Default Storage bucket created via API: `project-91260b43-6705-4176-b71.firebasestorage.app` in `asia-south1`.
 - Default Hosting site: `project-91260b43-6705-4176-b71` (`.web.app` / `.firebaseapp.com`).
+- Firebase Hosting → Cloud Run rewrites support `asia-south1` (checked against the Firebase docs 16 Oct), so `REGION_RUN=asia-south1`.
+- Google sign-in provider is NOT enabled yet: owner must enable it in the console (Authentication → Sign-in method → Google; support email namans1201@gmail.com). Needed for Task 13 (reporting).
