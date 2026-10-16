@@ -6,8 +6,8 @@
 
 **Cloud Run** runs two services: the public API, and a private, isolated Chromium link scanner that opens suspicious links so the user never has to.
 
-**Firestore** holds the shared scam list with report counts and linked identifiers, each person's checks, public trend counters, and usage limits, under rules that keep everything except a user's own checks and public stats server-only.
+**Firestore** holds the shared scam list with report counts and linked identifiers, each person's checks, public trend counters, and usage limits (server-only except a user's own checks and public stats).
 
 **Firebase** provides Authentication (anonymous to check, Google sign-in to report), Hosting for the installable web app and API rewrite, and Storage for uploads that auto-delete after 7 days.
 
-On a 50-case benchmark run against the live app, it flagged all 26 scams (100% recall) with a 4.2% false-positive rate and a median of 4.4 s for text.
+On a 50-case benchmark run against the live app, it flagged all 26 scams (100% recall) with a 4.2% false-positive rate and a 4.4 s median for text.
