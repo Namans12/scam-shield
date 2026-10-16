@@ -129,3 +129,10 @@ Submission checklist (organisers' rules): pitch deck PDF on the prescribed templ
 - Gemini quality on Hindi/Hinglish audio and screenshots is untested at scale — the eval harness (Task 16) is how we find out; keep example inputs rehearsed for the video.
 - Anonymous auth is free to mint, so per-user limits are soft; the global daily cap (3000) bounds Gemini spend; set the billing budget alert.
 - Truecaller/Google competition: the deck must lead with content analysis + UPI/QR/voice + actions, not "number lookup".
+
+
+## 10. Gemini reliability findings (16 Oct, evening)
+- **Cause of `analysis_failed` on checks containing a link/domain:** those are the only checks that attach Google Search grounding. On this project grounding returns **429 Resource exhausted after ~4 calls in a short window** and sometimes **hangs for 40 s+**. Plain (no-search) calls were fast and reliable in direct tests (4-10 s). Parallel load tests (mine) made it worse.
+- **Fixes shipped:** thinking level LOW (about 3x faster), first attempt capped at 15 s, one retry that always **drops Google Search**, failure cause logged (`gemini_attempt_failed attempt=N kind=... status=...`, no user content).
+- **After the fixes:** sequential link checks passed 7 of 8 (one 43 s failure where the no-search retry also hung); 4-parallel runs still show occasional 43 s failures. Single-user demo use is mostly fine, but expect an occasional failure.
+- **Open options:** request a Vertex quota increase for grounding / the model; disable search by default (env `GEMINI_COMBINED_GROUNDING=false` uses a separate two-call path, not "off": add a real switch); try `gemini-3.7-flash`; raise `CHECK_TIMEOUT_MS`/lower link-scan budget. Run the eval harness (Task 16) sequentially, not in parallel.
