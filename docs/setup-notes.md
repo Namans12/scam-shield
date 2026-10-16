@@ -19,3 +19,10 @@ Decision: `GEMINI_MODEL=gemini-3.8-flash`, `GEMINI_COMBINED_GROUNDING=true` (sin
 ## Firebase
 
 `firebase projects:addfirebase` and the REST `addFirebase` both returned 403 PERMISSION_DENIED even though the account is project owner (project sits under an organisation). Owner adds the project in console.firebase.google.com (accept terms), enables Anonymous + Google auth, creates Storage in `asia-south1`.
+
+## Firebase status (16 Oct)
+
+- Project added to Firebase by the owner in the console. Web app `scam-shield-web` (appId `1:494852004380:web:b1c5bafffa9aa58d631dd9`) created; public web config in `web/.env.production`.
+- Auth initialised via API; **Anonymous provider enabled**. Google provider: see below.
+- Default Storage bucket created via API: `project-91260b43-6705-4176-b71.firebasestorage.app` in `asia-south1`.
+- Default Hosting site: `project-91260b43-6705-4176-b71` (`.web.app` / `.firebaseapp.com`).
