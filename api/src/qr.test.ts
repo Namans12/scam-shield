@@ -24,11 +24,38 @@ describe("decodeQr", () => {
       .composite([{ input: png, left: 1000, top: 700 }]).png().toBuffer();
     expect(await decodeQr(big)).toBe(uri);
   });
+  it("decodes a QR from a 1-channel grayscale PNG", async () => {
+    const png = await QRCode.toBuffer(uri, { width: 400 });
+    const gray = await sharp(png).removeAlpha().grayscale().toColourspace("b-w").png().toBuffer();
+    expect((await sharp(gray).metadata()).channels).toBe(1);
+    expect(await decodeQr(gray)).toBe(uri);
+  });
+  it("returns null for an image above the input pixel limit", async () => {
+    const huge = await sharp({ create: { width: 8000, height: 8000, channels: 3, background: "#fff" } }).png().toBuffer();
+    expect(await decodeQr(huge)).toBeNull();
+  });
+  it("handles a very tall image without allocating its full raw size", async () => {
+    const tall = await sharp({ create: { width: 1500, height: 33000, channels: 3, background: "#fff" } }).png().toBuffer();
+    global.gc?.();
+    const before = process.memoryUsage().rss;
+    await expect(decodeQr(tall)).resolves.toBeNull();
+    const growthMb = (process.memoryUsage().rss - before) / 1024 / 1024;
+    expect(growthMb).toBeLessThan(150);
+  }, 30_000);
+  it("decodes a QR near the top of a tall image", async () => {
+    const png = await QRCode.toBuffer(uri, { width: 800 });
+    const tall = await sharp({ create: { width: 800, height: 1600, channels: 3, background: "#fff" } })
+      .composite([{ input: png, left: 0, top: 0 }]).png().toBuffer();
+    expect(await decodeQr(tall)).toBe(uri);
+  });
 });
 
 describe("parseUpiUri", () => {
   it("parses a upi://pay URI", () => {
     expect(parseUpiUri(uri)).toEqual({ pa: "bnbreward.cashback@ybl", pn: "Cashback Reward", am: "5000", tn: "Reward credit" });
+  });
+  it("decodes + as a space in values", () => {
+    expect(parseUpiUri("upi://pay?pa=a@y&tn=Reward+credit")).toEqual({ pa: "a@y", tn: "Reward credit" });
   });
   it("rejects non-UPI strings", () => {
     expect(parseUpiUri("https://example.com")).toBeNull();

@@ -2,36 +2,48 @@ import jsQR from "jsqr";
 import sharp, { type Sharp } from "sharp";
 import type { UpiPayload } from "@scam-shield/shared";
 
-const MAX_WIDTH = 1600;
+const MAX_DIM = 1600;
+const MAX_INPUT_PIXELS = 50_000_000;
+const TIMEOUT_SECONDS = 5;
 
-type Pipeline = (img: Sharp) => Sharp;
+interface Rgba { data: Buffer; width: number; height: number }
 
-async function scan(image: Buffer, prep: Pipeline): Promise<string | null> {
-  const base = sharp(image, { failOn: "none" });
-  const { width: srcWidth } = await base.metadata();
-  let img = base;
-  if (srcWidth && srcWidth > MAX_WIDTH) img = img.resize({ width: MAX_WIDTH });
-  const { data, info } = await prep(img).raw().toBuffer({ resolveWithObject: true });
-  if (info.channels !== 4) return null;
-  const code = jsQR(new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength), info.width, info.height);
+function jsqrScan({ data, width, height }: Rgba): string | null {
+  const code = jsQR(new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength), width, height);
   return code?.data ? code.data : null;
 }
 
-/** Decode the first QR code found in an image. Never throws: returns null on any failure. */
+async function toRgba(img: Sharp): Promise<Rgba | null> {
+  const { data, info } = await img.toColourspace("srgb").ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return info.channels === 4 ? { data, width: info.width, height: info.height } : null;
+}
+
+/**
+ * Decode the first QR code found in an image. Never throws: returns null on any failure.
+ * The image is decoded once and downscaled to fit inside 1600x1600 before raw conversion, so
+ * memory is bounded (<= ~10 MB RGBA) regardless of input dimensions.
+ */
 export async function decodeQr(image: Buffer): Promise<string | null> {
-  const passes: Pipeline[] = [
-    (img) => img.ensureAlpha(),
-    (img) => img.grayscale().normalise().toColourspace("srgb").ensureAlpha(),
-  ];
-  for (const prep of passes) {
-    try {
-      const result = await scan(image, prep);
-      if (result) return result;
-    } catch {
-      // corrupt / non-image input or decoder failure: try next pass, then give up
-    }
+  try {
+    const first = await toRgba(
+      sharp(image, { failOn: "none", limitInputPixels: MAX_INPUT_PIXELS })
+        .timeout({ seconds: TIMEOUT_SECONDS })
+        .resize({ width: MAX_DIM, height: MAX_DIM, fit: "inside", withoutEnlargement: true }),
+    );
+    if (!first) return null;
+    const direct = jsqrScan(first);
+    if (direct) return direct;
+    // Second pass on the already-bounded intermediate: grayscale + normalised contrast.
+    const second = await toRgba(
+      sharp(first.data, { raw: { width: first.width, height: first.height, channels: 4 } })
+        .timeout({ seconds: TIMEOUT_SECONDS })
+        .grayscale()
+        .normalise(),
+    );
+    return second ? jsqrScan(second) : null;
+  } catch {
+    return null; // corrupt / non-image input, over the pixel limit, timeout, or decoder failure
   }
-  return null;
 }
 
 /** Parse a upi://pay URI. Returns null for anything else or when `pa` is missing. */
