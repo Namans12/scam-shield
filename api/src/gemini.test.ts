@@ -91,8 +91,55 @@ describe("createGeminiModel.analyze", () => {
       const { client } = fake(() => new Promise(() => {}));
       const p = createGeminiModel(cfg, client).analyze(input);
       const assertion = expect(p).rejects.toBeInstanceOf(AnalysisError);
-      await vi.advanceTimersByTimeAsync(30_001);
+      await vi.advanceTimersByTimeAsync(40_001);
       await assertion;
     } finally { vi.useRealTimers(); }
+  });
+  it("retries once after a transient error and returns the verdict", async () => {
+    let n = 0;
+    const { client, generateContent } = fake(async () => {
+      if (n++ === 0) throw Object.assign(new Error("unavailable"), { status: 503 });
+      return { text: JSON.stringify(good) };
+    });
+    expect(await createGeminiModel(cfg, client).analyze(input)).toEqual(good);
+    expect(generateContent).toHaveBeenCalledTimes(2);
+  });
+  it("retries once after invalid JSON", async () => {
+    let n = 0;
+    const { client } = fake(async () => ({ text: n++ === 0 ? "oops" : JSON.stringify(good) }));
+    expect(await createGeminiModel(cfg, client).analyze(input)).toEqual(good);
+  });
+  it("does not retry a client error", async () => {
+    const { client, generateContent } = fake(async () => { throw Object.assign(new Error("bad request"), { status: 400 }); });
+    await expect(createGeminiModel(cfg, client).analyze(input)).rejects.toBeInstanceOf(AnalysisError);
+    expect(generateContent).toHaveBeenCalledTimes(1);
+  });
+  it("gives up after the second failure", async () => {
+    const { client, generateContent } = fake(async () => { throw new Error("boom"); });
+    await expect(createGeminiModel(cfg, client).analyze(input)).rejects.toBeInstanceOf(AnalysisError);
+    expect(generateContent).toHaveBeenCalledTimes(2);
+  });
+  it("after a hang, retries without the search tool and still returns a verdict", async () => {
+    vi.useFakeTimers();
+    try {
+      let n = 0;
+      const { client, generateContent } = fake((args) => (n++ === 0 ? new Promise(() => {}) : Promise.resolve({ text: JSON.stringify(good) })));
+      const p = createGeminiModel(cfg, client).analyze(urlInput);
+      await vi.advanceTimersByTimeAsync(25_001 + 400);
+      expect(await p).toEqual(good);
+      expect(generateContent).toHaveBeenCalledTimes(2);
+      expect(generateContent.mock.calls[0]![0].config.tools).toBeDefined();
+      expect(generateContent.mock.calls[1]![0].config.tools).toBeUndefined();
+    } finally { vi.useRealTimers(); }
+  });
+  it("logs the failure without user content", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const { client } = fake(async () => { throw Object.assign(new Error("quota exceeded"), { status: 429 }); });
+      await expect(createGeminiModel(cfg, client).analyze({ ...input, text: "SECRET-TEXT-123" })).rejects.toBeInstanceOf(AnalysisError);
+      const lines = spy.mock.calls.map((c) => String(c[0]));
+      expect(lines.some((l) => l.includes("gemini_attempt_failed attempt=1") && l.includes("status=429"))).toBe(true);
+      expect(lines.join("\n")).not.toContain("SECRET-TEXT-123");
+    } finally { spy.mockRestore(); }
   });
 });

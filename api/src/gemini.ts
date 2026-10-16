@@ -33,7 +33,13 @@ export interface GenAiClient {
   models: { generateContent(params: { model: string; contents: unknown; config?: Record<string, unknown> }): Promise<{ text?: string }> };
 }
 
-export const ANALYZE_TIMEOUT_MS = 30_000;
+/** First attempt is cut off here so a hung call leaves time for one retry inside the 45 s request budget. */
+export const ATTEMPT_TIMEOUT_MS = 25_000;
+/** Everything (both attempts) must finish by this point. */
+export const ANALYZE_TIMEOUT_MS = 40_000;
+/** No retry is started with less than this left. */
+const MIN_RETRY_MS = 8_000;
+const RETRY_DELAY_MS = 300;
 
 function buildParts(prompt: string, input: AnalyzeInput): Array<Record<string, unknown>> {
   const parts: Array<Record<string, unknown>> = [{ text: prompt }];
@@ -46,8 +52,8 @@ function buildParts(prompt: string, input: AnalyzeInput): Array<Record<string, u
 export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): VerdictModel {
   const ai: GenAiClient = client ?? (new GoogleGenAI({ vertexai: true, project: cfg.project, location: cfg.location }) as unknown as GenAiClient);
 
-  async function run(input: AnalyzeInput, signal: AbortSignal): Promise<GeminiVerdict> {
-    const groundingPrompt = buildGroundingPrompt(input);
+  async function run(input: AnalyzeInput, signal: AbortSignal, grounded: boolean): Promise<GeminiVerdict> {
+    const groundingPrompt = grounded ? buildGroundingPrompt(input) : undefined;
     let notes: string | undefined;
     const config: Record<string, unknown> = {
       abortSignal: signal,
@@ -88,24 +94,71 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
     return parsed.data;
   }
 
+  /** One bounded attempt. Rejects with AnalysisError(kind) so the caller can decide whether to retry. */
+  async function attempt(input: AnalyzeInput, ms: number, grounded: boolean): Promise<GeminiVerdict> {
+    const ctrl = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        ctrl.abort();
+        reject(new AnalysisError(`Analysis timed out after ${Math.round(ms / 1000)}s`, { cause: new TimeoutMarker() }));
+      }, ms);
+    });
+    try {
+      return await Promise.race([run(input, ctrl.signal, grounded), timeout]);
+    } catch (e) {
+      if (e instanceof AnalysisError) throw e;
+      throw new AnalysisError(`Gemini call failed: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   return {
     async analyze(input) {
-      const ctrl = new AbortController();
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      const timeout = new Promise<never>((_, reject) => {
-        timer = setTimeout(() => {
-          ctrl.abort();
-          reject(new AnalysisError(`Analysis timed out after ${ANALYZE_TIMEOUT_MS / 1000}s`));
-        }, ANALYZE_TIMEOUT_MS);
-      });
+      const started = Date.now();
+      let first: unknown;
       try {
-        return await Promise.race([run(input, ctrl.signal), timeout]);
+        return await attempt(input, Math.min(ATTEMPT_TIMEOUT_MS, ANALYZE_TIMEOUT_MS), true);
       } catch (e) {
-        if (e instanceof AnalysisError) throw e;
-        throw new AnalysisError(`Gemini call failed: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
-      } finally {
-        clearTimeout(timer);
+        first = e;
+      }
+      logAttemptFailure(1, first);
+      const timedOut = first instanceof AnalysisError && first.cause instanceof TimeoutMarker;
+      const left = ANALYZE_TIMEOUT_MS - (Date.now() - started) - RETRY_DELAY_MS;
+      if (!isTransient(first) || left < MIN_RETRY_MS) throw first;
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+      try {
+        // After a hang the Google Search step is the likeliest culprit: the retry skips it (faster, still a verdict).
+        return await attempt(input, left, !timedOut);
+      } catch (e) {
+        logAttemptFailure(2, e);
+        throw e;
       }
     },
   };
+}
+
+class TimeoutMarker extends Error {}
+
+/** Client errors (bad request, auth, not found...) will fail again; everything else is worth one more try. */
+function isTransient(e: unknown): boolean {
+  const status = statusOf(e);
+  if (status === undefined) return true;
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function statusOf(e: unknown): number | undefined {
+  const cause = e instanceof AnalysisError ? e.cause : e;
+  const st = (cause as { status?: unknown; code?: unknown } | undefined)?.status ?? (cause as { code?: unknown } | undefined)?.code;
+  return typeof st === "number" ? st : undefined;
+}
+
+/** Logs what failed without any user content: error class, HTTP status and the first words of an API error message. */
+function logAttemptFailure(n: number, e: unknown): void {
+  const cause = e instanceof AnalysisError ? e.cause : e;
+  const kind = cause instanceof TimeoutMarker ? "timeout" : cause instanceof Error ? cause.name : e instanceof AnalysisError ? "invalid_output" : "unknown";
+  const status = statusOf(e);
+  const msg = e instanceof AnalysisError && !(cause instanceof Error) ? e.message : cause instanceof Error && kind !== "ZodError" && kind !== "SyntaxError" ? cause.message : "";
+  console.error(`scam-shield: gemini_attempt_failed attempt=${n} kind=${kind}${status !== undefined ? ` status=${status}` : ""}${msg ? ` msg=${JSON.stringify(msg.slice(0, 160))}` : ""}`);
 }
