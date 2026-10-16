@@ -1,7 +1,7 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { capRedirects, capUrl, closeBrowser, pickDenial, scanDebugCounters, scanUrl } from "./scan";
+import { capRedirects, capUrl, closeBrowser, closeWithin, pickDenial, scanDebugCounters, scanUrl } from "./scan";
 
 let main: http.Server;
 let secret: http.Server;
@@ -201,6 +201,14 @@ describe("scan lifecycle", () => {
     }
     await settled();
   }, 30_000);
+});
+
+describe("closeWithin", () => {
+  it("returns false when the close never settles, true when it finishes or throws", async () => {
+    expect(await closeWithin(() => new Promise(() => undefined), 50)).toBe(false);
+    expect(await closeWithin(async () => undefined, 50)).toBe(true);
+    expect(await closeWithin(async () => { throw new Error("boom"); }, 50)).toBe(true);
+  });
 });
 
 describe("result shaping", () => {

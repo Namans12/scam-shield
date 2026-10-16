@@ -25,6 +25,7 @@ const MAX_TITLE = 300;
 const MAX_REQUESTS_PER_SCAN = 150;
 const MAX_TOTAL_BYTES = 25 * 1024 * 1024; // total bytes through the proxy (both directions) per scan
 const DEFAULT_MAX_CONCURRENT_SCANS = 4;
+const CLOSE_TIMEOUT_MS = 5_000; // a wedged context/proxy close must not hold a scan slot forever
 const MAX_URL_OUT = 2048;
 const MAX_REDIRECTS_OUT = 20;
 const MOBILE_UA =
@@ -81,6 +82,17 @@ export async function closeBrowser(): Promise<void> {
   const p = browserPromise;
   browserPromise = null;
   if (p) await p.then((b) => b.close()).catch(() => undefined);
+}
+
+/** Runs a close step with an upper bound. Resolves true if it finished (even by throwing) in time, false on timeout. */
+export async function closeWithin(close: () => Promise<unknown>, ms: number = CLOSE_TIMEOUT_MS): Promise<boolean> {
+  let timer: NodeJS.Timeout | undefined;
+  const timedOut = new Promise<false>((resolve) => { timer = setTimeout(() => resolve(false), ms); });
+  try {
+    return await Promise.race([Promise.resolve().then(close).then(() => true as const, () => true as const), timedOut]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ---- helpers ----
@@ -150,8 +162,13 @@ export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<Link
       const p = res.proxy;
       res.context = undefined;
       res.proxy = undefined;
-      if (c) { await c.close().catch(() => undefined); openContexts--; }
-      if (p) { await p.close().catch(() => undefined); openProxies--; }
+      if (c) {
+        const done = await closeWithin(() => c.close());
+        openContexts--;
+        // Wedged context: kill the shared Chromium (next scan relaunches it) so its renderer cannot linger.
+        if (!done) void closeWithin(() => closeBrowser());
+      }
+      if (p) { await closeWithin(() => p.close()); openProxies--; }
     });
     return closing;
   };

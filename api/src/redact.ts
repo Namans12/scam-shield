@@ -9,7 +9,8 @@ const LABEL_SRC =
   "|ओ\\.?\\s?टी\\.?\\s?पी\\.?|वन\\s+टाइम\\s+पासवर्ड|पासवर्ड";
 const LABEL_RE = new RegExp(LABEL_SRC, "giu");
 const CVV_LABEL_RE = /^(?:cvv|cvc)/i;
-const CURRENCY_BEFORE = /(?:rs\.?|inr|₹|rupees?)\s*$/i;
+// The letter lookbehind stops "orders 482913" / "hrs 482913" from being read as "Rs <amount>".
+const CURRENCY_BEFORE = /(?<![A-Za-z])(?:rs\.?|inr|rupees?)\s*$|₹\s*$/i;
 // How far either side of a label we look for secret-looking numbers. Bank SMSs put amounts,
 // merchants and references between the label and the code, and the code may come first.
 const WINDOW = 60;
@@ -98,7 +99,7 @@ export function redact(text: string, keep: string[]): string {
       if (/[A-Za-z]/.test(prev) && start !== labelEnd) continue;
       if (/[A-Za-z]/.test(next) && end !== labelStart) continue;
       // Currency amounts: "Rs 5000", "INR 2,500", "450.00".
-      if (CURRENCY_BEFORE.test(masked.slice(Math.max(0, start - 8), start))) continue;
+      if (CURRENCY_BEFORE.test(masked.slice(Math.max(0, start - 16), start))) continue;
       if (/^[,.]\d/.test(masked.slice(end, end + 2)) || (/[,.]/.test(prev) && /\d/.test(masked[start - 2] ?? ""))) continue;
       add(start, end, "[otp]");
     }
