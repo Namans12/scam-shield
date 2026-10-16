@@ -10,6 +10,7 @@
   "dependencies": {
     "@google/genai": "^2.30.0",
     "@scam-shield/shared": "*",
+    "firebase-admin": "^14.5.0",
     "jsqr": "^1.4.0",
     "sharp": "^0.35.5",
     "tldts": "^7.4.18"
