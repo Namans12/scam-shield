@@ -16,6 +16,7 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 beforeEach(() => {
+  getIdToken.mockReset();
   getIdToken.mockResolvedValue("tok-123");
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -56,10 +57,61 @@ describe("api client", () => {
   });
 
   it("falls back to unauthorized for a bare 401 and unknown for other non-JSON errors", async () => {
-    fetchMock.mockResolvedValueOnce(new Response("nope", { status: 401 }));
+    fetchMock.mockImplementationOnce(async () => new Response("nope", { status: 401 }));
+    fetchMock.mockImplementationOnce(async () => new Response("nope", { status: 401 }));
     await expect(checkContent({ text: "hi", lang: "en" })).rejects.toMatchObject({ code: "unauthorized", status: 401 });
-    fetchMock.mockResolvedValueOnce(new Response("<html>bad gateway</html>", { status: 502 }));
+    fetchMock.mockImplementationOnce(async () => new Response("<html>bad gateway</html>", { status: 502 }));
     await expect(checkContent({ text: "hi", lang: "en" })).rejects.toMatchObject({ code: "unknown", status: 502 });
+  });
+
+  it("maps a 429 with a non-JSON body to rate_limited", async () => {
+    fetchMock.mockResolvedValue(new Response("Too Many Requests", { status: 429 }));
+    await expect(checkContent({ text: "hi", lang: "en" })).rejects.toMatchObject({ code: "rate_limited", status: 429 });
+  });
+
+  it("retries once with a refreshed token after a server 401", async () => {
+    getIdToken.mockImplementation(async (force?: boolean) => (force ? "fresh-token" : "stale-token"));
+    const result = makeResult();
+    fetchMock.mockImplementationOnce(async () => jsonResponse({ error: "unauthorized" }, 401));
+    fetchMock.mockImplementationOnce(async () => jsonResponse(result));
+
+    await expect(checkContent({ text: "hi", lang: "en" })).resolves.toEqual(result);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer stale-token");
+    expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe("Bearer fresh-token");
+  });
+
+  it("does not retry a second time when the refreshed token is also rejected", async () => {
+    fetchMock.mockImplementation(async () => jsonResponse({ error: "unauthorized" }, 401));
+    await expect(checkContent({ text: "hi", lang: "en" })).rejects.toMatchObject({ code: "unauthorized" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry other errors", async () => {
+    fetchMock.mockImplementation(async () => jsonResponse({ error: "daily_limit" }, 429));
+    await expect(checkContent({ text: "hi", lang: "en" })).rejects.toMatchObject({ code: "daily_limit" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("aborts after 70 seconds and reports a network error", async () => {
+    vi.useFakeTimers();
+    try {
+      fetchMock.mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+          }),
+      );
+      const pending = checkContent({ text: "hi", lang: "en" });
+      const assertion = expect(pending).rejects.toMatchObject({ code: "network", status: 0 });
+      await vi.advanceTimersByTimeAsync(69_000);
+      expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(2_000);
+      await assertion;
+      expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("reports a network failure as code network", async () => {

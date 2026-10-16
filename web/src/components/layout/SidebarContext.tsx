@@ -6,7 +6,6 @@ const STORAGE_KEY = "scamshield:sidebar-expanded";
 interface SidebarState {
   /** Desktop: the drawer shows labels (240px) rather than the icon rail (72px). */
   expanded: boolean;
-  toggleExpanded: () => void;
   /** Mobile: the drawer is an overlay sheet instead of an inline column. */
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
@@ -38,15 +37,14 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     }
   }, [expanded]);
 
-  const toggleExpanded = useCallback(() => setExpanded((v) => !v), []);
   const toggle = useCallback(() => {
     if (isMobile) setMobileOpen((v) => !v);
     else setExpanded((v) => !v);
   }, [isMobile]);
 
   const value = useMemo(
-    () => ({ expanded, toggleExpanded, mobileOpen, setMobileOpen, isMobile, toggle }),
-    [expanded, toggleExpanded, mobileOpen, isMobile, toggle],
+    () => ({ expanded, mobileOpen, setMobileOpen, isMobile, toggle }),
+    [expanded, mobileOpen, isMobile, toggle],
   );
 
   return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>;

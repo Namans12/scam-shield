@@ -8,6 +8,8 @@ import { checkContent, errorMessageKey } from "@/api";
 import { useLang, useT, type MessageKey } from "@/i18n";
 
 const MAX_TEXT = 5000;
+/** After this long we tell the person it is slower than usual (the API itself allows up to 45 s). */
+const SLOW_AFTER_MS = 20_000;
 
 export default function CheckPage() {
   const t = useT();
@@ -17,6 +19,7 @@ export default function CheckPage() {
   const [text, setText] = useState("");
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [slow, setSlow] = useState(false);
   const [errorKey, setErrorKey] = useState<MessageKey | null>(null);
   const mounted = useRef(true);
 
@@ -26,6 +29,15 @@ export default function CheckPage() {
       mounted.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setSlow(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlow(true), SLOW_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const hasInput = text.trim().length > 0 || url.trim().length > 0;
 
@@ -64,11 +76,14 @@ export default function CheckPage() {
             onChange={(e) => setText(e.target.value)}
             maxLength={MAX_TEXT}
             placeholder={t("check.textPlaceholder")}
-            disabled={loading}
+            readOnly={loading}
           />
           <p className="mt-1 text-right text-sm text-muted-foreground">
             {t("check.charCount", { n: text.length, max: MAX_TEXT })}
           </p>
+          {text.length >= MAX_TEXT && (
+            <p className="mt-1 text-sm font-medium text-suspicious-fg">{t("check.limitNote")}</p>
+          )}
         </div>
 
         <div>
@@ -86,7 +101,7 @@ export default function CheckPage() {
             onChange={(e) => setUrl(e.target.value)}
             placeholder={t("check.linkPlaceholder")}
             aria-describedby={`${ids}-url-hint`}
-            disabled={loading}
+            readOnly={loading}
           />
           <p id={`${ids}-url-hint`} className="mt-1 text-sm text-muted-foreground">
             {t("check.linkHint")}
@@ -100,14 +115,24 @@ export default function CheckPage() {
           </div>
         )}
 
-        {loading && (
-          <p role="status" className="flex items-center gap-3 text-base font-medium">
-            <Loader2 className="animate-spin text-primary" size={24} aria-hidden />
-            {t("check.checking")}
-          </p>
-        )}
+        {/* Always mounted so screen readers announce text changes inside it. */}
+        <p role="status" aria-live="polite" className="flex min-h-6 items-center gap-3 text-base font-medium">
+          {loading && (
+            <>
+              <Loader2 className="animate-spin text-primary" size={24} aria-hidden />
+              {slow ? t("check.slow") : t("check.checking")}
+            </>
+          )}
+        </p>
 
-        <Button type="submit" size="lg" disabled={!hasInput || loading} className="w-full sm:w-auto sm:self-start">
+        {/* While loading the button is aria-disabled rather than disabled, so keyboard focus stays on it. */}
+        <Button
+          type="submit"
+          size="lg"
+          disabled={!hasInput && !loading}
+          aria-disabled={loading || undefined}
+          className="w-full sm:w-auto sm:self-start"
+        >
           <ScanSearch aria-hidden />
           {t("check.submit")}
         </Button>

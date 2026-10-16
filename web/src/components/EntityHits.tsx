@@ -1,5 +1,6 @@
 import { AtSign, Globe, Landmark, Phone } from "lucide-react";
-import { maskIdentifier, type EntityHit, type EntityKey } from "@scam-shield/shared";
+import { maskIdentifier } from "@scam-shield/shared/mask";
+import type { EntityHit, EntityKey } from "@scam-shield/shared";
 import { scamTypeKey, useT } from "@/i18n";
 
 function KindIcon({ k }: { k: EntityKey }) {

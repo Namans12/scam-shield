@@ -13,7 +13,6 @@
 
   --card: #ffffff;
   --card-foreground: #0e1a33;
-  --card-hover: #eef3f7;
 
   --popover: #ffffff;
   --popover-foreground: #0e1a33;
@@ -53,7 +52,6 @@
   --sidebar-w: 15rem;
   --sidebar-w-mini: 4.5rem;
   --topbar-h: 4rem;
-  --control-h: 2.75rem; /* 44px: minimum tap target */
   --rail-item: 2.75rem;
   --gutter: 1.5rem;
 
@@ -72,7 +70,6 @@
 
     --card: #121c33;
     --card-foreground: #e8edf6;
-    --card-hover: #1a2642;
 
     --popover: #121c33;
     --popover-foreground: #e8edf6;
@@ -113,7 +110,6 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-card-hover: var(--card-hover);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -145,7 +141,6 @@
   --spacing-sidebar: var(--sidebar-w);
   --spacing-rail: var(--sidebar-w-mini);
   --spacing-topbar: var(--topbar-h);
-  --spacing-control: var(--control-h);
   --spacing-rail-item: var(--rail-item);
   --spacing-gutter: var(--gutter);
 

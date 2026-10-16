@@ -5,13 +5,70 @@ const mocks = vi.hoisted(() => {
     currentUser: null as null | { uid: string },
     authStateReady: vi.fn(async () => {}),
   };
-  return { fakeAuth, signInAnonymously: vi.fn() };
+  return {
+    fakeAuth,
+    signInAnonymously: vi.fn(),
+    initializeApp: vi.fn(() => ({ name: "app" })),
+    getAuth: vi.fn(() => fakeAuth),
+    getFirestore: vi.fn(() => ({ kind: "db" })),
+    getStorage: vi.fn(() => ({ kind: "storage" })),
+  };
 });
 
-vi.mock("firebase/auth", () => ({
-  getAuth: () => mocks.fakeAuth,
-  signInAnonymously: mocks.signInAnonymously,
-}));
+vi.mock("firebase/app", () => ({ initializeApp: mocks.initializeApp }));
+vi.mock("firebase/auth", () => ({ getAuth: mocks.getAuth, signInAnonymously: mocks.signInAnonymously }));
+vi.mock("firebase/firestore", () => ({ getFirestore: mocks.getFirestore }));
+vi.mock("firebase/storage", () => ({ getStorage: mocks.getStorage }));
+
+describe("firebase (lazy)", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    mocks.fakeAuth.currentUser = null;
+    mocks.fakeAuth.authStateReady.mockClear();
+    mocks.signInAnonymously.mockReset();
+    mocks.initializeApp.mockClear();
+    mocks.getAuth.mockClear();
+    mocks.getAuth.mockImplementation(() => mocks.fakeAuth);
+    mocks.getFirestore.mockClear();
+    mocks.getStorage.mockClear();
+  });
+
+  it("does not initialise Firebase just by importing the module", async () => {
+    await import("./firebase");
+    expect(mocks.initializeApp).not.toHaveBeenCalled();
+    expect(mocks.getAuth).not.toHaveBeenCalled();
+  });
+
+  it("does not throw at import when the config is bad, and rejects only when used", async () => {
+    mocks.getAuth.mockImplementation(() => {
+      throw new Error("auth/invalid-api-key");
+    });
+    const { ensureAnonymousUser } = await import("./firebase");
+    await expect(ensureAnonymousUser()).rejects.toThrow("auth/invalid-api-key");
+  });
+
+  it("initialises app and auth on first use but never Firestore or Storage", async () => {
+    mocks.signInAnonymously.mockResolvedValue({ user: { uid: "anon-1" } });
+    const { ensureAnonymousUser } = await import("./firebase");
+    await ensureAnonymousUser();
+    expect(mocks.initializeApp).toHaveBeenCalledTimes(1);
+    expect(mocks.getAuth).toHaveBeenCalledTimes(1);
+    expect(mocks.getFirestore).not.toHaveBeenCalled();
+    expect(mocks.getStorage).not.toHaveBeenCalled();
+  });
+
+  it("creates Firestore and Storage only when asked, once each, on the same app", async () => {
+    const { getDb, getStorageLazy, getFirebaseApp } = await import("./firebase");
+    const [db1, db2] = await Promise.all([getDb(), getDb()]);
+    const st = await getStorageLazy();
+    expect(db1).toBe(db2);
+    expect(st).toEqual({ kind: "storage" });
+    expect(mocks.getFirestore).toHaveBeenCalledTimes(1);
+    expect(mocks.getStorage).toHaveBeenCalledTimes(1);
+    expect(mocks.initializeApp).toHaveBeenCalledTimes(1);
+    expect(await getFirebaseApp()).toEqual({ name: "app" });
+  });
+});
 
 describe("ensureAnonymousUser", () => {
   beforeEach(() => {
@@ -19,6 +76,7 @@ describe("ensureAnonymousUser", () => {
     mocks.fakeAuth.currentUser = null;
     mocks.fakeAuth.authStateReady.mockClear();
     mocks.signInAnonymously.mockReset();
+    mocks.getAuth.mockImplementation(() => mocks.fakeAuth);
   });
 
   it("signs in anonymously once, even when called concurrently and repeatedly", async () => {

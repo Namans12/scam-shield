@@ -10,16 +10,39 @@
     />
     <meta name="theme-color" content="#f6f8fa" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a1224" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Scam Shield" />
+    <meta property="og:title" content="Scam Shield" />
+    <meta
+      property="og:description"
+      content="Check a suspicious message, screenshot, QR code, link or voice note before you act on it."
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Scam Shield" />
+    <meta
+      name="twitter:description"
+      content="Check a suspicious message, screenshot, QR code, link or voice note before you act on it."
+    />
+
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
+    <!-- Fonts load without blocking first paint: the system font stack is used until they arrive. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

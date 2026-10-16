@@ -52,6 +52,24 @@ describe("ResultPage", () => {
     }
   });
 
+  it("moves focus to the verdict heading so it is announced", () => {
+    renderResult(makeResult());
+    expect(screen.getByRole("heading", { level: 1, name: "Scam" })).toHaveFocus();
+  });
+
+  it("marks model-written text with the language of the result", () => {
+    renderResult(makeResult({ language: "hi", summary: "सारांश", next_steps: ["कदम एक"] }));
+    expect(screen.getByText("सारांश")).toHaveAttribute("lang", "hi");
+    expect(screen.getByText("कदम एक").closest("li")).toHaveAttribute("lang", "hi");
+    expect(screen.getByText("Urgent threat to block your account")).toHaveAttribute("lang", "hi");
+    expect(screen.getByText("Your account will be blocked today").closest("blockquote")).toHaveAttribute("lang", "hi");
+  });
+
+  it("captions the placeholder action buttons as coming soon", () => {
+    renderResult(makeResult());
+    expect(screen.getByText("Coming soon")).toBeVisible();
+  });
+
   it("never uses the word safe, even for no_signs", () => {
     renderResult(makeResult({ verdict: "no_signs", risk_score: 6, scam_type: "none", red_flags: [], hits: [], hardSignals: [] }));
     expect(screen.getByText("No scam signs found")).toBeInTheDocument();

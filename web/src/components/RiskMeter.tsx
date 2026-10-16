@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { Verdict } from "@scam-shield/shared";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -11,19 +12,20 @@ const FILL: Record<Verdict, string> = {
 /** Horizontal meter for the 0-100 risk score. The number is always shown as text too. */
 export function RiskMeter({ score, verdict }: { score: number; verdict: Verdict }) {
   const t = useT();
+  const labelId = useId();
   const value = Math.max(0, Math.min(100, Math.round(score)));
   const label = t("result.riskScore");
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
-        <span id="risk-label" className="text-base font-semibold">
+        <span id={labelId} className="text-base font-semibold">
           {label}
         </span>
         <span className="text-base text-muted-foreground">{t("result.riskOutOf", { score: value })}</span>
       </div>
       <div
         role="meter"
-        aria-labelledby="risk-label"
+        aria-labelledby={labelId}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={value}

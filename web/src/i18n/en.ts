@@ -3,7 +3,6 @@
 // No scam signs found; scam-list wording is always "Reported N times".
 export const en = {
   "app.name": "Scam Shield",
-  "app.tagline": "Check a suspicious message before you act on it",
 
   "nav.label": "Main navigation",
   "nav.check": "Check",
@@ -17,10 +16,6 @@ export const en = {
   "nav.skip": "Skip to content",
 
   "lang.label": "Language",
-  "lang.en": "EN",
-  "lang.hi": "हिं",
-  "lang.enName": "English",
-  "lang.hiName": "Hindi",
 
   "check.title": "Got a message that feels wrong?",
   "check.subtitle": "Paste it here. We look for the warning signs of a scam and tell you what to do next.",
@@ -32,7 +27,8 @@ export const en = {
   "check.charCount": "{n} / {max}",
   "check.submit": "Check",
   "check.checking": "Checking… usually 5–15 seconds",
-  "check.needInput": "Paste a message or a link to check.",
+  "check.slow": "This is taking longer than usual. Please keep this page open.",
+  "check.limitNote": "Only the first 5,000 characters are checked.",
 
   "error.title": "We couldn't check this",
   "error.rate_limited": "You are checking too fast. Please wait a minute and try again.",
@@ -54,7 +50,6 @@ export const en = {
   "verdict.suspicious.desc": "Be careful. Some things here look wrong, so verify before you do anything.",
   "verdict.no_signs.desc": "We didn't find the usual warning signs. This is not a guarantee, so stay careful.",
 
-  "result.title": "Result",
   "result.riskScore": "Risk score",
   "result.riskOutOf": "{score} out of 100",
   "result.scamType": "Type of scam",

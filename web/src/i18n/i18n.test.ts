@@ -9,7 +9,10 @@ describe("i18n", () => {
 
   it("never calls anything safe", () => {
     for (const v of Object.values(en)) expect(v).not.toMatch(/\bsafe\b/i);
-    for (const v of Object.values(hi)) expect(v).not.toMatch(/सुरक्षित/);
+    for (const v of Object.values(hi)) {
+      expect(v).not.toMatch(/सुरक्षित/);
+      expect(v).not.toMatch(/safe/i);
+    }
   });
 
   it("uses the agreed verdict labels", () => {

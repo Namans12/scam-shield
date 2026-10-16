@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 // Every size is at least 44px tall: Scam Shield is used on phones, often by
 // people who are stressed and not used to small targets.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-lg text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-60 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 rounded-lg text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-60 aria-disabled:opacity-60 aria-disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
   {
     variants: {
       variant: {

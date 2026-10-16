@@ -27,7 +27,18 @@ const STYLES: Record<Verdict, { box: string; icon: React.ReactNode; label: Messa
   },
 };
 
-export function VerdictBanner({ verdict, lang, className }: { verdict: Verdict; lang: Lang; className?: string }) {
+export function VerdictBanner({
+  verdict,
+  lang,
+  className,
+  headingRef,
+}: {
+  verdict: Verdict;
+  lang: Lang;
+  className?: string;
+  /** Lets the page move focus here after navigating, so screen readers announce the verdict. */
+  headingRef?: React.Ref<HTMLHeadingElement>;
+}) {
   const s = STYLES[verdict];
   return (
     <section
@@ -36,7 +47,7 @@ export function VerdictBanner({ verdict, lang, className }: { verdict: Verdict; 
     >
       <span className="mt-1 shrink-0">{s.icon}</span>
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold leading-tight">{translate(lang, s.label)}</h1>
+        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold leading-tight focus:outline-none">{translate(lang, s.label)}</h1>
         <p className="mt-1 text-base leading-snug">{translate(lang, s.desc)}</p>
       </div>
     </section>

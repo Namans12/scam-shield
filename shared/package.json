@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./mask": "./src/mask.ts",
+    "./states": "./src/states.ts",
+    "./complaint": "./src/complaint.ts"
   },
   "scripts": {
     "test": "vitest run",

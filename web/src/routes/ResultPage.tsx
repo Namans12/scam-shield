@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { FileText, Flag, Share2 } from "lucide-react";
 import type { CheckResult } from "@scam-shield/shared";
@@ -48,11 +49,18 @@ export default function ResultPage() {
 
   // A Firestore read for results that are not in router state comes in a later task.
   const result = resultFromState(location.state, id);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const shownId = result?.id;
+  useEffect(() => {
+    // After navigating here, announce the verdict to screen readers.
+    if (shownId) headingRef.current?.focus();
+  }, [shownId]);
+
   if (!result) return <ResultGone />;
 
   return (
     <article>
-      <VerdictBanner verdict={result.verdict} lang={lang} />
+      <VerdictBanner verdict={result.verdict} lang={lang} headingRef={headingRef} />
 
       <div className="mt-6">
         <RiskMeter score={result.risk_score} verdict={result.verdict} />
@@ -66,18 +74,20 @@ export default function ResultPage() {
       )}
 
       <Section title={t("result.summary")}>
-        <p className="text-lg leading-relaxed break-anywhere">{result.summary}</p>
+        <p lang={result.language} className="text-lg leading-relaxed break-anywhere">
+          {result.summary}
+        </p>
       </Section>
 
       <Section title={t("result.redFlags")}>
-        <RedFlagList flags={result.red_flags} />
+        <RedFlagList flags={result.red_flags} lang={result.language} />
       </Section>
 
       {result.next_steps.length > 0 && (
         <Section title={t("result.nextSteps")}>
           <ol className="flex list-decimal flex-col gap-2 pl-6 text-lg marker:font-bold marker:text-primary">
             {result.next_steps.map((step, i) => (
-              <li key={i} className="pl-1 break-anywhere">
+              <li key={i} lang={result.language} className="pl-1 break-anywhere">
                 {step}
               </li>
             ))}
@@ -121,6 +131,7 @@ export default function ResultPage() {
           {t("action.share")}
         </Button>
       </div>
+      <p className="mt-2 text-sm text-muted-foreground">{t("action.soon")}</p>
 
       <div className="mt-8">
         <Disclaimer />

@@ -1,4 +1,5 @@
 import type { CheckRequest, CheckResult, EntityKey } from "@scam-shield/shared";
+import type { User } from "firebase/auth";
 import { ensureAnonymousUser } from "./firebase";
 import type { MessageKey } from "./i18n/en";
 
@@ -15,41 +16,63 @@ export class ApiError extends Error {
   }
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
+/** The server answers within 45 s (Hosting rewrites cut off at 60 s); give up a little after that. */
+export const REQUEST_TIMEOUT_MS = 70_000;
+
+async function send(path: string, body: unknown, user: User, forceRefresh: boolean, signal: AbortSignal): Promise<Response> {
   let token: string;
   try {
-    const user = await ensureAnonymousUser();
-    token = await user.getIdToken();
+    token = await user.getIdToken(forceRefresh);
+  } catch {
+    throw new ApiError("unauthorized", 401);
+  }
+  try {
+    return await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch {
+    // Offline, DNS failure, or our own timeout abort.
+    throw new ApiError("network", 0);
+  }
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  let user: User;
+  try {
+    user = await ensureAnonymousUser();
   } catch {
     throw new ApiError("unauthorized", 401);
   }
 
-  let res: Response;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    res = await fetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(body),
-    });
-  } catch {
-    throw new ApiError("network", 0);
-  }
+    let res = await send(path, body, user, false, controller.signal);
+    // A 401 can just mean the cached ID token expired: refresh it and try once more.
+    if (res.status === 401) res = await send(path, body, user, true, controller.signal);
 
-  if (!res.ok) {
-    let code: string | undefined;
-    try {
-      const data = (await res.json()) as { error?: unknown };
-      if (typeof data.error === "string") code = data.error;
-    } catch {
-      // Not JSON (for example a proxy error page): fall back to the status.
+    if (!res.ok) {
+      let code: string | undefined;
+      try {
+        const data = (await res.json()) as { error?: unknown };
+        if (typeof data.error === "string") code = data.error;
+      } catch {
+        // Not JSON (for example a proxy error page): fall back to the status.
+      }
+      if (controller.signal.aborted) throw new ApiError("network", 0);
+      throw new ApiError(code ?? (res.status === 401 ? "unauthorized" : res.status === 429 ? "rate_limited" : "unknown"), res.status);
     }
-    throw new ApiError(code ?? (res.status === 401 ? "unauthorized" : "unknown"), res.status);
-  }
 
-  try {
-    return (await res.json()) as T;
-  } catch {
-    throw new ApiError("unknown", res.status);
+    try {
+      return (await res.json()) as T;
+    } catch {
+      throw new ApiError(controller.signal.aborted ? "network" : "unknown", controller.signal.aborted ? 0 : res.status);
+    }
+  } finally {
+    clearTimeout(timer);
   }
 }
 

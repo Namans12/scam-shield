@@ -3,7 +3,6 @@ import type { MessageKey } from "./en";
 // Plain, everyday Hindi. Must have exactly the same keys as en.ts.
 export const hi: Record<MessageKey, string> = {
   "app.name": "Scam Shield",
-  "app.tagline": "कोई भी संदिग्ध मैसेज मानने से पहले जाँच लें",
 
   "nav.label": "मुख्य मेन्यू",
   "nav.check": "जाँच",
@@ -17,10 +16,6 @@ export const hi: Record<MessageKey, string> = {
   "nav.skip": "सीधे मुख्य भाग पर जाएँ",
 
   "lang.label": "भाषा",
-  "lang.en": "EN",
-  "lang.hi": "हिं",
-  "lang.enName": "अंग्रेज़ी",
-  "lang.hiName": "हिंदी",
 
   "check.title": "कोई मैसेज गड़बड़ लग रहा है?",
   "check.subtitle": "उसे यहाँ पेस्ट करें। हम धोखाधड़ी के संकेत ढूँढेंगे और बताएँगे कि आगे क्या करना है।",
@@ -32,18 +27,19 @@ export const hi: Record<MessageKey, string> = {
   "check.charCount": "{n} / {max}",
   "check.submit": "जाँचें",
   "check.checking": "जाँच हो रही है… आमतौर पर 5–15 सेकंड लगते हैं",
-  "check.needInput": "जाँचने के लिए कोई मैसेज या लिंक पेस्ट करें।",
+  "check.slow": "इस बार थोड़ा ज़्यादा समय लग रहा है। कृपया यह पेज खुला रखें।",
+  "check.limitNote": "सिर्फ़ पहले 5,000 अक्षरों की जाँच की जाती है।",
 
   "error.title": "हम इसकी जाँच नहीं कर पाए",
   "error.rate_limited": "आप बहुत जल्दी-जल्दी जाँच कर रहे हैं। एक मिनट रुककर फिर कोशिश करें।",
-  "error.daily_limit": "आज की जाँच की सीमा पूरी हो गई है। कृपया कल फिर कोशिश करें। अगर मामला जल्दी का है, तो 1930 पर कॉल करें।",
+  "error.daily_limit": "आज की सीमा पूरी हो गई। कृपया कल फिर कोशिश करें। अगर मामला ज़रूरी है, तो 1930 पर कॉल करें।",
   "error.analysis_failed": "हम इसका विश्लेषण नहीं कर पाए। कृपया फिर से कोशिश करें।",
   "error.empty_input": "जाँचने के लिए कोई मैसेज या लिंक पेस्ट करें।",
   "error.text_too_long": "यह मैसेज बहुत लंबा है। कृपया ज़रूरी हिस्सा ही पेस्ट करें (5000 अक्षर तक)।",
   "error.bad_url": "यह सही लिंक नहीं लग रहा। देखें कि वह http:// या https:// से शुरू होता है।",
   "error.unsupported_type": "हम इस तरह की फ़ाइल नहीं पढ़ सकते।",
   "error.file_too_large": "यह फ़ाइल बहुत बड़ी है। कृपया छोटी फ़ाइल इस्तेमाल करें।",
-  "error.unauthorized": "हम आपका सत्र पक्का नहीं कर पाए। कृपया पेज दोबारा खोलकर फिर कोशिश करें।",
+  "error.unauthorized": "कुछ तकनीकी दिक्कत हुई। पेज दोबारा खोलकर फिर कोशिश करें।",
   "error.network": "सर्वर से संपर्क नहीं हो पा रहा। अपना इंटरनेट देखें और फिर कोशिश करें।",
   "error.unknown": "कुछ गड़बड़ हो गई। कृपया फिर से कोशिश करें।",
 
@@ -54,7 +50,6 @@ export const hi: Record<MessageKey, string> = {
   "verdict.suspicious.desc": "सावधान रहें। इसमें कुछ बातें गड़बड़ लग रही हैं, इसलिए कुछ भी करने से पहले पक्का कर लें।",
   "verdict.no_signs.desc": "हमें आम चेतावनी के संकेत नहीं मिले। यह कोई गारंटी नहीं है, इसलिए सावधान रहें।",
 
-  "result.title": "नतीजा",
   "result.riskScore": "जोखिम स्कोर",
   "result.riskOutOf": "100 में से {score}",
   "result.scamType": "धोखाधड़ी का प्रकार",

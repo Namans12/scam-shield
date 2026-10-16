@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -70,14 +70,55 @@ describe("CheckPage", () => {
     await waitFor(() => expect(screen.getByText(/result page \/result\/abc abc/)).toBeInTheDocument());
   });
 
-  it("shows progress while checking", async () => {
+  it("shows progress while checking without losing keyboard focus", async () => {
     const user = userEvent.setup();
     checkContent.mockReturnValue(new Promise(() => {}));
     renderCheck();
+    // The live region exists before anything happens so screen readers announce changes to it.
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toBeEmptyDOMElement();
+
     await user.type(screen.getByLabelText("The message"), "hello");
-    await user.click(screen.getByRole("button", { name: "Check" }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Checking… usually 5–15 seconds");
-    expect(screen.getByRole("button", { name: "Check" })).toBeDisabled();
+    const button = screen.getByRole("button", { name: "Check" });
+    await user.click(button);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Checking… usually 5–15 seconds");
+    // Busy, not disabled: a disabled button would drop keyboard focus.
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveFocus();
+    await user.click(button);
+    expect(checkContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("says it is taking longer after 20 seconds", async () => {
+    vi.useFakeTimers();
+    try {
+      checkContent.mockReturnValue(new Promise(() => {}));
+      renderCheck();
+      fireEvent.change(screen.getByLabelText("The message"), { target: { value: "hello" } });
+      fireEvent.click(screen.getByRole("button", { name: "Check" }));
+      expect(screen.getByRole("status")).toHaveTextContent("Checking…");
+
+      act(() => {
+        vi.advanceTimersByTime(19_000);
+      });
+      expect(screen.getByRole("status")).toHaveTextContent("Checking…");
+      act(() => {
+        vi.advanceTimersByTime(2_000);
+      });
+      expect(screen.getByRole("status")).toHaveTextContent("taking longer than usual");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("tells the person when the 5,000 character limit is reached", () => {
+    renderCheck();
+    expect(screen.queryByText("Only the first 5,000 characters are checked.")).toBeNull();
+    fireEvent.change(screen.getByLabelText("The message"), { target: { value: "a".repeat(5000) } });
+    expect(screen.getByText("Only the first 5,000 characters are checked.")).toBeInTheDocument();
   });
 
   it("shows a friendly message for daily_limit", async () => {
