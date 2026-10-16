@@ -37,8 +37,8 @@ export interface GenAiClient {
   models: { generateContent(params: { model: string; contents: unknown; config?: Record<string, unknown> }): Promise<{ text?: string }> };
 }
 
-/** First attempt is cut off here so a hung call leaves time for one retry inside the 45 s request budget. */
-export const ATTEMPT_TIMEOUT_MS = 25_000;
+/** First attempt (with Google Search, which hangs on about 1 call in 4) is cut off here; the retry skips the search. */
+export const ATTEMPT_TIMEOUT_MS = 15_000;
 /** Everything (both attempts) must finish by this point. */
 export const ANALYZE_TIMEOUT_MS = 40_000;
 /** No retry is started with less than this left. */

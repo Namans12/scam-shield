@@ -125,7 +125,7 @@ describe("createGeminiModel.analyze", () => {
       let n = 0;
       const { client, generateContent } = fake((args) => (n++ === 0 ? new Promise(() => {}) : Promise.resolve({ text: JSON.stringify(good) })));
       const p = createGeminiModel(cfg, client).analyze(urlInput);
-      await vi.advanceTimersByTimeAsync(25_001 + 400);
+      await vi.advanceTimersByTimeAsync(15_001 + 400);
       expect(await p).toEqual(good);
       expect(generateContent).toHaveBeenCalledTimes(2);
       expect(generateContent.mock.calls[0]![0].config.tools).toBeDefined();
