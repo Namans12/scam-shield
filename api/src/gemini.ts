@@ -129,13 +129,13 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
         first = e;
       }
       logAttemptFailure(1, first);
-      const timedOut = first instanceof AnalysisError && first.cause instanceof TimeoutMarker;
       const left = ANALYZE_TIMEOUT_MS - (Date.now() - started) - RETRY_DELAY_MS;
       if (!isTransient(first) || left < MIN_RETRY_MS) throw first;
       await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
       try {
-        // After a hang the Google Search step is the likeliest culprit: the retry skips it (faster, still a verdict).
-        return await attempt(input, left, !timedOut);
+        // Google Search grounding is the usual culprit (project quota gives 429s after a few calls, and it can hang):
+        // the retry skips it, so a link still gets a verdict, just without the web lookup.
+        return await attempt(input, left, false);
       } catch (e) {
         logAttemptFailure(2, e);
         throw e;

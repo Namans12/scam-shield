@@ -140,6 +140,16 @@ describe("createGeminiModel.analyze", () => {
     await createGeminiModel(cfg, b.client).analyze(input);
     expect(b.generateContent.mock.calls[0]![0].config.thinkingConfig).toBeUndefined();
   });
+  it("after a 429 on the searching attempt, retries without the search tool", async () => {
+    let n = 0;
+    const { client, generateContent } = fake(async () => {
+      if (n++ === 0) throw Object.assign(new Error("Resource exhausted"), { status: 429 });
+      return { text: JSON.stringify(good) };
+    });
+    expect(await createGeminiModel(cfg, client).analyze(urlInput)).toEqual(good);
+    expect(generateContent.mock.calls[0]![0].config.tools).toBeDefined();
+    expect(generateContent.mock.calls[1]![0].config.tools).toBeUndefined();
+  });
   it("logs the failure without user content", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
