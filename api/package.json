@@ -8,6 +8,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "@scam-shield/shared": "*",
     "jsqr": "^1.4.0",
     "sharp": "^0.35.5",
