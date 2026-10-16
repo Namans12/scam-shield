@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DropZone } from "@/components/DropZone";
-import { checkContent, errorMessageKey } from "@/api";
+import { ApiError, checkContent, errorMessageKey } from "@/api";
 import { useLang, useT, type MessageKey } from "@/i18n";
 import { uploadForCheck, validateFile } from "@/upload";
 
@@ -27,6 +27,10 @@ export default function CheckPage() {
   const [slow, setSlow] = useState(false);
   const [errorKey, setErrorKey] = useState<MessageKey | null>(null);
   const mounted = useRef(true);
+  const submitRef = useRef<HTMLButtonElement>(null);
+  // Set while a submit is in flight, so a second submit in the same tick cannot start a second upload.
+  const busy = useRef(false);
+  const uploadAbort = useRef<AbortController | null>(null);
   // A file that is already uploaded is not uploaded again if only the check failed and is retried.
   const uploaded = useRef<{ file: File; storagePath: string; mimeType: string } | null>(null);
 
@@ -34,17 +38,32 @@ export default function CheckPage() {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      // Leaving the page must not leave up to 15 MB uploading in the background.
+      uploadAbort.current?.abort();
     };
   }, []);
 
+  // Each phase gets its own "taking longer than usual" clock: a slow upload and a slow check both say so.
   useEffect(() => {
-    if (!loading) {
-      setSlow(false);
-      return;
-    }
+    setSlow(false);
+    if (phase === "idle") return;
     const timer = setTimeout(() => setSlow(true), SLOW_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [loading]);
+  }, [phase]);
+
+  // The browser opens a file that is dropped anywhere outside the drop zone, leaving the page.
+  // Only file drags are stopped, so dragging text into the message box still works.
+  useEffect(() => {
+    const stop = (e: DragEvent) => {
+      if (Array.from(e.dataTransfer?.types ?? []).includes("Files")) e.preventDefault();
+    };
+    window.addEventListener("dragover", stop);
+    window.addEventListener("drop", stop);
+    return () => {
+      window.removeEventListener("dragover", stop);
+      window.removeEventListener("drop", stop);
+    };
+  }, []);
 
   const hasInput = text.trim().length > 0 || url.trim().length > 0 || file !== null;
 
@@ -56,7 +75,10 @@ export default function CheckPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!hasInput || loading) return;
+    if (!hasInput || loading || busy.current) return;
+    busy.current = true;
+    const controller = new AbortController();
+    uploadAbort.current = controller;
     setErrorKey(null);
     setProgress(0);
     try {
@@ -71,8 +93,11 @@ export default function CheckPage() {
         if (uploaded.current?.file === file) {
           attachment = uploaded.current;
         } else {
-          attachment = await uploadForCheck(file, (f) => {
-            if (mounted.current) setProgress(f);
+          attachment = await uploadForCheck(file, {
+            signal: controller.signal,
+            onProgress: (f) => {
+              if (mounted.current) setProgress(f);
+            },
           });
           uploaded.current = { file, ...attachment };
         }
@@ -91,9 +116,17 @@ export default function CheckPage() {
         navigate(`/result/${result.id}`, { state: { result } });
       }
     } catch (err) {
-      if (mounted.current) setErrorKey(errorMessageKey(err));
+      // Cancelling is the person's own choice, not an error: the file stays attached to try again.
+      const cancelled = err instanceof ApiError && err.code === "canceled";
+      if (mounted.current && !cancelled) setErrorKey(errorMessageKey(err));
     } finally {
-      if (mounted.current) setPhase("idle");
+      busy.current = false;
+      uploadAbort.current = null;
+      if (mounted.current) {
+        setPhase("idle");
+        // The Cancel button is gone now: put focus back on Check rather than dropping it.
+        if (controller.signal.aborted) submitRef.current?.focus();
+      }
     }
   }
 
@@ -159,17 +192,26 @@ export default function CheckPage() {
           {loading && (
             <>
               <Loader2 className="animate-spin text-primary" size={24} aria-hidden />
-              {phase === "uploading"
-                ? t("check.uploading", { pct: Math.floor((progress * 100) / 25) * 25 })
-                : slow
-                  ? t("check.slow")
+              <span>
+                {phase === "uploading"
+                  ? t("check.uploading", { pct: Math.floor((progress * 100) / 25) * 25 })
                   : t("check.checking")}
+                {slow && <span className="mt-1 block font-normal text-muted-foreground">{t("check.slow")}</span>}
+              </span>
             </>
           )}
         </p>
 
+        {/* Enabled on purpose (not aria-disabled): a stalled upload must always be cancellable. */}
+        {phase === "uploading" && (
+          <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto sm:self-start" onClick={() => uploadAbort.current?.abort()}>
+            {t("check.cancelUpload")}
+          </Button>
+        )}
+
         {/* While loading the button is aria-disabled rather than disabled, so keyboard focus stays on it. */}
         <Button
+          ref={submitRef}
           type="submit"
           size="lg"
           disabled={!hasInput && !loading}

@@ -4,6 +4,15 @@ import { useT } from "@/i18n";
 
 const MAX_RAW = 300;
 
+/**
+ * "5000", "₹5,000.00", "Rs. 500" and "INR 75" all become "₹..." exactly once.
+ * Anything that is not a plain number is shown as it came, with no prefix.
+ */
+function formatAmount(am: string): string {
+  const stripped = am.trim().replace(/^(?:₹|rs\.?|inr)\s*/i, "");
+  return /^\d[\d,]*(?:\.\d+)?$/.test(stripped) ? `₹${stripped}` : am;
+}
+
 /** Everything in a QR code is attacker-controlled: it is only ever rendered as text, never as a link. */
 export function QrCard({ qr }: { qr: QrInfo }) {
   const t = useT();
@@ -30,7 +39,7 @@ export function QrCard({ qr }: { qr: QrInfo }) {
           {am && (
             <>
               <dt className="font-medium">{t("qr.amount")}</dt>
-              <dd className="font-semibold">{`₹${am}`}</dd>
+              <dd className="font-semibold">{formatAmount(am)}</dd>
             </>
           )}
           {tn && (
@@ -46,7 +55,8 @@ export function QrCard({ qr }: { qr: QrInfo }) {
     );
   }
 
-  const shown = qr.raw.length > MAX_RAW ? `${qr.raw.slice(0, MAX_RAW - 1)}…` : qr.raw;
+  const cut = qr.raw.length > MAX_RAW;
+  const shown = cut ? `${qr.raw.slice(0, MAX_RAW - 1)}…` : qr.raw;
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <p className="flex items-center gap-2 text-base font-medium">
@@ -56,6 +66,11 @@ export function QrCard({ qr }: { qr: QrInfo }) {
       <p className="mt-2 font-mono text-base break-anywhere whitespace-pre-wrap" data-testid="qr-raw">
         {shown}
       </p>
+      {cut && (
+        <p className="mt-1 text-sm text-muted-foreground" data-testid="qr-shortened">
+          {t("qr.shortened")}
+        </p>
+      )}
       <p className="mt-2 text-sm text-muted-foreground">{t("qr.textOnly")}</p>
     </div>
   );

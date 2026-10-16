@@ -50,9 +50,15 @@ export const getDb = once<Firestore>(async () => {
   return getFirestore(app);
 });
 
+const STORAGE_RETRY_MS = 45_000;
+
 export const getStorageLazy = once<FirebaseStorage>(async () => {
   const [app, { getStorage }] = await Promise.all([getFirebaseApp(), import("firebase/storage")]);
-  return getStorage(app);
+  const storage = getStorage(app);
+  // The SDK retries a failing upload or request for 10 minutes by default, which looks like a hang.
+  storage.maxUploadRetryTime = STORAGE_RETRY_MS;
+  storage.maxOperationRetryTime = STORAGE_RETRY_MS;
+  return storage;
 });
 
 /**

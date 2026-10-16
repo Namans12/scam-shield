@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Upload, X } from "lucide-react";
+import { Camera, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT, type MessageKey } from "@/i18n";
 import { validateFile } from "@/upload";
@@ -51,6 +51,8 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
   const t = useT();
   const ids = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const [manyDropped, setManyDropped] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [errorKey, setErrorKey] = useState<MessageKey | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -94,6 +96,7 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
       // In a text box the person means the text.
       if (isTextField(e.target) && data.getData("text/plain")) return;
       e.preventDefault();
+      setManyDropped(false);
       chooseRef.current(image);
     }
     document.addEventListener("paste", onPaste);
@@ -131,7 +134,10 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
       onDrop={(e) => {
         e.preventDefault();
         setDragging(false);
-        choose(e.dataTransfer?.files?.[0]);
+        const dropped = e.dataTransfer?.files;
+        choose(dropped?.[0]);
+        // Only one file is checked at a time: say so rather than silently ignoring the rest.
+        setManyDropped(!disabled && (dropped?.length ?? 0) > 1);
       }}
       className={cn(
         "rounded-xl border-2 border-dashed bg-card p-4 transition-colors",
@@ -152,8 +158,26 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
         aria-hidden
         disabled={disabled}
         onChange={(e) => {
+          setManyDropped(false);
           choose(e.target.files?.[0]);
           e.target.value = ""; // so choosing the same file again after removing it still fires
+        }}
+      />
+      {/* A second picker that opens the camera directly, because a mixed accept list can hide it on some Android browsers. */}
+      <input
+        ref={cameraRef}
+        type="file"
+        data-testid="camera-input"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        tabIndex={-1}
+        aria-hidden
+        disabled={disabled}
+        onChange={(e) => {
+          setManyDropped(false);
+          choose(e.target.files?.[0]);
+          e.target.value = "";
         }}
       />
 
@@ -183,6 +207,7 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
             onClick={() => {
               if (disabled) return;
               setErrorKey(null);
+              setManyDropped(false);
               onFileChange(null);
             }}
           >
@@ -192,11 +217,21 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
         </div>
       ) : (
         <div className="mt-3 flex flex-col items-start gap-2">
-          <Button type="button" variant="outline" onClick={() => inputRef.current?.click()} aria-disabled={disabled || undefined}>
-            <Upload aria-hidden />
-            {t("dropzone.choose")}
-          </Button>
-          <p className="text-sm text-muted-foreground">{dragging ? t("dropzone.dropActive") : t("dropzone.drop")}</p>
+          <div className="flex w-full flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={() => inputRef.current?.click()} aria-disabled={disabled || undefined}>
+              <Upload aria-hidden />
+              {t("dropzone.choose")}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => cameraRef.current?.click()} aria-disabled={disabled || undefined}>
+              <Camera aria-hidden />
+              {t("dropzone.camera")}
+            </Button>
+          </div>
+          {/* Drag and drop and Ctrl+V make no sense on a phone: show the touch hint there instead. */}
+          <p className="text-sm text-muted-foreground [@media(pointer:coarse)]:hidden">
+            {dragging ? t("dropzone.dropActive") : t("dropzone.drop")}
+          </p>
+          <p className="hidden text-sm text-muted-foreground [@media(pointer:coarse)]:block">{t("dropzone.touchHint")}</p>
         </div>
       )}
 
@@ -216,6 +251,12 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
       <p id={hintId} className="mt-3 text-sm text-muted-foreground">
         {t("dropzone.hint")}
       </p>
+
+      {manyDropped && !errorKey && (
+        <p role="note" className="mt-2 text-sm font-medium text-suspicious-fg">
+          {t("dropzone.multiple")}
+        </p>
+      )}
 
       {errorKey && (
         <p id={errorId} role="alert" className="mt-2 rounded-lg bg-scam-bg px-3 py-2 text-base font-medium text-scam-fg">

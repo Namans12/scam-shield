@@ -66,6 +66,45 @@ describe("DropZone", () => {
     expect(screen.getByText(/add a screenshot, QR code or voice note/i)).toBeInTheDocument();
   });
 
+  it("also offers a Take a photo button that opens the camera directly", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Harness onChange={onChange} />);
+    const camera = screen.getByTestId("camera-input");
+    expect(camera).toHaveAttribute("accept", "image/*");
+    expect(camera).toHaveAttribute("capture", "environment");
+    expect(screen.getByRole("button", { name: "Take a photo" })).toBeInTheDocument();
+    // A camera photo is validated like any other file.
+    await user.upload(camera, png());
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ name: "screenshot.png" }));
+  });
+
+  it("shows a touch-friendly hint next to the keyboard and mouse one, switched by pointer type in CSS", () => {
+    render(<Harness />);
+    const desktop = screen.getByText(/paste a screenshot with Ctrl\+V/);
+    expect(desktop.className).toContain("[@media(pointer:coarse)]:hidden");
+    const touch = screen.getByText(/Tap a button above/);
+    expect(touch.className).toContain("hidden");
+    expect(touch.className).toContain("[@media(pointer:coarse)]:block");
+  });
+
+  it("uses the first file and says so when several are dropped", () => {
+    const onChange = vi.fn();
+    render(<Harness onChange={onChange} />);
+    const first = png();
+    const second = new File(["y"], "second.png", { type: "image/png" });
+    fireEvent.drop(screen.getByTestId("dropzone"), { dataTransfer: { files: [first, second], types: ["Files"] } });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(first);
+    expect(screen.getByRole("note")).toHaveTextContent("Only one file is checked at a time. Using the first one.");
+  });
+
+  it("does not show the one-file note for a single dropped file", () => {
+    render(<Harness />);
+    fireEvent.drop(screen.getByTestId("dropzone"), { dataTransfer: { files: [png()], types: ["Files"] } });
+    expect(screen.queryByRole("note")).toBeNull();
+  });
+
   it("shows a thumbnail, the name and size, and removes the file", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -100,7 +139,9 @@ describe("DropZone", () => {
     render(<Harness onChange={onChange} />);
     // A drop skips the picker's accept filter, so it is the way an unsupported file gets in.
     fireEvent.drop(screen.getByTestId("dropzone"), { dataTransfer: { files: [new File(["x"], "doc.pdf", { type: "application/pdf" })], types: ["Files"] } });
-    expect(screen.getByRole("alert")).toHaveTextContent("We can't read that type of file.");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Please send a screenshot (PNG, JPEG or WebP) or a voice note (MP3, M4A, OGG, WAV or WebM).",
+    );
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByText("doc.pdf")).toBeNull();
   });

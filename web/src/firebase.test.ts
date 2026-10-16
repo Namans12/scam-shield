@@ -62,7 +62,9 @@ describe("firebase (lazy)", () => {
     const [db1, db2] = await Promise.all([getDb(), getDb()]);
     const st = await getStorageLazy();
     expect(db1).toBe(db2);
-    expect(st).toEqual({ kind: "storage" });
+    expect(st).toMatchObject({ kind: "storage" });
+    // A stalled upload or request gives up in well under the SDK default of 10 minutes.
+    expect(st).toMatchObject({ maxUploadRetryTime: 45_000, maxOperationRetryTime: 45_000 });
     expect(mocks.getFirestore).toHaveBeenCalledTimes(1);
     expect(mocks.getStorage).toHaveBeenCalledTimes(1);
     expect(mocks.initializeApp).toHaveBeenCalledTimes(1);

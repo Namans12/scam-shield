@@ -151,7 +151,7 @@ describe("CheckPage", () => {
     ["empty_input", /Paste a message or a link/],
     ["text_too_long", /too long/],
     ["bad_url", /valid link/],
-    ["unsupported_type", /type of file/],
+    ["unsupported_type", /screenshot \(PNG, JPEG or WebP\) or a voice note/],
     ["file_too_large", /too large/],
     ["unauthorized", /reload the page/],
     ["network", /Can't reach the server/],
@@ -213,8 +213,8 @@ describe("CheckPage", () => {
     it("shows upload progress in the live region and a progress bar", async () => {
       const user = userEvent.setup();
       let report: (f: number) => void = () => {};
-      uploadForCheck.mockImplementation((_f: File, onProgress?: (f: number) => void) => {
-        report = onProgress ?? (() => {});
+      uploadForCheck.mockImplementation((_f: File, opts?: { onProgress?: (f: number) => void }) => {
+        report = opts?.onProgress ?? (() => {});
         return new Promise(() => {});
       });
       renderCheck();
@@ -260,7 +260,7 @@ describe("CheckPage", () => {
     it("rejects a PDF right away under the drop zone and keeps Check disabled", () => {
       renderCheck();
       fireEvent.drop(screen.getByTestId("dropzone"), { dataTransfer: { files: [new File(["x"], "bill.pdf", { type: "application/pdf" })], types: ["Files"] } });
-      expect(screen.getByRole("alert")).toHaveTextContent("We can't read that type of file.");
+      expect(screen.getByRole("alert")).toHaveTextContent(/Please send a screenshot \(PNG, JPEG or WebP\)/);
       expect(screen.getByRole("button", { name: "Check" })).toBeDisabled();
     });
 
@@ -271,6 +271,130 @@ describe("CheckPage", () => {
       await user.upload(fileInput(), new File(["a"], "note.ogg", { type: "audio/ogg" }));
       expect(screen.queryByText("scan.png")).toBeNull();
       expect(screen.getByText("note.ogg")).toBeInTheDocument();
+    });
+
+    it("does not start a second upload when Check is pressed again while uploading", async () => {
+      const user = userEvent.setup();
+      uploadForCheck.mockReturnValue(new Promise(() => {}));
+      renderCheck();
+      await user.upload(fileInput(), png());
+      const button = screen.getByRole("button", { name: "Check" });
+      await user.click(button);
+      await user.click(button);
+      fireEvent.submit(button.closest("form")!);
+      expect(uploadForCheck).toHaveBeenCalledTimes(1);
+    });
+
+    it("also starts only one upload when submitted twice in the same tick", () => {
+      uploadForCheck.mockReturnValue(new Promise(() => {}));
+      renderCheck();
+      fireEvent.drop(screen.getByTestId("dropzone"), { dataTransfer: { files: [png()], types: ["Files"] } });
+      const form = screen.getByRole("button", { name: "Check" }).closest("form")!;
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+      expect(uploadForCheck).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows an enabled Cancel button during the upload that aborts it and leaves the file attached", async () => {
+      const user = userEvent.setup();
+      let signal: AbortSignal | undefined;
+      uploadForCheck.mockImplementation((_f: File, opts?: { signal?: AbortSignal }) => {
+        signal = opts?.signal;
+        return new Promise((_res, rej) => opts?.signal?.addEventListener("abort", () => rej(new ApiError("canceled"))));
+      });
+      renderCheck();
+      expect(screen.queryByRole("button", { name: "Cancel upload" })).toBeNull();
+      await user.upload(fileInput(), png());
+      await user.click(screen.getByRole("button", { name: "Check" }));
+
+      const cancel = screen.getByRole("button", { name: "Cancel upload" });
+      expect(cancel).toBeEnabled();
+      expect(cancel).not.toHaveAttribute("aria-disabled");
+      await user.click(cancel);
+
+      expect(signal?.aborted).toBe(true);
+      expect(checkContent).not.toHaveBeenCalled();
+      // No error alert for something the person chose, the file is still there, and Check works again.
+      await waitFor(() => expect(screen.getByRole("button", { name: "Check" })).toBeEnabled());
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(screen.getByText("scan.png")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Cancel upload" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Check" })).toHaveFocus();
+    });
+
+    it("aborts the upload when the page is left", async () => {
+      const user = userEvent.setup();
+      let signal: AbortSignal | undefined;
+      uploadForCheck.mockImplementation((_f: File, opts?: { signal?: AbortSignal }) => {
+        signal = opts?.signal;
+        return new Promise(() => {});
+      });
+      const { unmount } = renderCheck();
+      await user.upload(fileInput(), png());
+      await user.click(screen.getByRole("button", { name: "Check" }));
+      expect(signal?.aborted).toBe(false);
+      unmount();
+      expect(signal?.aborted).toBe(true);
+    });
+
+    it("shows the slow notice during a slow upload, then times the check phase separately", async () => {
+      vi.useFakeTimers();
+      try {
+        let finish: (v: { storagePath: string; mimeType: string }) => void = () => {};
+        uploadForCheck.mockReturnValue(new Promise((res) => (finish = res)));
+        checkContent.mockReturnValue(new Promise(() => {}));
+        renderCheck();
+        fireEvent.drop(screen.getByTestId("dropzone"), { dataTransfer: { files: [png()], types: ["Files"] } });
+        fireEvent.click(screen.getByRole("button", { name: "Check" }));
+        expect(screen.getByRole("status")).toHaveTextContent("Uploading your file");
+        expect(screen.getByRole("status")).not.toHaveTextContent("taking longer than usual");
+
+        act(() => {
+          vi.advanceTimersByTime(21_000);
+        });
+        expect(screen.getByRole("status")).toHaveTextContent("Uploading your file");
+        expect(screen.getByRole("status")).toHaveTextContent("taking longer than usual");
+
+        // The check phase starts a fresh 20 second clock.
+        await act(async () => {
+          finish({ storagePath: "uploads/u/x.png", mimeType: "image/png" });
+        });
+        expect(screen.getByRole("status")).toHaveTextContent("Checking…");
+        expect(screen.getByRole("status")).not.toHaveTextContent("taking longer than usual");
+        act(() => {
+          vi.advanceTimersByTime(19_000);
+        });
+        expect(screen.getByRole("status")).not.toHaveTextContent("taking longer than usual");
+        act(() => {
+          vi.advanceTimersByTime(2_000);
+        });
+        expect(screen.getByRole("status")).toHaveTextContent("taking longer than usual");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("stops the browser opening a file dropped outside the zone, but only while this page is shown", () => {
+      const { unmount } = renderCheck();
+      const fire = (type: string, types: string[]) => {
+        const e = new Event(type, { bubbles: true, cancelable: true });
+        Object.defineProperty(e, "dataTransfer", { value: { types, files: [] } });
+        document.body.dispatchEvent(e);
+        return e;
+      };
+      expect(fire("drop", ["Files"]).defaultPrevented).toBe(true);
+      expect(fire("dragover", ["Files"]).defaultPrevented).toBe(true);
+      // Dragging text (for example into the message box) is left alone.
+      expect(fire("drop", ["text/plain"]).defaultPrevented).toBe(false);
+
+      unmount();
+      expect(fire("drop", ["Files"]).defaultPrevented).toBe(false);
+    });
+
+    it("still attaches a file dropped on the zone itself", () => {
+      renderCheck();
+      fireEvent.drop(screen.getByTestId("dropzone"), { dataTransfer: { files: [png()], types: ["Files"] } });
+      expect(screen.getByText("scan.png")).toBeInTheDocument();
     });
 
     it("keeps pasting text into the message box working", async () => {

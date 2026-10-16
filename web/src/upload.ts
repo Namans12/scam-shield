@@ -28,6 +28,7 @@ const ALIASES: Record<string, string> = {
   "image/jpg": "image/jpeg",
   "audio/mp3": "audio/mpeg",
   "audio/x-mpeg": "audio/mpeg",
+  "audio/opus": "audio/ogg",
   "audio/x-m4a": "audio/mp4",
   "audio/m4a": "audio/mp4",
   "audio/x-aac": "audio/aac",
@@ -40,7 +41,7 @@ const ALIASES: Record<string, string> = {
 function canonicalType(type: string): string | null {
   const base = (type.split(";")[0] ?? "").trim().toLowerCase();
   const canonical = ALIASES[base] ?? base;
-  return Object.hasOwn(TYPES, canonical) ? canonical : null;
+  return Object.prototype.hasOwnProperty.call(TYPES, canonical) ? canonical : null;
 }
 
 export type ValidateResult = { ok: true; kind: FileKind } | { ok: false; code: "unsupported_type" | "file_too_large" };
@@ -82,20 +83,33 @@ function newId(): string {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
+/** An upload that moves no bytes for this long is cancelled (each bit of progress restarts the clock). */
+export const UPLOAD_STALL_MS = 60_000;
+
+export interface UploadOptions {
+  /** Called with a fraction between 0 and 1. */
+  onProgress?: (fraction: number) => void;
+  /** Aborting cancels the upload; the promise then rejects with ApiError code "canceled". */
+  signal?: AbortSignal;
+}
+
 /**
  * Uploads a validated file to uploads/{uid}/{uuid}.{ext}. The content type sent
- * to Storage comes from our own validation, never from the file name. `onProgress`
- * gets a fraction between 0 and 1. Rejects with an ApiError the UI can show.
+ * to Storage comes from our own validation, never from the file name. Rejects with
+ * an ApiError the UI can show: "upload_failed" if the upload stalls for
+ * UPLOAD_STALL_MS or fails, "canceled" if the signal aborts it.
  */
 export async function uploadForCheck(
   file: File,
-  onProgress?: (fraction: number) => void,
+  { onProgress, signal }: UploadOptions = {},
 ): Promise<{ storagePath: string; mimeType: string }> {
   const checked = validateFile(file);
   if (!checked.ok) throw new ApiError(checked.code, 400);
   const mimeType = canonicalType(file.type)!;
+  const canceled = () => new ApiError("canceled", 0);
 
   try {
+    if (signal?.aborted) throw canceled();
     let user;
     try {
       user = await ensureAnonymousUser();
@@ -103,14 +117,42 @@ export async function uploadForCheck(
       throw new ApiError("unauthorized", 401);
     }
     const [storage, { ref, uploadBytesResumable }] = await Promise.all([getStorageLazy(), import("firebase/storage")]);
+    if (signal?.aborted) throw canceled();
+
     const storagePath = `uploads/${user.uid}/${newId()}.${TYPES[mimeType]!.ext}`;
     const task = uploadBytesResumable(ref(storage, storagePath), file, { contentType: mimeType });
     await new Promise<void>((resolve, reject) => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const finish = () => {
+        clearTimeout(timer);
+        signal?.removeEventListener("abort", onAbort);
+      };
+      const stop = (err: unknown) => {
+        finish();
+        task.cancel();
+        reject(err);
+      };
+      const onAbort = () => stop(canceled());
+      const arm = () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => stop(new ApiError("upload_failed", 0)), UPLOAD_STALL_MS);
+      };
+      signal?.addEventListener("abort", onAbort);
+      arm();
       task.on(
         "state_changed",
-        (snap) => onProgress?.(snap.totalBytes > 0 ? snap.bytesTransferred / snap.totalBytes : 0),
-        reject,
-        () => resolve(),
+        (snap) => {
+          arm();
+          onProgress?.(snap.totalBytes > 0 ? snap.bytesTransferred / snap.totalBytes : 0);
+        },
+        (err) => {
+          finish();
+          reject(err);
+        },
+        () => {
+          finish();
+          resolve();
+        },
       );
     });
     return { storagePath, mimeType };

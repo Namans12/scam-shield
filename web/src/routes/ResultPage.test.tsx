@@ -172,6 +172,29 @@ describe("ResultPage", () => {
       expect(screen.queryByRole("link", { name: /ravi/ })).toBeNull();
     });
 
+    it("does not print a double rupee sign", () => {
+      renderResult(makeResult({ qr: { raw: "x", upi: { pa: "a@b", am: "₹5,000.00" } } }));
+      expect(screen.getByText("₹5,000.00")).toBeInTheDocument();
+      expect(document.body.textContent).not.toContain("₹₹");
+    });
+
+    it.each([
+      ["Rs. 500", "₹500"],
+      ["INR 1,200.50", "₹1,200.50"],
+      ["rs500", "₹500"],
+      ["  ₹ 75 ", "₹75"],
+      ["250", "₹250"],
+    ])("normalises the amount %j to %j", (am, shown) => {
+      renderResult(makeResult({ qr: { raw: "x", upi: { pa: "a@b", am } } }));
+      expect(screen.getByText(shown)).toBeInTheDocument();
+    });
+
+    it("shows an amount that is not a plain number verbatim, with no rupee prefix", () => {
+      renderResult(makeResult({ qr: { raw: "x", upi: { pa: "a@b", am: "five thousand" } } }));
+      expect(screen.getByText("five thousand")).toBeInTheDocument();
+      expect(document.body.textContent).not.toContain("₹five");
+    });
+
     it("renders a script-like payee name and note as text", () => {
       const evil = "<script>window.__pwned = true</script>";
       const { container } = renderResult(
@@ -198,6 +221,7 @@ describe("ResultPage", () => {
       expect(shown.textContent!.length).toBeLessThanOrEqual(301);
       expect(shown.textContent).toContain("https://evil.example/");
       expect(shown.textContent!.endsWith("…")).toBe(true);
+      expect(screen.getByTestId("qr-shortened")).toHaveTextContent("(shortened)");
       expect(shown.closest("a")).toBeNull();
       expect(container.querySelector("a[href*='evil']")).toBeNull();
       expect(screen.queryByText("This QR asks you to PAY")).toBeNull();
@@ -206,6 +230,7 @@ describe("ResultPage", () => {
     it("shows a short non-UPI QR in full without an ellipsis", () => {
       renderResult(makeResult({ qr: { raw: "WIFI:S:cafe;T:WPA;P:pw;;" } }));
       expect(screen.getByTestId("qr-raw")).toHaveTextContent("WIFI:S:cafe;T:WPA;P:pw;;");
+      expect(screen.queryByTestId("qr-shortened")).toBeNull();
     });
 
     it("shows no QR card when there is no QR", () => {
