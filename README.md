@@ -64,8 +64,8 @@ One check: the app sends the text or an uploaded file path to the API. The API v
 | Scam recall (scams flagged) | 100% |
 | False-positive rate (genuine flagged) | 4.2% (1 of 24: a payment screenshot judged Suspicious) |
 | Scam type correct (among flagged scams) | 100% |
-| Latency, text | p50 4.4 s, p95 10.8 s |
-| Latency, image / audio | p50 9.9 s / 9.1 s |
+| Latency, text | p50 4.5 s, p95 8.6 s |
+| Latency, image / audio | p50 7.4 s / 11.8 s (image p95 33.8 s) |
 
 Details, cases and raw results: [`eval/`](eval/) and [`eval/results/latest.md`](eval/results/latest.md). The first run exposed a real bug (the model did not know today's date and flagged 2026 dates as "in the future"); it is fixed and the earlier result is kept in `eval/results/run1-before-date-fix.md`. The cases are synthetic and small, so treat the numbers as a sanity check, not a guarantee.
 
