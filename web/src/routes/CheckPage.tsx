@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, ScanSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useLang, useT, type MessageKey } from "@/i18n";
 import { uploadForCheck, validateFile } from "@/upload";
 import { ExampleRow } from "@/components/ExampleRow";
 import type { Example } from "@/examples";
+import { takeSharedPayload } from "@/share-target/sw-share";
 
 const MAX_TEXT = 5000;
 /** After this long we tell the person it is slower than usual (the API itself allows up to 45 s). */
@@ -19,6 +20,7 @@ export default function CheckPage() {
   const t = useT();
   const { lang } = useLang();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const ids = useId();
   const [text, setText] = useState("");
   const [url, setUrl] = useState("");
@@ -66,6 +68,23 @@ export default function CheckPage() {
       window.removeEventListener("drop", stop);
     };
   }, []);
+
+  // "Share to Scam Shield" from another app: the service worker parked the share, pick it up and check it.
+  const sharedHandled = useRef(false);
+  useEffect(() => {
+    if (params.get("shared") !== "1" || sharedHandled.current) return;
+    sharedHandled.current = true;
+    setParams({}, { replace: true });
+    if (typeof caches === "undefined") return;
+    void takeSharedPayload(caches).then((shared) => {
+      if (!shared || !mounted.current) return;
+      setText(shared.text ?? "");
+      setUrl(shared.url ?? "");
+      setFile(shared.file ?? null);
+      void run({ text: shared.text ?? "", url: shared.url ?? "", file: shared.file ?? null });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   const hasInput = text.trim().length > 0 || url.trim().length > 0 || file !== null;
 

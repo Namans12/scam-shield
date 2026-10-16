@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Check, Copy, ExternalLink, Phone } from "lucide-react";
 import type { CheckResult } from "@scam-shield/shared";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Disclaimer } from "@/components/Disclaimer";
 import { useLang, useT } from "@/i18n";
+import { fetchCheck } from "@/data";
 
 /** "5000" and "5,000" become "Rs 5,000"; anything else is kept as typed. */
 export function formatAmount(raw: string): string | undefined {
@@ -26,7 +27,21 @@ export default function ComplaintPage() {
   const t = useT();
   const { lang } = useLang();
   const state = location.state as { result?: CheckResult } | null;
-  const result = state?.result && state.result.id === id ? state.result : null;
+  const stateResult = state?.result && state.result.id === id ? state.result : null;
+  const [fetched, setFetched] = useState<{ id: string; result: CheckResult | null } | null>(null);
+  useEffect(() => {
+    if (stateResult || !id) return;
+    let live = true;
+    fetchCheck(id).then(
+      (r) => live && setFetched({ id, result: r }),
+      () => live && setFetched({ id, result: null }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [id, stateResult]);
+  const result = stateResult ?? (fetched && fetched.id === id ? fetched.result : null);
+  const loading = !stateResult && !!id && !(fetched && fetched.id === id);
   const [amount, setAmount] = useState("");
   const [when, setWhen] = useState("");
   const [copied, setCopied] = useState(false);
@@ -36,6 +51,7 @@ export default function ComplaintPage() {
     [result, lang, amount, when],
   );
 
+  if (loading) return <p role="status" className="text-base">{t("result.loading")}</p>;
   if (!result) {
     return (
       <div className="rounded-2xl border border-border bg-card p-6 text-center">

@@ -1,8 +1,11 @@
 import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CheckResult } from "@scam-shield/shared";
 import ResultPage from "./ResultPage";
+
+const fetchCheck = vi.hoisted(() => vi.fn());
+vi.mock("@/data", () => ({ fetchCheck }));
 import { setLang } from "@/i18n";
 import { JPEG_DATA_URL, makeResult } from "@/test/fixtures";
 
@@ -18,6 +21,8 @@ function renderResult(result: CheckResult | undefined, id = "chk_123") {
 }
 
 beforeEach(() => {
+  fetchCheck.mockReset();
+  fetchCheck.mockResolvedValue(null);
   // The UI language is module-level state: reset it so tests do not leak into each other.
   setLang("en");
 });
@@ -138,16 +143,24 @@ describe("ResultPage", () => {
     expect(screen.getByText(/couldn't open this link/)).toBeInTheDocument();
   });
 
-  it("shows a friendly page when the result is not in router state", () => {
+  it("reads the result from Firestore when it is not in router state", async () => {
+    fetchCheck.mockResolvedValue(makeResult({ id: "from-db", summary: "Loaded from the database." }));
+    renderResult(undefined, "from-db");
+    expect(screen.getByRole("status")).toHaveTextContent("Loading your result…");
+    expect(await screen.findByText("Loaded from the database.")).toBeInTheDocument();
+    expect(fetchCheck).toHaveBeenCalledWith("from-db");
+  });
+
+  it("shows a friendly page when the result is not in router state or Firestore", async () => {
     renderResult(undefined);
-    expect(screen.getByText("This result is no longer on this device")).toBeInTheDocument();
+    expect(await screen.findByText("This result is no longer on this device")).toBeInTheDocument();
     const again = screen.getByRole("link", { name: "Check again" });
     expect(again).toHaveAttribute("href", "/");
   });
 
-  it("does not show a result for a different id", () => {
+  it("does not show a result for a different id", async () => {
     renderResult(makeResult({ id: "other" }), "chk_123");
-    expect(screen.getByText("This result is no longer on this device")).toBeInTheDocument();
+    expect(await screen.findByText("This result is no longer on this device")).toBeInTheDocument();
   });
 
   it("is available in Hindi", () => {

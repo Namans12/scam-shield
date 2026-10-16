@@ -7,7 +7,8 @@ import CheckPage from "@/routes/CheckPage";
 import ResultPage from "@/routes/ResultPage";
 import ComplaintPage from "@/routes/ComplaintPage";
 import AboutPage from "@/routes/AboutPage";
-import ComingSoonPage from "@/routes/ComingSoonPage";
+import TrendsPage from "@/routes/TrendsPage";
+import HistoryPage from "@/routes/HistoryPage";
 import NotFoundPage from "@/routes/NotFoundPage";
 
 function ScrollToTop() {
@@ -29,8 +30,8 @@ export default function App() {
             <Route path="/" element={<CheckPage />} />
             <Route path="/result/:id" element={<ResultPage />} />
             <Route path="/complaint/:id" element={<ComplaintPage />} />
-            <Route path="/trends" element={<ComingSoonPage titleKey="trends.title" />} />
-            <Route path="/history" element={<ComingSoonPage titleKey="history.title" />} />
+            <Route path="/trends" element={<TrendsPage />} />
+            <Route path="/history" element={<HistoryPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

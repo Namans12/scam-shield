@@ -2,6 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const fetchCheck = vi.hoisted(() => vi.fn());
+vi.mock("@/data", () => ({ fetchCheck }));
 import ComplaintPage, { formatAmount } from "./ComplaintPage";
 import { setLang } from "@/i18n";
 import { makeResult } from "@/test/fixtures";
@@ -16,7 +19,11 @@ function renderPage(withState = true) {
   );
 }
 
-beforeEach(() => setLang("en"));
+beforeEach(() => {
+  setLang("en");
+  fetchCheck.mockReset();
+  fetchCheck.mockResolvedValue(null);
+});
 
 describe("formatAmount", () => {
   it("formats plain numbers and keeps free text", () => {
@@ -54,8 +61,8 @@ describe("ComplaintPage", () => {
     expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
   });
 
-  it("asks to run the check again when the result is not on this device", () => {
+  it("asks to run the check again when the result is not on this device", async () => {
     renderPage(false);
-    expect(screen.getByText("This result is no longer on this device")).toBeInTheDocument();
+    expect(await screen.findByText("This result is no longer on this device")).toBeInTheDocument();
   });
 });

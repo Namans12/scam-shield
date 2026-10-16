@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { FileText, Flag } from "lucide-react";
+import { FileText, Flag, Loader2 } from "lucide-react";
 import type { CheckResult } from "@scam-shield/shared";
 import { Button } from "@/components/ui/button";
 import { VerdictBanner } from "@/components/VerdictBanner";
@@ -13,6 +13,7 @@ import { QrCard } from "@/components/QrCard";
 import { ReportDialog } from "@/components/ReportDialog";
 import { ShareWarning } from "@/components/ShareWarning";
 import { scamTypeKey, useLang, useT } from "@/i18n";
+import { fetchCheck } from "@/data";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -50,8 +51,22 @@ export default function ResultPage() {
   const t = useT();
   const { lang } = useLang();
 
-  // A Firestore read for results that are not in router state comes in a later task.
-  const result = resultFromState(location.state, id);
+  // The result usually arrives in router state; opened from History or a reload, it is read from Firestore.
+  const stateResult = resultFromState(location.state, id);
+  const [fetched, setFetched] = useState<{ id: string; result: CheckResult | null } | null>(null);
+  useEffect(() => {
+    if (stateResult || !id) return;
+    let live = true;
+    fetchCheck(id).then(
+      (r) => live && setFetched({ id, result: r }),
+      () => live && setFetched({ id, result: null }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [id, stateResult]);
+  const loading = !stateResult && !!id && !(fetched && fetched.id === id);
+  const result = stateResult ?? (fetched && fetched.id === id ? fetched.result : null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const shownId = result?.id;
@@ -60,6 +75,14 @@ export default function ResultPage() {
     if (shownId) headingRef.current?.focus();
   }, [shownId]);
 
+  if (loading) {
+    return (
+      <p role="status" className="flex items-center gap-3 text-base">
+        <Loader2 className="animate-spin text-primary" aria-hidden />
+        {t("result.loading")}
+      </p>
+    );
+  }
   if (!result) return <ResultGone />;
 
   return (

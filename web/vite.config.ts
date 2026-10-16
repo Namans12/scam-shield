@@ -29,16 +29,13 @@ export default defineConfig({
       manifest: false,
       injectRegister: "auto",
       registerType: "autoUpdate",
-      workbox: {
-        // /api/** goes to Cloud Run through a Hosting rewrite. It must never be
-        // answered with the SPA shell, and results are per-user: never cache.
-        navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-            handler: "NetworkOnly",
-          },
-        ],
+      // Own service worker (src/sw.ts) so it can also handle the Android share target.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectManifest: {
+        // Firestore and Storage are lazy chunks used on a few pages; they are fetched when needed, not precached.
+        globIgnores: ["**/firestore-*.js", "**/storage-*.js", "**/index.esm-*.js"],
       },
     }),
   ],
