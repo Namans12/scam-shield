@@ -1,7 +1,7 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { closeBrowser, scanUrl } from "./scan";
+import { capRedirects, capUrl, closeBrowser, pickDenial, scanDebugCounters, scanUrl } from "./scan";
 
 let main: http.Server;
 let secret: http.Server;
@@ -33,7 +33,25 @@ beforeAll(async () => {
     else if (url === "/redir-metadata") { res.writeHead(302, { location: "http://169.254.169.254/latest/meta-data/" }); res.end(); }
     else if (url === "/redir-hex") { res.writeHead(302, { location: "http://0x7f.1:" + secretPort + "/secret-hex" }); res.end(); }
     else if (url === "/redir-chain") { res.writeHead(302, { location: "/redir-literal" }); res.end(); }
-    else if (url === "/redir-file") { res.writeHead(302, { location: "file:///etc/passwd" }); res.end(); }
+    else if (url === "/webrtc") {
+      res.setHeader("content-type", "text/html");
+      res.end(`<title>pending</title><script>
+        var r = { rtc: typeof RTCPeerConnection, wrtc: typeof webkitRTCPeerConnection, dc: typeof RTCDataChannel, wt: typeof WebTransport, ctor: "none" };
+        try { new RTCPeerConnection(); r.ctor = "created"; } catch (e) { r.ctor = "threw"; }
+        document.title = JSON.stringify(r);
+      </script>`);
+    } else if (url === "/state-set") {
+      res.setHeader("content-type", "text/html");
+      res.end(`<title>x</title><script>
+        document.cookie = "sess=abc123; path=/"; localStorage.setItem("k", "v1"); sessionStorage.setItem("s", "v2");
+        document.title = "set:" + document.cookie + "|" + localStorage.getItem("k") + "|" + sessionStorage.getItem("s");
+      </script>`);
+    } else if (url === "/state-read") {
+      res.setHeader("content-type", "text/html");
+      res.end(`<title>x</title><script>
+        document.title = "read:" + document.cookie + "|" + localStorage.getItem("k") + "|" + sessionStorage.getItem("s");
+      </script>`);
+    } else if (url === "/redir-file") { res.writeHead(302, { location: "file:///etc/passwd" }); res.end(); }
     else if (url === "/sub") {
       res.setHeader("content-type", "text/html");
       res.end(`<title>Subresources</title><img src="${secretOrigin}/sub-img"><script src="${secretOrigin}/sub-script.js"></script><iframe src="${secretOrigin}/sub-frame"></iframe><p>visible text</p>`);
@@ -128,9 +146,81 @@ describe("scanUrl SSRF guard", () => {
     expect(secretHits).toEqual([]);
   }, 60_000);
 
-  it("uses a fresh context per scan", async () => {
-    const a = await scanUrl(`${mainOrigin}/login`, { allowPrivateForTests: true });
-    const b = await scanUrl(`${mainOrigin}/login`, { allowPrivateForTests: true });
-    expect(a.title).toBe(b.title);
+  it("gives each scan a fresh context: cookies/localStorage/sessionStorage do not carry over", async () => {
+    const first = await scanUrl(`${mainOrigin}/state-set`, { allowPrivateForTests: true });
+    expect(first.title).toBe("set:sess=abc123|v1|v2"); // the state really was written in scan 1
+    const second = await scanUrl(`${mainOrigin}/state-read`, { allowPrivateForTests: true });
+    expect(second.title).toBe("read:|null|null");
   }, 60_000);
+
+  it("removes WebRTC / WebTransport so they cannot bypass the proxy", async () => {
+    const res = await scanUrl(`${mainOrigin}/webrtc`, { allowPrivateForTests: true });
+    const r = JSON.parse(res.title!);
+    expect(r).toEqual({ rtc: "undefined", wrtc: "undefined", dc: "undefined", wt: "undefined", ctor: "threw" });
+  }, 60_000);
+});
+
+describe("scan lifecycle", () => {
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const settled = async () => {
+    for (let i = 0; i < 50; i++) {
+      const c = scanDebugCounters();
+      if (c.inFlight === 0 && c.openProxies === 0 && c.openContexts === 0) return c;
+      await sleep(100);
+    }
+    return scanDebugCounters();
+  };
+
+  it("deadline firing during a slow DNS lookup returns timeout and never starts a proxy/context afterwards", async () => {
+    const before = scanDebugCounters();
+    const res = await scanUrl("http://slow-dns.test/", { timeoutMs: 400, lookup: async () => { await sleep(1500); return ["8.8.8.8"]; } });
+    expect(res.blockedReason).toBe("timeout");
+    await sleep(2000); // lookup has now resolved; run() must have bailed
+    const c = await settled();
+    expect(c).toMatchObject({ inFlight: 0, openProxies: 0, openContexts: 0 });
+    expect(c.proxiesStarted).toBe(before.proxiesStarted);
+    expect(c.contextsStarted).toBe(before.contextsStarted);
+  }, 30_000);
+
+  it("deadline firing mid-navigation closes the context and proxy and frees the slot", async () => {
+    const res = await scanUrl(`${mainOrigin}/slow`, { allowPrivateForTests: true, timeoutMs: 1500 });
+    expect(res.blockedReason).toBe("timeout");
+    expect(await settled()).toMatchObject({ inFlight: 0, openProxies: 0, openContexts: 0 });
+  }, 30_000);
+
+  it("rejects beyond MAX_CONCURRENT_SCANS with scan_failed", async () => {
+    const prev = process.env.MAX_CONCURRENT_SCANS;
+    process.env.MAX_CONCURRENT_SCANS = "1";
+    try {
+      const slow = scanUrl("http://hold.test/", { timeoutMs: 1500, lookup: async () => { await sleep(1000); return ["8.8.8.8"]; } });
+      const second = await scanUrl("http://other.test/", { lookup: async () => ["8.8.8.8"] });
+      expect(second).toMatchObject({ blockedReason: "scan_failed", redirects: [] });
+      await slow;
+    } finally {
+      if (prev === undefined) delete process.env.MAX_CONCURRENT_SCANS; else process.env.MAX_CONCURRENT_SCANS = prev;
+    }
+    await settled();
+  }, 30_000);
+});
+
+describe("result shaping", () => {
+  it("caps URL length and redirect list", () => {
+    expect(capUrl("http://a/" + "x".repeat(5000)).length).toBe(2048);
+    const list = Array.from({ length: 50 }, (_, i) => "http://a/" + i + "x".repeat(3000));
+    const out = capRedirects(list);
+    expect(out).toHaveLength(20);
+    expect(out.every((u) => u.length <= 2048)).toBe(true);
+  });
+
+  it("prefers the denial that matches a main-frame navigation origin", () => {
+    const denials = [
+      { reason: "bad_port" as const, url: "http://ads.example.net:8080/pixel" },
+      { reason: "private_address" as const, url: "http://169.254.169.254/latest" },
+    ];
+    expect(pickDenial(denials, new Set(["http://start.example/", "http://169.254.169.254/latest"]))).toBe("private_address");
+    expect(pickDenial(denials, new Set(["http://other.example/"]))).toBe("bad_port"); // fallback: first denial
+    expect(pickDenial([], new Set())).toBeUndefined();
+    // CONNECT denials are recorded as https://host:port/
+    expect(pickDenial([{ reason: "private_address", url: "https://10.0.0.1:443/" }], new Set(["https://10.0.0.1/x"]))).toBe("private_address");
+  });
 });

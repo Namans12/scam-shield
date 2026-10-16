@@ -4,7 +4,7 @@ import { assertPublicUrl, BlockedUrlError, isPublicAddress } from "./guard";
 const NON_PUBLIC = [
   "10.0.0.1", "127.0.0.1", "169.254.169.254", "172.16.5.4", "192.168.1.1", "100.64.0.1", "0.0.0.0",
   "::1", "::", "fd00::1", "fc00::1", "fe80::1", "::ffff:127.0.0.1", "::ffff:7f00:1", "::ffff:10.0.0.1",
-  "224.0.0.1", "255.255.255.255", "64:ff9b::7f00:1", "not-an-ip", "",
+  "::127.0.0.1", "::7f00:1", "64:ff9b:1::7f00:1", "2002:7f00:1::", "100::1", "ff02::1", "224.0.0.1", "255.255.255.255", "64:ff9b::7f00:1", "not-an-ip", "",
 ];
 const PUBLIC = ["8.8.8.8", "142.250.183.14", "2001:4860:4860::8888", "::ffff:8.8.8.8"];
 
@@ -56,7 +56,7 @@ describe("assertPublicUrl", () => {
     "http://0/", "http://0.0.0.0/", "http://[::1]/", "http://[::ffff:127.0.0.1]/", "http://[::ffff:7f00:1]/",
     "http://169.254.169.254/latest/meta-data/", "http://0xa9fea9fe/", "http://[fd00::1]/", "http://[fe80::1]/",
     "http://10.0.0.1/", "http://192.168.0.1/", "http://172.16.0.1/", "http://100.64.0.1/",
-    "https://[::ffff:169.254.169.254]/", "http://0251.0376.0251.0376/",
+    "https://[::ffff:169.254.169.254]/", "http://[::127.0.0.1]/", "http://[64:ff9b:1::7f00:1]/", "http://0251.0376.0251.0376/",
   ])("blocks IP literal spelling %s without any DNS lookup", async (u) => {
     await expect(assertPublicUrl(u, never)).rejects.toMatchObject({ reason: "private_address" });
   });

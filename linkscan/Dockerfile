@@ -1,23 +1,28 @@
-# Build from the repo root:  docker build -f linkscan/Dockerfile -t scam-shield-linkscan .
+# Build with the REPO ROOT as context:
+#   docker build -f linkscan/Dockerfile -t scam-shield-linkscan .
 # The base image ships Chromium + system deps matching playwright 1.55.0 (pinned exactly in package.json).
 FROM mcr.microsoft.com/playwright:v1.55.0-noble AS build
 WORKDIR /app
-COPY linkscan/package.json ./package.json
-# @scam-shield/shared is imported type-only (erased by esbuild), so it is not needed at runtime.
-RUN npm pkg delete dependencies.@scam-shield/shared \
- && npm install --omit=dev --no-audit --no-fund
-COPY linkscan/src ./src
-RUN npx --yes esbuild@0.28.2 src/server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js
+# Reproducible runtime deps: root lockfile + the workspace manifests only (linkscan, and shared which it links to).
+COPY package.json package-lock.json ./
+COPY linkscan/package.json linkscan/package.json
+COPY shared/package.json shared/package.json
+RUN npm ci --omit=dev -w linkscan --ignore-scripts --no-audit --no-fund
+COPY linkscan/src linkscan/src
+# @scam-shield/shared is imported type-only (erased by esbuild), so its sources are not needed at runtime.
+RUN npx --yes esbuild@0.28.2 linkscan/src/server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js
 
 FROM mcr.microsoft.com/playwright:v1.55.0-noble
 WORKDIR /app
+# NOTE: LINKSCAN_NO_SANDBOX is intentionally NOT set here. Chromium's sandbox stays ON by default.
+# Cloud Run gen1 (gVisor) cannot create the user-namespace sandbox, so the deploy script passes
+# --set-env-vars LINKSCAN_NO_SANDBOX=1 explicitly there; see linkscan/SECURITY.md for the compensating controls.
 ENV NODE_ENV=production \
-    PORT=8080 \
-    # Cloud Run (gVisor) cannot create Chromium's user-namespace sandbox; the container is the sandbox there.
-    LINKSCAN_NO_SANDBOX=1
-COPY --from=build --chown=pwuser:pwuser /app/package.json ./package.json
+    PORT=8080
 COPY --from=build --chown=pwuser:pwuser /app/node_modules ./node_modules
 COPY --from=build --chown=pwuser:pwuser /app/dist ./dist
+# "type": "module" is needed for the ESM bundle
+COPY --from=build --chown=pwuser:pwuser /app/linkscan/package.json ./package.json
 USER pwuser
 EXPOSE 8080
 CMD ["node","dist/server.js"]

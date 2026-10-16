@@ -4,7 +4,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { LinkScan } from "@scam-shield/shared";
-import { scanUrl } from "./scan";
+import { hasScanCapacity, scanUrl } from "./scan";
 
 export const app = new Hono();
 
@@ -22,6 +22,12 @@ app.post("/scan", async (c) => {
   }
   const url = (body as { url?: unknown } | null)?.url;
   if (typeof url !== "string" || url.length === 0) return c.json({ error: "url (string) is required" }, 400);
+  if (!hasScanCapacity()) {
+    // Distinguishable overflow signal; callers still get a well-formed scan_failed LinkScan body.
+    c.header("Retry-After", "2");
+    const busy: LinkScan = { requestedUrl: url, redirects: [], blockedReason: "scan_failed" };
+    return c.json(busy, 503);
+  }
   try {
     // Only the URL is taken from the request. Scan options are never client- or environment-controlled.
     return c.json(await scanUrl(url));

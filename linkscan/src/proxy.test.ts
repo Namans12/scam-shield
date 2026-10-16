@@ -45,6 +45,7 @@ describe("scan proxy", () => {
     expect(res.status).toBeUndefined();
     expect(res.error).toBeDefined();
     expect(p.denied).toEqual(["private_address"]);
+    expect(p.deniedDetail).toEqual([{ reason: "private_address", url: `http://127.0.0.1:${port}/` }]);
   });
 
   it("refuses CONNECT tunnels to blocked targets and passes the right host:port to authorize", async () => {

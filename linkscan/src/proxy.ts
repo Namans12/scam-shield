@@ -15,6 +15,8 @@ export interface ScanProxy {
   port: number;
   /** Reasons for every connection the proxy refused (in order). */
   denied: Reason[];
+  /** Same, with the URL that was refused (CONNECT tunnels are recorded as https://host:port/). */
+  deniedDetail: Array<{ reason: Reason; url: string }>;
   /** True once the per-scan byte budget has been exceeded (all connections are then torn down). */
   overLimit(): boolean;
   close(): Promise<void>;
@@ -32,6 +34,7 @@ const IDLE_MS = 20_000;
  */
 export async function startScanProxy(authorize: Authorize, maxBytes: number): Promise<ScanProxy> {
   const denied: Reason[] = [];
+  const deniedDetail: Array<{ reason: Reason; url: string }> = [];
   const sockets = new Set<Socket>();
   let bytes = 0;
   let over = false;
@@ -47,8 +50,10 @@ export async function startScanProxy(authorize: Authorize, maxBytes: number): Pr
       if (opts && opts.all) cb(null, rows);
       else cb(null, rows[0].address, rows[0].family);
     }) as unknown as net.LookupFunction;
-  const deny = (e: unknown, ...toKill: Socket[]) => {
-    denied.push(e instanceof BlockedUrlError ? e.reason : "scan_failed");
+  const deny = (e: unknown, url: string, ...toKill: Socket[]) => {
+    const reason: Reason = e instanceof BlockedUrlError ? e.reason : "scan_failed";
+    denied.push(reason);
+    deniedDetail.push({ reason, url: url.slice(0, 2048) });
     // No response at all: the browser sees a failed load rather than a renderable error page.
     for (const s of toKill) s.destroy();
   };
@@ -57,10 +62,10 @@ export async function startScanProxy(authorize: Authorize, maxBytes: number): Pr
     track(req.socket);
     (async () => {
       let target: URL;
-      try { target = new URL(req.url ?? ""); } catch { return deny(new BlockedUrlError("bad_scheme"), req.socket); }
-      if (target.protocol !== "http:") return deny(new BlockedUrlError("bad_scheme"), req.socket);
+      try { target = new URL(req.url ?? ""); } catch { return deny(new BlockedUrlError("bad_scheme"), String(req.url), req.socket); }
+      if (target.protocol !== "http:") return deny(new BlockedUrlError("bad_scheme"), target.href, req.socket);
       let addrs: string[];
-      try { addrs = await authorize(target.href); } catch (e) { return deny(e, req.socket); }
+      try { addrs = await authorize(target.href); } catch (e) { return deny(e, target.href, req.socket); }
       if (over) return req.socket.destroy();
 
       const headers = { ...req.headers };
@@ -97,10 +102,11 @@ export async function startScanProxy(authorize: Authorize, maxBytes: number): Pr
     track(clientSocket);
     (async () => {
       let addrs: string[];
-      try { addrs = await authorize(`https://${req.url}/`); } catch (e) { return deny(e, clientSocket); }
+      const connectUrl = `https://${req.url}/`;
+      try { addrs = await authorize(connectUrl); } catch (e) { return deny(e, connectUrl, clientSocket); }
       if (over) return clientSocket.destroy();
       const m = /^(\[[^\]]+\]|[^:]+):(\d+)$/.exec(req.url ?? "");
-      if (!m) return deny(new BlockedUrlError("bad_scheme"), clientSocket);
+      if (!m) return deny(new BlockedUrlError("bad_scheme"), connectUrl, clientSocket);
       const upstream = net.connect({ host: m[1].replace(/^\[|\]$/g, ""), port: Number(m[2]), lookup: pinned(addrs) });
       track(upstream);
       upstream.setTimeout(IDLE_MS, () => upstream.destroy());
@@ -126,6 +132,7 @@ export async function startScanProxy(authorize: Authorize, maxBytes: number): Pr
   return {
     port: (server.address() as AddressInfo).port,
     denied,
+    deniedDetail,
     overLimit: () => over,
     close: () =>
       new Promise<void>((resolve) => {

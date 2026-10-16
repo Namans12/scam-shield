@@ -2,7 +2,8 @@ import { chromium, type Browser, type BrowserContext, type Page, type Response }
 import type { LinkScan } from "@scam-shield/shared";
 import { isIP } from "node:net";
 import { assertPublicUrl, BlockedUrlError, defaultLookup, resolvePublicUrl, type LookupFn } from "./guard";
-import { startScanProxy, type ScanProxy } from "./proxy";
+import { startScanProxy } from "./proxy";
+import type { ScanProxy } from "./proxy";
 
 type Reason = NonNullable<LinkScan["blockedReason"]>;
 
@@ -23,11 +24,20 @@ const MAX_TEXT = 8_000;
 const MAX_TITLE = 300;
 const MAX_REQUESTS_PER_SCAN = 150;
 const MAX_TOTAL_BYTES = 25 * 1024 * 1024; // total bytes through the proxy (both directions) per scan
-const MAX_CONCURRENT_SCANS = 6;
+const DEFAULT_MAX_CONCURRENT_SCANS = 4;
+const MAX_URL_OUT = 2048;
+const MAX_REDIRECTS_OUT = 20;
 const MOBILE_UA =
   "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36";
 // Heavy, useless-for-triage resource types are never fetched.
 const SKIPPED_RESOURCE_TYPES = new Set(["media", "font", "websocket", "eventsource"]);
+
+// Network APIs that can open sockets outside the HTTP proxy are removed from every page/frame.
+const INIT_SCRIPT = `(() => {
+  for (const n of ["RTCPeerConnection", "webkitRTCPeerConnection", "mozRTCPeerConnection", "RTCDataChannel", "RTCSessionDescription", "RTCIceCandidate", "WebTransport"]) {
+    try { Object.defineProperty(window, n, { value: undefined, writable: false, configurable: false }); } catch (e) {}
+  }
+})();`;
 
 // ---- shared browser (one Chromium process; a fresh isolated context per scan) ----
 let browserPromise: Promise<Browser> | null = null;
@@ -42,8 +52,17 @@ function getBrowser(): Promise<Browser> {
       "--no-first-run",
       "--mute-audio",
       "--deny-permission-prompts",
+      // WebRTC could otherwise send UDP/STUN straight from the container, around the validating proxy.
+      "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
+      "--disable-quic",
+      // One hostile page must not take the whole instance down: bound the V8 heap and renderer processes.
+      // --jitless also removes the JIT, a large part of the renderer exploit surface (fine for triage).
+      "--js-flags=--max-old-space-size=256 --jitless",
+      "--renderer-process-limit=2",
+      "--disable-gpu",
     ];
-    // Cloud Run (gVisor) cannot create the Chromium user-namespace sandbox; the container is the sandbox there.
+    // Opt-in only, for runtimes that cannot create Chromium's user-namespace sandbox (Cloud Run gen1/gVisor).
+    // See SECURITY.md for the compensating controls. Never enabled by default.
     if (process.env.LINKSCAN_NO_SANDBOX === "1") args.push("--no-sandbox");
     browserPromise = chromium
       // Chromium needs a (dummy) launch-level proxy for per-context proxies to be honoured; every
@@ -66,15 +85,9 @@ export async function closeBrowser(): Promise<void> {
 
 // ---- helpers ----
 const normalizeText = (s: string) => s.replace(/\s+/g, " ").trim();
+const originOf = (u: string): string => { try { return new URL(u).origin; } catch { return ""; } };
 
 class Timeout extends Error {}
-
-function withDeadline<T>(p: Promise<T>, ms: number): Promise<T> {
-  let timer: NodeJS.Timeout;
-  const t = new Promise<never>((_, rej) => { timer = setTimeout(() => rej(new Timeout("deadline")), ms); });
-  p.catch(() => undefined); // never leave the loser unhandled
-  return Promise.race([p, t]).finally(() => clearTimeout(timer));
-}
 
 function reasonFromError(e: unknown): Reason {
   if (e instanceof BlockedUrlError) return e.reason;
@@ -85,30 +98,90 @@ function reasonFromError(e: unknown): Reason {
   return "scan_failed";
 }
 
+export const capUrl = (u: string): string => (u.length > MAX_URL_OUT ? u.slice(0, MAX_URL_OUT) : u);
+export const capRedirects = (list: string[]): string[] => list.slice(0, MAX_REDIRECTS_OUT).map(capUrl);
+
+/** Prefer the proxy denial that matches a main-frame navigation (document / redirect hop); else the first. */
+export function pickDenial(denials: Array<{ reason: Reason; url: string }>, mainFrameUrls: Set<string>): Reason | undefined {
+  const origins = new Set([...mainFrameUrls].map(originOf));
+  const hit = denials.find((d) => origins.has(originOf(d.url)));
+  return (hit ?? denials[0])?.reason;
+}
+
+// ---- concurrency / lifecycle accounting ----
 let inFlight = 0;
+let openProxies = 0;
+let openContexts = 0;
+let proxiesStarted = 0;
+let contextsStarted = 0;
+
+/** Internal counters, exposed for lifecycle tests. */
+export function scanDebugCounters() {
+  return { inFlight, openProxies, openContexts, proxiesStarted, contextsStarted };
+}
+
+function maxConcurrent(): number {
+  const raw = process.env.MAX_CONCURRENT_SCANS;
+  if (raw === undefined || raw === "") return DEFAULT_MAX_CONCURRENT_SCANS;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : DEFAULT_MAX_CONCURRENT_SCANS;
+}
+
+/** True if a scan slot is free (server.ts uses this to answer 503 on overflow). */
+export function hasScanCapacity(): boolean {
+  return inFlight < maxConcurrent();
+}
 
 export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<LinkScan> {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const blocked = (blockedReason: Reason): LinkScan => ({ requestedUrl: raw, redirects: [], blockedReason });
 
-  if (inFlight >= MAX_CONCURRENT_SCANS) return blocked("scan_failed");
+  if (!hasScanCapacity()) return blocked("scan_failed");
   inFlight++;
   const deadline = Date.now() + timeoutMs;
-  let context = undefined as BrowserContext | undefined;
-  let proxy = undefined as ScanProxy | undefined;
+
+  // Everything the scan opens is registered here so it can be closed from the deadline OR from run().
+  const res: { context?: BrowserContext; proxy?: ScanProxy } = {};
+  let aborted = false;
+  let closing: Promise<void> = Promise.resolve();
+  const closeAll = (): Promise<void> => {
+    closing = closing.then(async () => {
+      const c = res.context;
+      const p = res.proxy;
+      res.context = undefined;
+      res.proxy = undefined;
+      if (c) { await c.close().catch(() => undefined); openContexts--; }
+      if (p) { await p.close().catch(() => undefined); openProxies--; }
+    });
+    return closing;
+  };
+  const bail = () => { if (aborted) throw new Timeout("deadline"); };
+
+  // run() is the only owner of the in-flight slot: it is released after everything has been closed.
+  const work = run()
+    .catch((e): LinkScan => blocked(reasonFromError(e)))
+    .finally(async () => {
+      await closeAll();
+      inFlight--;
+    });
+
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<LinkScan>((resolve) => {
+    timer = setTimeout(() => {
+      aborted = true;
+      void closeAll(); // cancels in-flight page operations right away
+      resolve(blocked("timeout"));
+    }, timeoutMs);
+  });
   try {
-    return await withDeadline(run(), timeoutMs);
-  } catch (e) {
-    return blocked(reasonFromError(e));
+    return await Promise.race([work, timeout]);
   } finally {
-    inFlight--;
-    await context?.close().catch(() => undefined);
-    await proxy?.close().catch(() => undefined);
+    clearTimeout(timer);
   }
 
   async function run(): Promise<LinkScan> {
     const allowPrivate = opts.allowPrivateForTests === true;
-    const exemptOrigins = new Set((opts.testAllowedOrigins ?? []).map((o) => { try { return new URL(o).origin; } catch { return ""; } }));
+    const exemptOrigins = new Set((opts.testAllowedOrigins ?? []).map((o) => originOf(o)));
     const baseLookup = opts.lookup ?? defaultLookup;
     const cache = new Map<string, Promise<string[]>>();
     const lookup: LookupFn = (h) => {
@@ -116,10 +189,7 @@ export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<Link
       if (!p) { p = baseLookup(h); cache.set(h, p); }
       return p;
     };
-    const isExempt = (u: string): boolean => {
-      if (allowPrivate) return true;
-      try { return exemptOrigins.has(new URL(u).origin); } catch { return false; }
-    };
+    const isExempt = (u: string): boolean => allowPrivate || exemptOrigins.has(originOf(u));
     /** Throws BlockedUrlError unless the URL is http(s) to a public destination. */
     const check = async (u: string): Promise<void> => {
       if (isExempt(u)) {
@@ -135,19 +205,24 @@ export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<Link
     const authorize = async (u: string): Promise<string[]> => {
       if (isExempt(u)) {
         await check(u); // scheme only
-        const host = new URL(u).hostname.replace(/^[|]$/g, "");
+        const host = new URL(u).hostname.replace(/^\[|\]$/g, "");
         return isIP(host) ? [host] : lookup(host);
       }
       return (await resolvePublicUrl(u, lookup)).addresses;
     };
 
-    // 1. validate the requested URL before a browser is even touched
+    // 1. validate the requested URL before anything is opened
     await check(raw);
-    proxy = await startScanProxy(authorize, MAX_TOTAL_BYTES);
-    const px = proxy;
+    bail();
+    const px = await startScanProxy(authorize, MAX_TOTAL_BYTES);
+    proxiesStarted++;
+    openProxies++;
+    res.proxy = px;
+    bail();
 
     const browser = await getBrowser();
-    context = await browser.newContext({
+    bail();
+    const ctx = await browser.newContext({
       viewport: { width: 390, height: 844 },
       isMobile: true,
       hasTouch: true,
@@ -165,11 +240,17 @@ export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<Link
       bypassCSP: false,
       javaScriptEnabled: true,
     });
-    const ctx = context;
+    contextsStarted++;
+    openContexts++;
+    res.context = ctx;
+    bail();
+    await ctx.addInitScript(INIT_SCRIPT);
     const page = await ctx.newPage();
+    bail();
 
     let blockedNav: Reason | undefined;
     let requestCount = 0;
+    const mainFrameUrls = new Set<string>();
 
     // 2. re-validate every request the browser routes: document, subresources, frames. (Redirect hops and
     // DNS pinning are enforced by the proxy, since Playwright does not re-route redirects.)
@@ -192,18 +273,27 @@ export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<Link
     ctx.on("page", (p: Page) => { if (p !== page) p.close().catch(() => undefined); });
     page.on("dialog", (d) => { d.dismiss().catch(() => undefined); });
     page.on("download", (d) => { d.cancel().catch(() => undefined); });
+    page.on("request", (r) => {
+      if (r.isNavigationRequest() && r.frame() === page.mainFrame()) mainFrameUrls.add(r.url());
+    });
+    bail();
 
     let resp: Response | null;
     try {
       resp = await page.goto(raw, { waitUntil: "domcontentloaded", timeout: Math.max(1, deadline - Date.now()) });
     } catch (e) {
+      bail();
       if (blockedNav) return blocked(blockedNav);
       if (px.overLimit()) return blocked("scan_failed");
-      if (px.denied.length) return blocked(px.denied[0]);
+      const d = pickDenial(px.deniedDetail, mainFrameUrls);
+      if (d) return blocked(d);
       throw e;
     }
+    bail();
     if (blockedNav) return blocked(blockedNav);
-    if (px.denied.length && resp && resp.status() >= 300 && resp.status() < 400) return blocked(px.denied[0]);
+    if (px.denied.length && resp && resp.status() >= 300 && resp.status() < 400) {
+      return blocked(pickDenial(px.deniedDetail, mainFrameUrls) ?? px.denied[0]);
+    }
 
     const redirects: string[] = [];
     for (let r = resp?.request().redirectedFrom() ?? null; r; r = r.redirectedFrom()) redirects.unshift(r.url());
@@ -211,6 +301,7 @@ export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<Link
     // brief settle for JS-rendered content (not networkidle: trackers keep it open forever)
     const settle = Math.min(SETTLE_MS, Math.max(0, deadline - Date.now() - 2_000));
     if (settle > 0) await page.waitForTimeout(settle);
+    bail();
 
     if (px.overLimit() || page.isClosed()) return blocked("scan_failed");
 
@@ -218,6 +309,7 @@ export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<Link
     const data = (await page.evaluate(
       "({ title: document.title || '', text: ((document.body && document.body.innerText) || '').slice(0, 100000) })",
     )) as { title: string; text: string };
+    bail();
     const finalUrl = page.url();
 
     let screenshotDataUrl: string | undefined;
@@ -225,13 +317,14 @@ export async function scanUrl(raw: string, opts: ScanOptions = {}): Promise<Link
       const buf = await page.screenshot({ type: "jpeg", quality: 60, timeout: Math.max(1, deadline - Date.now()) });
       screenshotDataUrl = `data:image/jpeg;base64,${buf.toString("base64")}`;
     } catch { /* text result is still useful */ }
+    bail();
 
     if (px.overLimit()) return blocked("scan_failed");
 
     return {
       requestedUrl: raw,
-      finalUrl,
-      redirects,
+      finalUrl: capUrl(finalUrl),
+      redirects: capRedirects(redirects),
       title: normalizeText(data.title).slice(0, MAX_TITLE),
       text: normalizeText(data.text).slice(0, MAX_TEXT),
       screenshotDataUrl,

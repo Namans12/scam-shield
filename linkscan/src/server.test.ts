@@ -36,6 +36,21 @@ describe("POST /scan", () => {
   });
 });
 
+describe("capacity overflow", () => {
+  it("answers 503 + Retry-After with a scan_failed LinkScan body when no scan slot is free", async () => {
+    const prev = process.env.MAX_CONCURRENT_SCANS;
+    process.env.MAX_CONCURRENT_SCANS = "0";
+    try {
+      const res = await post({ url: "http://example.com/" });
+      expect(res.status).toBe(503);
+      expect(res.headers.get("retry-after")).toBe("2");
+      expect(await res.json()).toMatchObject({ requestedUrl: "http://example.com/", blockedReason: "scan_failed", redirects: [] });
+    } finally {
+      if (prev === undefined) delete process.env.MAX_CONCURRENT_SCANS; else process.env.MAX_CONCURRENT_SCANS = prev;
+    }
+  });
+});
+
 describe("GET /healthz", () => {
   it("200", async () => expect((await app.request("/healthz")).status).toBe(200));
 });

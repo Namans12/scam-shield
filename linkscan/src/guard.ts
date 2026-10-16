@@ -30,6 +30,8 @@ export function isPublicAddress(ip: string): boolean {
   if (addr.kind() === "ipv6") {
     const v6 = addr as ipaddr.IPv6;
     if (v6.isIPv4MappedAddress()) return v6.toIPv4Address().range() === "unicast";
+    // Global unicast only (2000::/3): rejects ::/96 (IPv4-compatible), 64:ff9b:1::/48, ULA, link-local, etc.
+    if ((v6.parts[0] & 0xe000) !== 0x2000) return false;
   }
   return addr.range() === "unicast";
 }
