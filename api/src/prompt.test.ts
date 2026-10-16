@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ExtractedEntities } from "./extract";
-import { buildGroundingPrompt, buildVerdictPrompt } from "./prompt";
+import { buildGroundingPrompt, buildVerdictPrompt, todayIst } from "./prompt";
 
 const empty: ExtractedEntities = { phones: [], upiIds: [], urls: [], domains: [], bankAccounts: [] };
 
@@ -67,5 +67,14 @@ describe("buildGroundingPrompt", () => {
   });
   it("looks up the final URL of a link scan", () => {
     expect(buildGroundingPrompt({ lang: "en", entities: empty, hits: [], linkScan: { requestedUrl: "https://a.in", finalUrl: "https://b.in/x", redirects: [] } })).toContain("b.in");
+  });
+});
+
+describe("today's date", () => {
+  it("is given to the model in India time", () => {
+    expect(todayIst(new Date("2026-10-16T20:00:00Z"))).toBe("2026-10-17");
+    const p = buildVerdictPrompt({ text: "x", lang: "en", entities: empty, hits: [] }, undefined, new Date("2026-10-16T05:00:00Z"));
+    expect(p).toContain("Today's date in India is 2026-10-16");
+    expect(p).toContain("31 September");
   });
 });
