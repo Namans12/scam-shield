@@ -6,5 +6,9 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@scam-shield/shared": "*",
+    "tldts": "^7.4.18"
   }
 }
