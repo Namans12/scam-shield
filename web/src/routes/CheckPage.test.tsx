@@ -8,6 +8,9 @@ import { makeResult } from "@/test/fixtures";
 
 const checkContent = vi.hoisted(() => vi.fn());
 const uploadForCheck = vi.hoisted(() => vi.fn());
+const takeSharedPayload = vi.hoisted(() => vi.fn());
+
+vi.mock("@/share-target/sw-share", () => ({ takeSharedPayload }));
 
 vi.mock("@/api", async () => {
   const actual = await vi.importActual<typeof import("@/api")>("@/api");
@@ -28,9 +31,9 @@ function ResultProbe() {
   return <p>result page {loc.pathname} {state?.result?.id}</p>;
 }
 
-function renderCheck() {
+function renderCheck(path = "/") {
   return render(
-    <MemoryRouter initialEntries={["/"]}>
+    <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/" element={<CheckPage />} />
         <Route path="/result/:id" element={<ResultProbe />} />
@@ -48,6 +51,20 @@ beforeEach(() => {
 });
 
 describe("CheckPage", () => {
+  it("checks what was shared to the app, then opens the result", async () => {
+    vi.stubGlobal("caches", {});
+    takeSharedPayload.mockResolvedValue({ text: "KYC pending https://bnb-kyc-update.web.app", url: "https://bnb-kyc-update.web.app" });
+    checkContent.mockResolvedValue(makeResult({ id: "shared1" }));
+    try {
+      renderCheck("/?shared=1");
+      await waitFor(() => expect(checkContent).toHaveBeenCalledWith({ text: "KYC pending https://bnb-kyc-update.web.app", url: "https://bnb-kyc-update.web.app", lang: "en" }));
+      await waitFor(() => expect(screen.getByText(/result page \/result\/shared1/)).toBeInTheDocument());
+      expect(checkContent).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("runs the text example in one tap", async () => {
     const user = userEvent.setup();
     checkContent.mockResolvedValue(makeResult({ id: "ex1" }));
