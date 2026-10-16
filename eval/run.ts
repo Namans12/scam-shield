@@ -47,12 +47,22 @@ async function upload(c: Case, s: Session): Promise<string> {
   return path;
 }
 
+// The API allows 10 checks per minute per IP: start at most one case every 6.5 s so the run never trips it.
+const MIN_GAP_MS = 6500;
+let lastStart = 0;
+async function pace() {
+  const wait = lastStart + MIN_GAP_MS - Date.now();
+  lastStart = Math.max(Date.now(), lastStart + MIN_GAP_MS);
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+}
+
 async function runCase(c: Case): Promise<EvalRow & { attempts: number; riskScore?: number }> {
   const base = { id: c.id, label: c.label, scamType: c.scam_type, kind: c.kind };
   let attempts = 0;
   let lastErr = "";
   for (let i = 0; i < 2; i++) {
     attempts++;
+    await pace();
     const s = await getSession();
     try {
       const body: Record<string, unknown> = { lang: LANG, ...(c.text && { text: c.text }) };
