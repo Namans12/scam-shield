@@ -87,15 +87,16 @@ export class FirestoreStore implements Store, StoreInspect {
     return { reportId, newlyCounted };
   }
 
-  async bumpUsage(uid: string, day: string): Promise<{ uidCount: number; globalCount: number }> {
+  async bumpUsage(uid: string, day: string, perUidLimit?: number): Promise<{ uidCount: number; globalCount: number }> {
     const uRef = this.db.collection("usage").doc(`${encodeDocId(uid)}_${day}`);
     const gRef = this.db.collection("usage").doc(`global_${day}`);
     return this.db.runTransaction(async (tx) => {
       const [u, g] = await tx.getAll(uRef, gRef);
       const uidCount = ((u.data()?.count as number | undefined) ?? 0) + 1;
-      const globalCount = ((g.data()?.count as number | undefined) ?? 0) + 1;
+      const within = perUidLimit === undefined || uidCount <= perUidLimit;
+      const globalCount = ((g.data()?.count as number | undefined) ?? 0) + (within ? 1 : 0);
       tx.set(uRef, { count: uidCount });
-      tx.set(gRef, { count: globalCount });
+      if (within) tx.set(gRef, { count: globalCount });
       return { uidCount, globalCount };
     });
   }

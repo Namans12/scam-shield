@@ -9,7 +9,8 @@ export interface Store {
   saveCheck(c: StoredCheck): Promise<void>;
   getCheck(id: string): Promise<StoredCheck | null>;
   addReport(r: ReportInput): Promise<{ reportId: string; newlyCounted: EntityKey[] }>;
-  bumpUsage(uid: string, day: string): Promise<{ uidCount: number; globalCount: number }>;
+  /** Counts one check for `uid`. The global counter advances only while the uid's new count is <= perUidLimit (when given), so a user over their limit cannot burn the shared budget. */
+  bumpUsage(uid: string, day: string, perUidLimit?: number): Promise<{ uidCount: number; globalCount: number }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -202,12 +203,13 @@ export class MemoryStore implements Store, StoreInspect {
     return { reportId, newlyCounted: plan.newlyCounted };
   }
 
-  async bumpUsage(uid: string, day: string): Promise<{ uidCount: number; globalCount: number }> {
+  async bumpUsage(uid: string, day: string, perUidLimit?: number): Promise<{ uidCount: number; globalCount: number }> {
     const uk = `${uid}_${day}`, gk = `global_${day}`;
     const uidCount = (this.usage.get(uk) ?? 0) + 1;
-    const globalCount = (this.usage.get(gk) ?? 0) + 1;
     this.usage.set(uk, uidCount);
-    this.usage.set(gk, globalCount);
+    const within = perUidLimit === undefined || uidCount <= perUidLimit;
+    const globalCount = (this.usage.get(gk) ?? 0) + (within ? 1 : 0);
+    if (within) this.usage.set(gk, globalCount);
     return { uidCount, globalCount };
   }
 

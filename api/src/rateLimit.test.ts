@@ -41,14 +41,17 @@ describe("createRateLimiter", () => {
     expect(rl.size()).toBe(1);
   });
 
-  it("fails closed for new keys when full, but still serves tracked keys", () => {
+  it("fails OPEN for new keys when the table is full (bounded memory, existing keys still limited)", () => {
     const c = clock();
-    const rl = createRateLimiter({ max: 5, maxKeys: 3, now: c.now });
+    const rl = createRateLimiter({ max: 1, maxKeys: 3, now: c.now });
     rl.isLimited("a"); rl.isLimited("b"); rl.isLimited("c");
-    expect(rl.isLimited("new")).toBe(true);
+    // table full: an untracked caller is let through (per-uid and global caps still apply) and is not stored
+    for (let i = 0; i < 100; i++) expect(rl.isLimited(`new${i}`)).toBe(false);
     expect(rl.size()).toBe(3);
-    expect(rl.isLimited("a")).toBe(false);
+    // tracked keys keep being limited
+    expect(rl.isLimited("a")).toBe(true);
     c.advance(61_000);
-    expect(rl.isLimited("new")).toBe(false);
+    expect(rl.isLimited("new0")).toBe(false);
+    expect(rl.isLimited("new0")).toBe(true);
   });
 });

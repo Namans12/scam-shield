@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import QRCode from "qrcode";
 import type { GeminiVerdict, LinkScan } from "@scam-shield/shared";
-import { createApp, MAX_AUDIO_BYTES, MAX_IMAGE_BYTES, verhoeffValid } from "./app";
+import { createApp, MAX_AUDIO_BYTES, MAX_IMAGE_BYTES, UploadNotFoundError, verhoeffValid } from "./app";
 import type { AppDeps, AuthUser } from "./app";
 import { AnalysisError } from "./gemini";
 import type { AnalyzeInput, VerdictModel } from "./gemini";
@@ -30,7 +30,7 @@ interface Ctx {
   deps: AppDeps;
   store: MemoryStore;
   analyze: ReturnType<typeof vi.fn<(i: AnalyzeInput) => Promise<GeminiVerdict>>>;
-  scan: ReturnType<typeof vi.fn<(u: string) => Promise<LinkScan>>>;
+  scan: ReturnType<typeof vi.fn<(u: string, signal?: AbortSignal) => Promise<LinkScan>>>;
   uploads: Map<string, { bytes: Buffer; mimeType: string; size?: number }>;
   saveScreenshot: ReturnType<typeof vi.fn<(uid: string, id: string, jpeg: Buffer) => Promise<string>>>;
   copyEvidence: ReturnType<typeof vi.fn<(p: string, r: string) => Promise<void>>>;
@@ -41,7 +41,7 @@ function setup(over: Partial<AppDeps> = {}): Ctx {
   const store = new MemoryStore({ now: () => NOW });
   const analyze = vi.fn<(i: AnalyzeInput) => Promise<GeminiVerdict>>(async () => verdict());
   const model: VerdictModel = { analyze };
-  const scan = vi.fn<(u: string) => Promise<LinkScan>>(async (u) => ({ requestedUrl: u, redirects: [], title: "Page", httpStatus: 200 }));
+  const scan = vi.fn<(u: string, signal?: AbortSignal) => Promise<LinkScan>>(async (u) => ({ requestedUrl: u, redirects: [], title: "Page", httpStatus: 200 }));
   const uploads = new Map<string, { bytes: Buffer; mimeType: string; size?: number }>();
   const saveScreenshot = vi.fn<(uid: string, id: string, jpeg: Buffer) => Promise<string>>(async (uid, id) => `screenshots/${uid}/${id}.jpg`);
   const copyEvidence = vi.fn<(p: string, r: string) => Promise<void>>(async () => {});
@@ -54,7 +54,7 @@ function setup(over: Partial<AppDeps> = {}): Ctx {
     },
     readUpload: async (path) => {
       const u = uploads.get(path);
-      if (!u) throw new Error("missing");
+      if (!u) throw new UploadNotFoundError();
       return { bytes: u.bytes, gcsUri: `gs://bucket/${path}`, mimeType: u.mimeType, size: u.size ?? u.bytes.length };
     },
     saveScreenshot, copyEvidence,
@@ -139,7 +139,7 @@ describe("POST /api/check: validation and limits", () => {
     const c = setup();
     const res = await check(c, { url: "bnb-kyc-update.web.app/login", lang: "en" });
     expect(res.status).toBe(200);
-    expect(c.scan).toHaveBeenCalledWith("https://bnb-kyc-update.web.app/login");
+    expect(c.scan).toHaveBeenCalledWith("https://bnb-kyc-update.web.app/login", expect.any(AbortSignal));
   });
 
   it("returns 403 not_your_upload for storagePath uploads/other-uid/x.png", async () => {
@@ -238,18 +238,48 @@ describe("POST /api/check: pipeline", () => {
     expect(c.analyze.mock.calls[0][0].hits).toHaveLength(1);
   });
 
-  it("reconciles a no_signs verdict raised by a hard signal so the UI never says 'no signs' for a scam", async () => {
+  it("replaces a no_signs verdict raised by a reported entity with a localized reported note, flag and next step", async () => {
     const c = setup();
     c.store.putEntity(`phone:${SCAMMER}`, entityDoc(1));
-    const res = await check(c, { text: `call ${SCAMMER}`, lang: "en" });
-    const body = await res.json();
+    const body = await (await check(c, { text: `call ${SCAMMER}`, lang: "en" })).json();
     expect(body.verdict).toBe("suspicious");
     expect(body.hardSignals).toEqual(["reported_entity"]);
     expect(body.scam_type).toBe("other");
-    expect(body.summary.startsWith("This number/ID/link has been reported before.")).toBe(true);
+    expect(body.summary).toBe("This number/ID/link has been reported to Scam Shield before.");
+    expect(body.summary).not.toMatch(/no signs/i);
+    expect(body.red_flags).toHaveLength(1);
+    expect(body.red_flags[0].evidence).toBe("+91 70XXXXX111 reported 1 time");
+    expect(body.next_steps[0]).toBe("Do not pay or share any OTP/PIN. Call 1930 if you've lost money.");
+
+    c.store.putEntity(`phone:${SCAMMER}`, entityDoc(3));
+    const multi = await (await check(c, { text: `call ${SCAMMER}`, lang: "en" })).json();
+    expect(multi.verdict).toBe("scam");
+    expect(multi.summary).toBe("This number/ID/link has been reported to Scam Shield before.");
+    expect(multi.red_flags[0].evidence).toBe("+91 70XXXXX111 reported 3 times");
 
     const hi = await (await check(c, { text: `call ${SCAMMER}`, lang: "hi" })).json();
-    expect(hi.summary).toMatch(/^इस नंबर\/आईडी\/लिंक की पहले भी शिकायत/);
+    expect(hi.summary.startsWith("इस नंबर/आईडी/लिंक की Scam Shield पर पहले भी शिकायत")).toBe(true);
+    expect(hi.summary).not.toMatch(/No signs/i);
+    expect(hi.red_flags[0].flag).toMatch(/[ऀ-ॿ]/);
+    expect(hi.next_steps[0]).toContain("1930");
+    expect(hi.next_steps[0]).toMatch(/[ऀ-ॿ]/);
+  });
+
+  it("replaces a no_signs verdict raised by the QR signal with the pay-QR note, payee flag and next step", async () => {
+    const c = setup();
+    c.uploads.set("uploads/u1/qr.png", { bytes: await QRCode.toBuffer(UPI_URI, { width: 400 }), mimeType: "image/png" });
+    const body = await (await check(c, { storagePath: "uploads/u1/qr.png", text: "Scan to receive your refund", lang: "en" })).json();
+    expect(body.verdict).toBe("scam");
+    expect(body.scam_type).toBe("qr_receive_scam");
+    expect(body.summary).toBe("This QR asks you to PAY money, but the message says you will receive it.");
+    expect(body.summary).not.toMatch(/no signs/i);
+    expect(body.red_flags[0].evidence).toBe("Payee bnbreward.cashback@ybl, amount 5000");
+    expect(body.next_steps[0]).toBe("Do not pay or share any OTP/PIN. Call 1930 if you've lost money.");
+
+    const hi = await (await check(c, { storagePath: "uploads/u1/qr.png", text: "Scan to receive your refund", lang: "hi" })).json();
+    expect(hi.summary).toMatch(/^यह QR आपसे पैसे भेजने/);
+    expect(hi.red_flags[0].evidence).toContain("bnbreward.cashback@ybl");
+    expect(hi.red_flags[0].evidence).toContain("5000");
   });
 
   it("does not touch the scam_type or summary when the model already flagged it", async () => {
@@ -292,9 +322,9 @@ describe("POST /api/check: pipeline", () => {
   it("scans the explicit url, else the first url in the text, in parallel with the scam-list lookup", async () => {
     const c = setup();
     await check(c, { url: "https://explicit.example/a", text: "see https://other.example/b", lang: "en" });
-    expect(c.scan).toHaveBeenLastCalledWith("https://explicit.example/a");
+    expect(c.scan).toHaveBeenLastCalledWith("https://explicit.example/a", expect.any(AbortSignal));
     await check(c, { text: "verify at https://first.example/x or https://second.example/y", lang: "en" });
-    expect(c.scan).toHaveBeenLastCalledWith("https://first.example/x");
+    expect(c.scan).toHaveBeenLastCalledWith("https://first.example/x", expect.any(AbortSignal));
     c.scan.mockClear();
     await check(c, { text: "no links here", lang: "en" });
     expect(c.scan).not.toHaveBeenCalled();
@@ -632,5 +662,180 @@ describe("POST /api/report", () => {
     const { id } = await checked(c);
     const body = await (await report(c, { checkId: id }, { token: "google:g1" })).json();
     expect(Object.keys(body).sort()).toEqual(["entityKeys", "reportId"]);
+  });
+});
+
+describe("usage accounting", () => {
+  const probe = (c: Ctx) => c.store.bumpUsage("probe", "2026-10-16");
+
+  it("requests rejected by the per-uid daily limit do not consume the global budget", async () => {
+    const c = setup({ limits: { perUidPerDay: 3, globalPerDay: 3000, perIpPerMinute: 1000 } });
+    for (let i = 0; i < 8; i++) await check(c, { text: `hello ${i}`, lang: "en" });
+    const p = await probe(c);
+    expect(p.globalCount).toBe(4); // 3 allowed checks + this probe; the 5 rejected ones did not count
+  });
+
+  it("passes the per-uid limit to bumpUsage", async () => {
+    const c = setup();
+    const bump = vi.spyOn(c.store, "bumpUsage");
+    await check(c, { text: "hello", lang: "en" });
+    expect(bump).toHaveBeenCalledWith("u1", "2026-10-16", 30);
+  });
+
+  it("does not consume quota for validation failures, missing or unsupported uploads", async () => {
+    const c = setup();
+    const bump = vi.spyOn(c.store, "bumpUsage");
+    c.uploads.set("uploads/u1/a.exe", { bytes: Buffer.from("MZ"), mimeType: "application/x-msdownload" });
+    c.uploads.set("uploads/u1/big.png", { bytes: Buffer.alloc(0), mimeType: "image/png", size: MAX_IMAGE_BYTES + 1 });
+    c.uploads.set("uploads/u1/notype.png", { bytes: Buffer.from("x"), mimeType: "" });
+    const bodies: Array<[Record<string, unknown>, number]> = [
+      [{ lang: "en" }, 400], [{ text: "a".repeat(5001), lang: "en" }, 400], [{ url: "javascript:x", lang: "en" }, 400],
+      [{ storagePath: "uploads/u1/nope.png", lang: "en" }, 400], [{ storagePath: "uploads/u1/a.exe", lang: "en" }, 400],
+      [{ storagePath: "uploads/u1/big.png", lang: "en" }, 400],
+      [{ storagePath: "uploads/u1/notype.png", mimeType: "image/png", lang: "en" }, 400],
+      [{ storagePath: "uploads/other/x.png", lang: "en" }, 403],
+    ];
+    for (const [body, status] of bodies) expect((await check(c, body)).status, JSON.stringify(body)).toBe(status);
+    expect(bump).not.toHaveBeenCalled();
+    expect(await probe(c)).toEqual({ uidCount: 1, globalCount: 1 });
+  });
+
+  it("downloads the upload only after the usage check (metadata first)", async () => {
+    const c = setup({ limits: { perUidPerDay: 1, globalPerDay: 3000, perIpPerMinute: 1000 } });
+    c.uploads.set("uploads/u1/a.png", { bytes: Buffer.from("x"), mimeType: "image/png" });
+    const read = vi.spyOn(c.deps, "readUpload");
+    await check(c, { text: "first", lang: "en" });
+    read.mockClear();
+    const res = await check(c, { storagePath: "uploads/u1/a.png", lang: "en" });
+    expect(res.status).toBe(429);
+    expect(read).toHaveBeenCalled();
+    expect(read.mock.calls.every((call) => call[1]?.metadataOnly === true)).toBe(true);
+  });
+
+  it("trusts only the stored contentType: empty means unsupported_type even when the client claims an image", async () => {
+    const c = setup();
+    c.uploads.set("uploads/u1/x", { bytes: Buffer.from("x"), mimeType: "" });
+    const res = await check(c, { storagePath: "uploads/u1/x", mimeType: "image/png", lang: "en" });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "unsupported_type" });
+  });
+
+  it("accepts exactly the spec MIME types", async () => {
+    const c = setup();
+    const ok = ["image/png", "image/jpeg", "image/webp", "audio/mpeg", "audio/mp4", "audio/aac", "audio/ogg", "audio/wav", "audio/webm"];
+    const bad = ["audio/mp3", "audio/x-wav", "audio/wave", "audio/x-m4a", "audio/m4a", "audio/flac", "image/gif", "image/heic"];
+    const p = (m: string) => `uploads/u1/f-${m.replace("/", "_")}`;
+    for (const m of [...ok, ...bad]) c.uploads.set(p(m), { bytes: Buffer.from("x"), mimeType: m });
+    for (const m of ok) expect((await check(c, { storagePath: p(m), lang: "en" })).status, m).toBe(200);
+    for (const m of bad) expect((await check(c, { storagePath: p(m), lang: "en" })).status, m).toBe(400);
+  });
+
+  it("allows images up to 10 MB and audio up to 15 MB", () => {
+    expect(MAX_IMAGE_BYTES).toBe(10 * 1024 * 1024);
+    expect(MAX_AUDIO_BYTES).toBe(15 * 1024 * 1024);
+  });
+
+  it("maps unexpected readUpload failures to 502 internal_error without consuming quota", async () => {
+    const c = setup();
+    const bump = vi.spyOn(c.store, "bumpUsage");
+    vi.spyOn(c.deps, "readUpload").mockRejectedValue(new Error("storage exploded at /srv/x"));
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await check(c, { storagePath: "uploads/u1/a.png", lang: "en" });
+    expect(res.status).toBe(502);
+    expect(await res.text()).toBe('{"error":"internal_error"}');
+    expect(bump).not.toHaveBeenCalled();
+    expect(JSON.stringify(err.mock.calls)).not.toContain("exploded");
+    err.mockRestore();
+  });
+
+  it("passes an abort signal to the scanner that fires when the check times out", async () => {
+    const c = setup({ checkTimeoutMs: 30 });
+    let seen: AbortSignal | undefined;
+    c.scan.mockImplementation(async (u, signal) => { seen = signal; return { requestedUrl: u, redirects: [] }; });
+    c.analyze.mockImplementation(() => new Promise(() => {}));
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await check(c, { url: "https://a.example", lang: "en" });
+    expect(res.status).toBe(502);
+    expect(seen).toBeInstanceOf(AbortSignal);
+    expect(seen!.aborted).toBe(true);
+    err.mockRestore();
+  });
+});
+
+describe("rate limiting by client ip", () => {
+  const limits = { perUidPerDay: 1000, globalPerDay: 100000, perIpPerMinute: 2 };
+
+  it("uses the TRUSTED_PROXY_HOPS-th entry (default 2) from the right, so a spoofed first entry cannot dodge the limit", async () => {
+    const c = setup({ limits });
+    const via = (spoof: string) => `${spoof}, 198.51.100.7, 35.191.0.1`;
+    expect((await check(c, { text: "a", lang: "en" }, { ip: via("1.1.1.1") })).status).toBe(200);
+    expect((await check(c, { text: "a", lang: "en" }, { ip: via("2.2.2.2") })).status).toBe(200);
+    expect((await check(c, { text: "a", lang: "en" }, { ip: via("3.3.3.3") })).status).toBe(429);
+    // a different real client is unaffected
+    expect((await check(c, { text: "a", lang: "en" }, { ip: "9.9.9.9, 198.51.100.8, 35.191.0.1" })).status).toBe(200);
+  });
+
+  it("honours a configured hop count and falls back to the first entry when there are fewer", async () => {
+    const c = setup({ limits, trustedProxyHops: 1 });
+    expect((await check(c, { text: "a", lang: "en" }, { ip: "1.1.1.1, 10.0.0.1" })).status).toBe(200);
+    expect((await check(c, { text: "a", lang: "en" }, { ip: "2.2.2.2, 10.0.0.1" })).status).toBe(200);
+    expect((await check(c, { text: "a", lang: "en" }, { ip: "3.3.3.3, 10.0.0.1" })).status).toBe(429);
+    const d = setup({ limits });
+    for (let i = 0; i < 2; i++) expect((await check(d, { text: "a", lang: "en" }, { ip: "5.5.5.5" })).status).toBe(200);
+    expect((await check(d, { text: "a", lang: "en" }, { ip: "5.5.5.5" })).status).toBe(429);
+  });
+
+  it("gives /api/report its own looser limiter (60/min by default)", async () => {
+    const c = setup({ limits });
+    const ip = "7.7.7.7";
+    for (let i = 0; i < 2; i++) expect((await check(c, { text: "a", lang: "en" }, { ip })).status).toBe(200);
+    expect((await check(c, { text: "a", lang: "en" }, { ip })).status).toBe(429);
+    // report calls from the same ip are not blocked by the exhausted check bucket
+    for (let i = 0; i < 60; i++) expect((await report(c, { checkId: "nope" }, { ip, token: "google:g1" })).status).toBe(404);
+    expect((await report(c, { checkId: "nope" }, { ip, token: "google:g1" })).status).toBe(429);
+  });
+});
+
+describe("auth header", () => {
+  it("accepts a lowercase or oddly spaced bearer scheme and rejects other schemes", async () => {
+    const c = setup();
+    const call = (h: string) => c.app.request("/api/check", {
+      method: "POST", headers: { authorization: h, "content-type": "application/json", "x-forwarded-for": `10.1.0.${++ipCounter}` },
+      body: JSON.stringify({ text: "hi", lang: "en" }),
+    });
+    for (const h of ["bearer anon:u1", "BEARER   anon:u1", "Bearer anon:u1"]) expect((await call(h)).status, h).toBe(200);
+    for (const h of ["Basic anon:u1", "Bearer", "anon:u1", "Bearer a b"]) expect((await call(h)).status, h).toBe(401);
+  });
+});
+
+describe("stored check hygiene", () => {
+  it("never stores Gemini's raw entities: filtered to the final keys, no Aadhaar or card numbers anywhere", async () => {
+    const c = setup();
+    c.analyze.mockResolvedValue(verdict({
+      summary: "Scam. Aadhaar 2345 6789 0124 and card 4111 1111 1111 1111 were shown.",
+      entities: {
+        phones: ["70000 22222"], upi_ids: ["xyz@ybl"], urls: ["https://scam-site.example/login?token=secret"],
+        bank_accounts: ["2345 6789 0124", "4111 1111 1111 1111", "123456789012"], brands_impersonated: ["BNB"],
+      },
+    }));
+    const body = await (await check(c, { text: "hello", lang: "en" })).json();
+    const stored = (await c.store.getCheck(body.id)) as StoredCheck;
+    const raw = JSON.stringify(stored);
+    for (const s of ["234567890124", "2345 6789 0124", "2345-6789-0124", "4111111111111111", "4111 1111 1111 1111", "token=secret", "70000 22222"]) expect(raw, s).not.toContain(s);
+    expect(stored.entities.bank_accounts).toEqual(["123456789012"]);
+    expect(stored.entities.phones).toEqual(["+917000022222"]);
+    expect(stored.entities.upi_ids).toEqual(["xyz@ybl"]);
+    expect(stored.entities.urls).toEqual(["scam-site.example"]);
+    expect(stored.entities.brands_impersonated).toEqual(["BNB"]);
+    // the HTTP response still shows the user what the model saw
+    expect(body.entities.phones).toEqual(["70000 22222"]);
+  });
+
+  it("stores empty entity lists when no identifiers were found", async () => {
+    const c = setup();
+    c.analyze.mockResolvedValue(verdict({ entities: { phones: [], upi_ids: [], urls: [], bank_accounts: ["4111 1111 1111 1111"], brands_impersonated: [] } }));
+    const body = await (await check(c, { text: "hello", lang: "en" })).json();
+    const stored = (await c.store.getCheck(body.id)) as StoredCheck;
+    expect(stored.entities).toEqual({ phones: [], upi_ids: [], urls: [], bank_accounts: [], brands_impersonated: [] });
   });
 });

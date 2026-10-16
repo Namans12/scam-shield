@@ -197,6 +197,21 @@ function storeSuite(name: string, make: () => Promise<Inspectable> | Inspectable
       expect((await s.bumpUsage(`a${p}`, "2030-02-01-" + p)).uidCount).toBe(1); // new day resets
     });
 
+    it("bumpUsage only advances the global counter while the uid is within its limit", async () => {
+      setup();
+      const d = day();
+      const u = "lim" + p;
+      expect(await s.bumpUsage(u, d, 2)).toEqual({ uidCount: 1, globalCount: 1 });
+      expect(await s.bumpUsage(u, d, 2)).toEqual({ uidCount: 2, globalCount: 2 });
+      // over the uid limit: uid keeps counting, the shared budget does not move
+      expect(await s.bumpUsage(u, d, 2)).toEqual({ uidCount: 3, globalCount: 2 });
+      expect(await s.bumpUsage(u, d, 2)).toEqual({ uidCount: 4, globalCount: 2 });
+      // another user still sees (and advances) the untouched global count
+      expect(await s.bumpUsage("other" + p, d, 2)).toEqual({ uidCount: 1, globalCount: 3 });
+      // without a limit it behaves as before
+      expect((await s.bumpUsage(u, d)).globalCount).toBe(4);
+    });
+
     it("saveCheck/getCheck round-trip, tolerate undefined fields and odd ids, null when missing", async () => {
       setup();
       const id = "chk/" + p;

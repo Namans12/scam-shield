@@ -6,7 +6,8 @@
 // A warm instance can live for hours and every distinct key adds an entry, and
 // X-Forwarded-For is attacker-influenced, so a caller can mint a new key per request.
 // Two bounds because they fail differently: the sweep keeps steady-state memory
-// proportional to *active* keys, and the hard cap holds under a deliberate flood.
+// proportional to *active* keys, and the hard cap holds under a deliberate flood (when full,
+// new keys are not tracked and are allowed: fail OPEN, since this is only a best-effort limiter).
 
 export interface RateLimiterOptions {
   /** Requests allowed per window per key. */
@@ -49,10 +50,11 @@ export function createRateLimiter(opts: RateLimiterOptions): RateLimiter {
       sweep(now);
       const b = buckets.get(key);
       if (!b || now - b.windowStart > windowMs) {
-        // Only a *new* key can hit the cap; an existing key refreshing its window is never
-        // turned away for capacity. When a flood of unique keys fills the table, fail closed:
-        // an untracked caller is treated as limited, so "fill the table, then attack" fails.
-        if (!b && buckets.size >= maxKeys) return true;
+        // Table full: an untracked caller is let through WITHOUT being tracked. The limiter is
+        // best-effort; failing closed here would let an attacker who floods the table with spoofed
+        // keys lock every new honest client out. The per-uid and global daily caps still bound cost,
+        // and memory stays bounded because nothing new is stored.
+        if (!b && buckets.size >= maxKeys) return false;
         buckets.set(key, { count: 1, windowStart: now });
         return false;
       }
