@@ -73,3 +73,21 @@ describe("extractEntities account heuristics", () => {
     expect(extractEntities("account card 4111 1111 1111 1111").bankAccounts).toEqual([]);
   });
 });
+
+describe("extractEntities hardening", () => {
+  it("does not treat a 12-digit number after an Aadhaar label as a bank account", () => {
+    expect(extractEntities("aadhaar no 123456789012 account verify").bankAccounts).toEqual([]);
+    expect(extractEntities("आधार 123456789012 खाता").bankAccounts).toEqual([]);
+  });
+  it("finds a UPI id followed by punctuation", () => {
+    expect(extractEntities("pay to ab@ybl, thanks").upiIds).toEqual(["ab@ybl"]);
+    expect(extractEntities("pay to ab@ybl.").upiIds).toEqual(["ab@ybl"]);
+  });
+  it("is fast on long adversarial input", () => {
+    for (const s of ["a".repeat(5000), "a.".repeat(2500), "1 ".repeat(2500), "1".repeat(5000), "a@".repeat(2500), "http://" + "a".repeat(5000)]) {
+      const t = performance.now();
+      extractEntities(s);
+      expect(performance.now() - t).toBeLessThan(200);
+    }
+  });
+});

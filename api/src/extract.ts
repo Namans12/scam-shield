@@ -1,5 +1,8 @@
 import { parse, getHostname } from "tldts";
 import type { EntityKey } from "@scam-shield/shared";
+import { AADHAAR_SEP_RE, CARD_RE, luhnValid, toAsciiDigits } from "./patterns";
+
+export { luhnValid, toAsciiDigits };
 
 export interface ExtractedEntities {
   phones: string[];
@@ -7,27 +10,6 @@ export interface ExtractedEntities {
   urls: string[];
   domains: string[];
   bankAccounts: string[];
-}
-
-/** Convert Devanagari digits (U+0966-U+096F) to ASCII digits. Length-preserving. */
-export function toAsciiDigits(text: string): string {
-  return text.replace(/[०-९]/g, (c) => String(c.charCodeAt(0) - 0x0966));
-}
-
-/** Luhn checksum over a string of digits. */
-export function luhnValid(digits: string): boolean {
-  let sum = 0;
-  let dbl = false;
-  for (let i = digits.length - 1; i >= 0; i--) {
-    let d = digits.charCodeAt(i) - 48;
-    if (dbl) {
-      d *= 2;
-      if (d > 9) d -= 9;
-    }
-    sum += d;
-    dbl = !dbl;
-  }
-  return digits.length > 0 && sum % 10 === 0;
 }
 
 /** Indian mobile -> "+91XXXXXXXXXX"; 1800/1860 toll-free -> digits only; otherwise null. */
@@ -49,11 +31,9 @@ const URL_RE = /\bhttps?:\/\/[^\s<>"'`()[\]{}]+/gi;
 const UPI_RE = /(?<![\w.\-@])[\w.\-]{2,256}@[a-zA-Z]{2,64}(?!\w|\.\w)/g;
 const AT_TOKEN_RE = /[^\s@]*@[^\s]*/g;
 const PHONE_RE = /(?<![\w@])(?:\+\s?91[\s-]?|91[\s-]|0)?[6-9](?:[\s-]?\d){9}(?![\w@])|(?<![\w@])1(?:800|860)(?:[\s-]?\d){6,7}(?![\w@])/g;
-const CARD_RE = /(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)/g;
-// Separator-delimited only: a contiguous 12-digit run may legitimately be an account number.
-const AADHAAR_RE = /(?<!\d[ -]?)\d{4}[ -]\d{4}[ -]\d{4}(?![ -]?\d)/g;
 const ACCT_RE = /(?<!\d)\d{9,18}(?!\d)/g;
 const ACCT_CTX = /a\/c|account|acct|a\.c|खाता/i;
+const AADHAAR_CTX = /aadhaar|aadhar|आधार|uid/i;
 const NOT_ACCT_CTX = /(?:utr|ref|txn|rrn|transaction|order|trans)\W{0,4}(?:no|id|number)?\W{0,4}$/i;
 const BARE_DOMAIN_RE = /(?<![\w@.\-/])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?![\w@-])(?:\/[^\s<>"'`]*)?/gi;
 
@@ -105,7 +85,7 @@ export function extractEntities(input: string): ExtractedEntities {
 
   // 4. Cards (Luhn-valid) and Aadhaar-shaped numbers are never bank accounts.
   text = text.replace(CARD_RE, (m) => (luhnValid(m.replace(/\D/g, "")) ? blank(m) : m));
-  text = text.replace(AADHAAR_RE, blank);
+  text = text.replace(AADHAAR_SEP_RE, blank);
 
   // 5. Bank accounts: 9-18 digit runs near an account keyword.
   for (const m of text.matchAll(ACCT_RE)) {
@@ -114,6 +94,7 @@ export function extractEntities(input: string): ExtractedEntities {
     const before = text.slice(Math.max(0, start - 30), start);
     const after = text.slice(end, end + 30);
     if (!ACCT_CTX.test(before) && !ACCT_CTX.test(after)) continue;
+    if (m[0].length === 12 && AADHAAR_CTX.test(text.slice(Math.max(0, start - 20), start))) continue;
     if (NOT_ACCT_CTX.test(text.slice(Math.max(0, start - 14), start))) continue;
     bankAccounts.push(m[0]);
   }
