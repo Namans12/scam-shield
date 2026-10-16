@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.superpowers/
+.env
+.env.*
+!.env.example
+!web/.env.production
+eval/results/*.raw.json
