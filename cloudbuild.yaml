@@ -1,0 +1,15 @@
+# Builds one service image from the REPO ROOT context (no local Docker needed):
+#   gcloud builds submit . --config cloudbuild.yaml --substitutions=_SVC=api,_TAG=<git short sha>
+# Image: asia-south1-docker.pkg.dev/$PROJECT_ID/scam-shield/$_SVC:$_TAG   (scripts/deploy.sh runs api and linkscan in parallel)
+substitutions:
+  _SVC: api
+  _REGION: asia-south1
+  _REPO: scam-shield
+  _TAG: latest
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "${_SVC}/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SVC}:${_TAG}", "."]
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SVC}:${_TAG}"
+options:
+  logging: CLOUD_LOGGING_ONLY

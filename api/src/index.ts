@@ -106,6 +106,7 @@ export function buildDeps(env: NodeJS.ProcessEnv = process.env): AppDeps {
     now: () => new Date(),
     limits: { ...DEFAULT_LIMITS },
     trustedProxyHops: parseHops(env.TRUSTED_PROXY_HOPS),
+    debugXff: parseBool(env.DEBUG_XFF, false),
   };
 }
 

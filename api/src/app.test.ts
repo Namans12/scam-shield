@@ -84,6 +84,14 @@ describe("GET /api/health", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
   });
+
+  it("only reports the X-Forwarded-For entry count when debugXff is on", async () => {
+    const h = { "x-forwarded-for": "1.2.3.4, 5.6.7.8, 9.9.9.9" };
+    expect(await (await setup().app.request("/api/health", { headers: h })).json()).toEqual({ ok: true });
+    const on = setup({ debugXff: true });
+    expect(await (await on.app.request("/api/health", { headers: h })).json()).toEqual({ ok: true, xff: 3, hops: 2 });
+    expect(await (await on.app.request("/api/health")).json()).toEqual({ ok: true, xff: 0, hops: 2 });
+  });
 });
 
 describe("POST /api/check: validation and limits", () => {

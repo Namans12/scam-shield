@@ -36,6 +36,8 @@ export interface AppDeps {
   limits: { perUidPerDay: number; globalPerDay: number; perIpPerMinute: number; /** default 60 */ perIpReportPerMinute?: number };
   /** Number of trusted proxies appended to X-Forwarded-For (default 2: Firebase Hosting + Cloud Run front end). */
   trustedProxyHops?: number;
+  /** Deployment diagnostic (default off): /api/health also reports how many X-Forwarded-For entries arrived. Never logs addresses. */
+  debugXff?: boolean;
   /** Hard limit for one /api/check (default 45 000 ms). */
   checkTimeoutMs?: number;
 }
@@ -333,7 +335,11 @@ export function createApp(deps: AppDeps): Hono {
     }
   }
 
-  app.get("/api/health", (c) => c.json({ ok: true }));
+  app.get("/api/health", (c) => {
+    if (!deps.debugXff) return c.json({ ok: true });
+    const xff = (c.req.header("x-forwarded-for") ?? "").split(",").map((x) => x.trim()).filter(Boolean).length;
+    return c.json({ ok: true, xff, hops });
+  });
 
   app.post("/api/check", async (c) => {
     const user = await authenticate(c);

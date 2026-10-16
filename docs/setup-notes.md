@@ -28,3 +28,11 @@ Decision: `GEMINI_MODEL=gemini-3.8-flash`, `GEMINI_COMBINED_GROUNDING=true` (sin
 - Default Hosting site: `project-91260b43-6705-4176-b71` (`.web.app` / `.firebaseapp.com`).
 - Firebase Hosting → Cloud Run rewrites support `asia-south1` (checked against the Firebase docs 16 Oct), so `REGION_RUN=asia-south1`.
 - Google sign-in provider ENABLED by owner (verified via API 16 Oct).
+
+## Deploy pipeline (Task 10, 16 Oct)
+
+- `scripts/deploy.sh [api|linkscan|web|rules|all]`: images are built with Cloud Build (`cloudbuild.yaml`, repo root as context, `_SVC=api|linkscan`), tagged with the git short sha (`-dirty` suffix when the image inputs have uncommitted changes), then `gcloud run deploy`. `scripts/smoke.sh <base-url>` is the post-deploy check. Env flags: `LINKSCAN_NO_SANDBOX=1` (linkscan), `DEBUG_XFF=1` (api: `/api/health` also returns `xff` = number of X-Forwarded-For entries received and `hops`; default off, never logs addresses).
+- Rules, indexes and the 7-day `uploads/` lifecycle were deployed 16 Oct (`scripts/deploy.sh rules`): Firestore `checks` owner-read, `stats` public read, everything else denied; Storage `uploads/{uid}` owner create/read/delete (size < 15 MB, image/audio types only), `linkscans/{uid}` owner read, everything else denied. NOTE: the API actually stores screenshots under `screenshots/{uid}/...`, which the spec'd rules deny to clients; the web app does not read them from Storage, so this is harmless.
+- Services: `scam-shield-api` (public, gen2, 1 CPU / 1 GiB, concurrency 20, min 1 / max 5, runs as the default compute SA) and `scam-shield-linkscan` (private, gen2, 2 CPU / 2 GiB, concurrency 4, min 0 / max 3, dedicated zero-role SA `linkscan-sa@project-91260b43-6705-4176-b71.iam.gserviceaccount.com`, no VPC; `run.invoker` on that service granted to the API's SA).
+- The API image bundles `api/src/index.ts` with esbuild; `@scam-shield/shared` is inlined with `--alias:@scam-shield/shared=./shared/src/index.ts`, everything else stays external and comes from `npm ci --omit=dev -w api`.
+- Cloud Build runs as the default compute SA, which needs `roles/artifactregistry.writer` (on the `scam-shield` repo) and `roles/logging.logWriter` to push images / write build logs. Both are missing: see the Task 10 report. Status of the first deploy is recorded below once images can be pushed.

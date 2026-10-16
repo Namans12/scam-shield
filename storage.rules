@@ -1,0 +1,21 @@
+rules_version = '2';
+// Clients upload evidence to uploads/{their uid}/ only; the API (Admin SDK) does everything else.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /uploads/{uid}/{file} {
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 15 * 1024 * 1024
+        && (request.resource.contentType.matches('image/(png|jpeg|webp)')
+            || request.resource.contentType.matches('audio/(mpeg|mp4|aac|ogg|wav|webm)'));
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow update: if false;
+    }
+    match /linkscans/{uid}/{file} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
