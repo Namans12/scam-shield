@@ -9,6 +9,7 @@ import { RedFlagList } from "@/components/RedFlagList";
 import { EntityHits } from "@/components/EntityHits";
 import { LinkScanCard } from "@/components/LinkScanCard";
 import { Disclaimer } from "@/components/Disclaimer";
+import { QrCard } from "@/components/QrCard";
 import { scamTypeKey, useLang, useT } from "@/i18n";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -79,6 +80,15 @@ export default function ResultPage() {
         </p>
       </Section>
 
+      {result.inputKind === "audio" && result.transcript && (
+        <details className="mt-6 rounded-xl border border-border bg-card p-4">
+          <summary className="cursor-pointer text-base font-semibold">{t("result.transcript")}</summary>
+          <p lang={result.language} className="mt-3 text-base leading-relaxed break-anywhere whitespace-pre-wrap">
+            {result.transcript}
+          </p>
+        </details>
+      )}
+
       <Section title={t("result.redFlags")}>
         <RedFlagList flags={result.red_flags} lang={result.language} />
       </Section>
@@ -109,10 +119,7 @@ export default function ResultPage() {
 
       {result.qr && (
         <Section title={t("qr.title")}>
-          <div className="rounded-xl border border-border bg-card p-4 text-base">
-            <p>{t("qr.found")}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{t("qr.soon")}</p>
-          </div>
+          <QrCard qr={result.qr} />
         </Section>
       )}
 

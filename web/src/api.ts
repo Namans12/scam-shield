@@ -96,6 +96,7 @@ const FRIENDLY = new Set([
   "bad_url",
   "unsupported_type",
   "file_too_large",
+  "upload_failed",
   "unauthorized",
   "network",
 ]);

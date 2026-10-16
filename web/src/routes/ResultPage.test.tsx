@@ -151,4 +151,89 @@ describe("ResultPage", () => {
     expect(screen.getByText("7 बार रिपोर्ट किया गया")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "1930" })).toHaveAttribute("href", "tel:1930");
   });
+
+  describe("QR card", () => {
+    it("shows a UPI QR as a request to PAY, with the payee as plain text", () => {
+      const { container } = renderResult(
+        makeResult({
+          inputKind: "image",
+          qr: { raw: "upi://pay?pa=ravi.kumar@okbnb&pn=Ravi&am=4999&tn=refund", upi: { pa: "ravi.kumar@okbnb", pn: "Ravi", am: "4999", tn: "refund" } },
+        }),
+      );
+      expect(screen.getByText("This QR asks you to PAY")).toBeInTheDocument();
+      const vpa = screen.getByTestId("qr-payee");
+      expect(vpa).toHaveTextContent("ravi.kumar@okbnb");
+      expect(vpa.closest("a")).toBeNull();
+      expect(container.querySelector("a[href^='upi:']")).toBeNull();
+      expect(screen.getByText("Ravi")).toBeInTheDocument();
+      expect(screen.getByText("₹4999")).toBeInTheDocument();
+      expect(screen.getByText("refund")).toBeInTheDocument();
+      expect(screen.getByText(/You never need to scan a QR code to receive money/)).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /ravi/ })).toBeNull();
+    });
+
+    it("renders a script-like payee name and note as text", () => {
+      const evil = "<script>window.__pwned = true</script>";
+      const { container } = renderResult(
+        makeResult({ qr: { raw: "x", upi: { pa: "a@b", pn: evil, tn: "<img src=x onerror=alert(1)>" } } }),
+      );
+      expect(screen.getByText(evil)).toBeInTheDocument();
+      expect(container.querySelector("script")).toBeNull();
+      expect(container.querySelector("img")).toBeNull();
+      expect((window as unknown as { __pwned?: boolean }).__pwned).toBeUndefined();
+    });
+
+    it("leaves out the fields a UPI QR does not have", () => {
+      renderResult(makeResult({ qr: { raw: "x", upi: { pa: "a@b" } } }));
+      expect(screen.queryByText("Amount")).toBeNull();
+      expect(screen.queryByText("Note")).toBeNull();
+      expect(screen.queryByText("Payee name")).toBeNull();
+    });
+
+    it("shows other QR content as plain text, cut at 300 characters", () => {
+      const raw = "https://evil.example/" + "a".repeat(400);
+      const { container } = renderResult(makeResult({ qr: { raw } }));
+      expect(screen.getByText("This QR contains:")).toBeInTheDocument();
+      const shown = screen.getByTestId("qr-raw");
+      expect(shown.textContent!.length).toBeLessThanOrEqual(301);
+      expect(shown.textContent).toContain("https://evil.example/");
+      expect(shown.textContent!.endsWith("…")).toBe(true);
+      expect(shown.closest("a")).toBeNull();
+      expect(container.querySelector("a[href*='evil']")).toBeNull();
+      expect(screen.queryByText("This QR asks you to PAY")).toBeNull();
+    });
+
+    it("shows a short non-UPI QR in full without an ellipsis", () => {
+      renderResult(makeResult({ qr: { raw: "WIFI:S:cafe;T:WPA;P:pw;;" } }));
+      expect(screen.getByTestId("qr-raw")).toHaveTextContent("WIFI:S:cafe;T:WPA;P:pw;;");
+    });
+
+    it("shows no QR card when there is no QR", () => {
+      renderResult(makeResult());
+      expect(screen.queryByText("QR code")).toBeNull();
+    });
+  });
+
+  describe("voice note transcript", () => {
+    it("shows what was said in a collapsible block, as text in the result language", () => {
+      const evil = "<b>pay now</b> aapka account band ho jayega";
+      const { container } = renderResult(makeResult({ inputKind: "audio", transcript: evil, language: "hi" }));
+      const summary = screen.getByText("What was said");
+      expect(summary.closest("details")).not.toBeNull();
+      expect(summary.closest("details")).not.toHaveAttribute("open");
+      const body = screen.getByText(evil);
+      expect(body).toHaveAttribute("lang", "hi");
+      expect(container.querySelector("b")).toBeNull();
+    });
+
+    it("does not show the block for a text check", () => {
+      renderResult(makeResult({ inputKind: "text", transcript: "ignored" }));
+      expect(screen.queryByText("What was said")).toBeNull();
+    });
+
+    it("does not show an empty block for audio without a transcript", () => {
+      renderResult(makeResult({ inputKind: "audio" }));
+      expect(screen.queryByText("What was said")).toBeNull();
+    });
+  });
 });

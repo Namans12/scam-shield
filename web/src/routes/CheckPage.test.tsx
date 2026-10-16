@@ -7,10 +7,16 @@ import { setLang } from "@/i18n";
 import { makeResult } from "@/test/fixtures";
 
 const checkContent = vi.hoisted(() => vi.fn());
+const uploadForCheck = vi.hoisted(() => vi.fn());
 
 vi.mock("@/api", async () => {
   const actual = await vi.importActual<typeof import("@/api")>("@/api");
   return { ...actual, checkContent };
+});
+
+vi.mock("@/upload", async () => {
+  const actual = await vi.importActual<typeof import("@/upload")>("@/upload");
+  return { ...actual, uploadForCheck };
 });
 
 // Imported after the mock so ApiError is the real class.
@@ -35,6 +41,9 @@ function renderCheck() {
 
 beforeEach(() => {
   checkContent.mockReset();
+  uploadForCheck.mockReset();
+  Object.defineProperty(URL, "createObjectURL", { configurable: true, writable: true, value: (f: File) => `blob:${f.name}` });
+  Object.defineProperty(URL, "revokeObjectURL", { configurable: true, writable: true, value: () => {} });
   setLang("en");
 });
 
@@ -163,6 +172,116 @@ describe("CheckPage", () => {
     await user.type(screen.getByLabelText("The message"), "hello");
     await user.click(screen.getByRole("button", { name: "Check" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/Can't reach the server/);
+  });
+
+  describe("file uploads", () => {
+    const png = () => new File(["x"], "scan.png", { type: "image/png" });
+    const fileInput = () => screen.getByTestId("file-input") as HTMLInputElement;
+
+    it("lets you check with only a file attached, and disables Check again after removing it", async () => {
+      const user = userEvent.setup();
+      renderCheck();
+      const button = screen.getByRole("button", { name: "Check" });
+      expect(button).toBeDisabled();
+      await user.upload(fileInput(), png());
+      expect(button).toBeEnabled();
+      await user.click(screen.getByRole("button", { name: "Remove scan.png" }));
+      expect(button).toBeDisabled();
+    });
+
+    it("uploads first, then sends storagePath, mimeType and the typed text", async () => {
+      const user = userEvent.setup();
+      uploadForCheck.mockResolvedValue({ storagePath: "uploads/u1/abc.png", mimeType: "image/png" });
+      checkContent.mockResolvedValue(makeResult({ id: "q1" }));
+      renderCheck();
+      await user.type(screen.getByLabelText("The message"), "  scan to receive money  ");
+      await user.upload(fileInput(), png());
+      await user.click(screen.getByRole("button", { name: "Check" }));
+
+      expect(uploadForCheck).toHaveBeenCalledTimes(1);
+      expect(uploadForCheck.mock.calls[0]![0]).toBeInstanceOf(File);
+      expect(checkContent).toHaveBeenCalledWith({
+        storagePath: "uploads/u1/abc.png",
+        mimeType: "image/png",
+        text: "scan to receive money",
+        url: undefined,
+        lang: "en",
+      });
+      await waitFor(() => expect(screen.getByText(/result page \/result\/q1 q1/)).toBeInTheDocument());
+    });
+
+    it("shows upload progress in the live region and a progress bar", async () => {
+      const user = userEvent.setup();
+      let report: (f: number) => void = () => {};
+      uploadForCheck.mockImplementation((_f: File, onProgress?: (f: number) => void) => {
+        report = onProgress ?? (() => {});
+        return new Promise(() => {});
+      });
+      renderCheck();
+      await user.upload(fileInput(), png());
+      await user.click(screen.getByRole("button", { name: "Check" }));
+
+      expect(screen.getByRole("status")).toHaveTextContent("Uploading your file");
+      act(() => report(0.6));
+      expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "60");
+      expect(screen.getByRole("status")).toHaveTextContent("Uploading your file… 50%");
+      expect(checkContent).not.toHaveBeenCalled();
+      // One file only, and no changes while it is on its way.
+      expect(screen.getByRole("button", { name: "Remove scan.png" })).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("shows a friendly alert when the upload fails and keeps the file for a retry", async () => {
+      const user = userEvent.setup();
+      uploadForCheck.mockRejectedValue(new ApiError("upload_failed"));
+      renderCheck();
+      await user.upload(fileInput(), png());
+      await user.click(screen.getByRole("button", { name: "Check" }));
+
+      expect(await screen.findByText(/couldn't upload that file/)).toBeInTheDocument();
+      expect(checkContent).not.toHaveBeenCalled();
+      expect(screen.getByText("scan.png")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Check" })).toBeEnabled();
+    });
+
+    it("does not upload the same file twice when the check itself fails and is retried", async () => {
+      const user = userEvent.setup();
+      uploadForCheck.mockResolvedValue({ storagePath: "uploads/u1/abc.png", mimeType: "image/png" });
+      checkContent.mockRejectedValueOnce(new ApiError("analysis_failed", 502)).mockResolvedValueOnce(makeResult({ id: "r2" }));
+      renderCheck();
+      await user.upload(fileInput(), png());
+      await user.click(screen.getByRole("button", { name: "Check" }));
+      expect(await screen.findByText(/couldn't analyse/)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Check" }));
+      await waitFor(() => expect(screen.getByText(/result page \/result\/r2/)).toBeInTheDocument());
+      expect(uploadForCheck).toHaveBeenCalledTimes(1);
+      expect(checkContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("rejects a PDF right away under the drop zone and keeps Check disabled", () => {
+      renderCheck();
+      fireEvent.drop(screen.getByTestId("dropzone"), { dataTransfer: { files: [new File(["x"], "bill.pdf", { type: "application/pdf" })], types: ["Files"] } });
+      expect(screen.getByRole("alert")).toHaveTextContent("We can't read that type of file.");
+      expect(screen.getByRole("button", { name: "Check" })).toBeDisabled();
+    });
+
+    it("keeps only one file: a second one replaces the first", async () => {
+      const user = userEvent.setup();
+      renderCheck();
+      await user.upload(fileInput(), png());
+      await user.upload(fileInput(), new File(["a"], "note.ogg", { type: "audio/ogg" }));
+      expect(screen.queryByText("scan.png")).toBeNull();
+      expect(screen.getByText("note.ogg")).toBeInTheDocument();
+    });
+
+    it("keeps pasting text into the message box working", async () => {
+      const user = userEvent.setup();
+      renderCheck();
+      const box = screen.getByLabelText("The message");
+      await user.click(box);
+      await user.paste("Your KYC is expiring");
+      expect(box).toHaveValue("Your KYC is expiring");
+      expect(screen.queryByText("scan.png")).toBeNull();
+    });
   });
 
   it("sends lang hi when Hindi is selected", async () => {

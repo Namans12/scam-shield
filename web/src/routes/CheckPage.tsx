@@ -4,8 +4,10 @@ import { Loader2, ScanSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { DropZone } from "@/components/DropZone";
 import { checkContent, errorMessageKey } from "@/api";
 import { useLang, useT, type MessageKey } from "@/i18n";
+import { uploadForCheck, validateFile } from "@/upload";
 
 const MAX_TEXT = 5000;
 /** After this long we tell the person it is slower than usual (the API itself allows up to 45 s). */
@@ -18,10 +20,15 @@ export default function CheckPage() {
   const ids = useId();
   const [text, setText] = useState("");
   const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [phase, setPhase] = useState<"idle" | "uploading" | "checking">("idle");
+  const [progress, setProgress] = useState(0);
+  const loading = phase !== "idle";
   const [slow, setSlow] = useState(false);
   const [errorKey, setErrorKey] = useState<MessageKey | null>(null);
   const mounted = useRef(true);
+  // A file that is already uploaded is not uploaded again if only the check failed and is retried.
+  const uploaded = useRef<{ file: File; storagePath: string; mimeType: string } | null>(null);
 
   useEffect(() => {
     mounted.current = true;
@@ -39,24 +46,54 @@ export default function CheckPage() {
     return () => clearTimeout(timer);
   }, [loading]);
 
-  const hasInput = text.trim().length > 0 || url.trim().length > 0;
+  const hasInput = text.trim().length > 0 || url.trim().length > 0 || file !== null;
+
+  function onFileChange(next: File | null) {
+    uploaded.current = null;
+    setErrorKey(null);
+    setFile(next);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!hasInput || loading) return;
-    setLoading(true);
     setErrorKey(null);
+    setProgress(0);
     try {
+      let attachment: { storagePath: string; mimeType: string } | undefined;
+      if (file) {
+        const valid = validateFile(file);
+        if (!valid.ok) {
+          setErrorKey(`error.${valid.code}`);
+          return;
+        }
+        setPhase("uploading");
+        if (uploaded.current?.file === file) {
+          attachment = uploaded.current;
+        } else {
+          attachment = await uploadForCheck(file, (f) => {
+            if (mounted.current) setProgress(f);
+          });
+          uploaded.current = { file, ...attachment };
+        }
+        if (mounted.current) setProgress(1);
+      }
+      setPhase("checking");
       const result = await checkContent({
+        ...(attachment && { storagePath: attachment.storagePath, mimeType: attachment.mimeType }),
         text: text.trim() || undefined,
         url: url.trim() || undefined,
         lang,
       });
-      if (mounted.current) navigate(`/result/${result.id}`, { state: { result } });
+      if (mounted.current) {
+        setFile(null);
+        uploaded.current = null;
+        navigate(`/result/${result.id}`, { state: { result } });
+      }
     } catch (err) {
       if (mounted.current) setErrorKey(errorMessageKey(err));
     } finally {
-      if (mounted.current) setLoading(false);
+      if (mounted.current) setPhase("idle");
     }
   }
 
@@ -85,6 +122,8 @@ export default function CheckPage() {
             <p className="mt-1 text-sm font-medium text-suspicious-fg">{t("check.limitNote")}</p>
           )}
         </div>
+
+        <DropZone file={file} onFileChange={onFileChange} disabled={loading} progress={phase === "uploading" ? progress : null} />
 
         <div>
           <label htmlFor={`${ids}-url`} className="mb-2 block text-base font-semibold">
@@ -120,7 +159,11 @@ export default function CheckPage() {
           {loading && (
             <>
               <Loader2 className="animate-spin text-primary" size={24} aria-hidden />
-              {slow ? t("check.slow") : t("check.checking")}
+              {phase === "uploading"
+                ? t("check.uploading", { pct: Math.floor((progress * 100) / 25) * 25 })
+                : slow
+                  ? t("check.slow")
+                  : t("check.checking")}
             </>
           )}
         </p>
