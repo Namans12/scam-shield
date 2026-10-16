@@ -26,7 +26,8 @@ HOW TO JUDGE
 - risk_score is 0-100 and must agree with the verdict: scam 70-100, suspicious 30-69, no_signs 0-29.
 - Choose the single best scam_type, or "none" when there are no signs.
 - Fill the entities fields with phone numbers, UPI IDs, URLs, bank account numbers and brands that appear in the input. Do not invent any. "brands_impersonated" lists only brands the content appears to be faking or pretending to be from; leave it empty when there are no signs of a scam.
-- If the input is audio, put a faithful transcript in "transcript". If it is an image, read the text in it first.
+- Quote "evidence" exactly as written or spoken in the input, in the input's own language and script (do not translate or transliterate the quote); everything else you write is in the answer language.
+- If the input is audio, put a faithful transcript in "transcript", in the language and script it was spoken in (Hinglish stays in Roman letters). If it is an image, read the text in it first.
 - next_steps must be short, concrete and actionable (for example: do not click, do not share the OTP, call the number printed on your bank card, report on cybercrime.gov.in or dial 1930).
 
 INDIAN CONTEXT

@@ -45,12 +45,12 @@ export default function AboutPage() {
         </Button>
         <ul className="mt-4 flex flex-col gap-2 text-lg">
           <li>
-            <a className="font-medium underline underline-offset-4" href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer">
+            <a className="inline-flex min-h-11 items-center font-medium underline underline-offset-4" href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer">
               {t("about.help.cybercrime")}
             </a>
           </li>
           <li>
-            <a className="font-medium underline underline-offset-4" href="https://sancharsaathi.gov.in" target="_blank" rel="noopener noreferrer">
+            <a className="inline-flex min-h-11 items-center font-medium underline underline-offset-4" href="https://sancharsaathi.gov.in" target="_blank" rel="noopener noreferrer">
               {t("about.help.chakshu")}
             </a>
           </li>
