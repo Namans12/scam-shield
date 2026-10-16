@@ -92,8 +92,8 @@ describe("redact: OTP in longer bank messages (round 2)", () => {
   const cases: [string, string][] = [
     ["OTP for txn of INR 2,500 at XYZ is 482913", "OTP for txn of INR 2,500 at XYZ is [otp]"],
     ["Your one time password, valid for 3 minutes, is 482913", "Your one time password, valid for 3 minutes, is [otp]"],
-    ["OTP for order 12345678 is 482913", "OTP for order 12345678 is [otp]"],
-    ["आपका ओटीपी order 12345678 है 482913", "आपका ओटीपी order 12345678 है [otp]"],
+    ["OTP for order 12345678 is 482913", "OTP for order [otp] is [otp]"],
+    ["आपका ओटीपी order 12345678 है 482913", "आपका ओटीपी order [otp] है [otp]"],
     ["Dear customer, your OTP for payment of Rs 1,250.50 to ABC Stores is 482913. Do not share.", "Dear customer, your OTP for payment of Rs 1,250.50 to ABC Stores is [otp]. Do not share."],
   ];
   for (const [input, expected] of cases) {
@@ -108,6 +108,47 @@ describe("redact: scaling", () => {
     for (const s of ["a".repeat(50000), "a@".repeat(25000), "1 ".repeat(25000), "1".repeat(50000), "OTP ".repeat(12500), "1-".repeat(25000)]) {
       const t = performance.now();
       redact(s, ["+919876543210", "ab@ybl"]);
+      expect(performance.now() - t).toBeLessThan(200);
+    }
+  });
+});
+
+describe("redact: redact every secret-looking number around a label (round 3)", () => {
+  const has = (s: string, ...nums: string[]) => nums.forEach((n) => expect(s).not.toContain(n));
+  it("OTP followed by a later reference after a colon", () => {
+    const out = redact("OTP 482913 for txn. Ref: 55667788", []);
+    expect(out).toBe("OTP [otp] for txn. Ref: [otp]");
+  });
+  it("OTP followed by card ending", () => {
+    const out = redact("OTP 482913 valid 10 min. Card ending: 4321", []);
+    has(out, "482913");
+    expect(out.startsWith("OTP [otp] valid 10 min.")).toBe(true);
+  });
+  it("OTP followed by an unkept phone", () => {
+    const out = redact("OTP 482913. Call: 98765 43210", []);
+    has(out, "482913");
+    expect(out.startsWith("OTP [otp]. Call:")).toBe(true);
+  });
+  it("number before the label with a later validity time", () => {
+    const out = redact("482913 is your OTP to login. Valid till 1530 hrs", []);
+    has(out, "482913");
+    expect(out.startsWith("[otp] is your OTP to login.")).toBe(true);
+  });
+  it("redacts both copies of the code", () => {
+    const out = redact("482913 is your verification code. Do not share it. Web code #482913", []);
+    has(out, "482913");
+    expect(out).toBe("[otp] is your verification code. Do not share it. Web code #[otp]");
+  });
+  it("keeps a kept phone near the label but redacts the OTP", () => {
+    expect(redact("OTP 482913 sent to +919876543210", ["+919876543210"])).toBe("OTP [otp] sent to +919876543210");
+  });
+  it("still leaves amounts alone", () => {
+    expect(redact("OTP 482913 for Rs 2,500 and INR 450.00 at XYZ", [])).toBe("OTP [otp] for Rs 2,500 and INR 450.00 at XYZ");
+  });
+  it("is fast with many labels and numbers", () => {
+    for (const s of ["OTP 12345 ".repeat(5000), "482913 OTP ".repeat(5000), "cvv 123 ".repeat(6000)]) {
+      const t = performance.now();
+      redact(s, ["+919876543210"]);
       expect(performance.now() - t).toBeLessThan(200);
     }
   });
