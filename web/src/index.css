@@ -1,0 +1,225 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Scam Shield theme: calm and trustworthy. Light first (off-white, deep navy
+   text, teal primary) with a dark scheme that follows the device setting.
+   Verdict colours come as a trio per verdict (bg / fg / solid) and every
+   bg+fg pair is at least WCAG AA (4.5:1) in both schemes. */
+:root {
+  color-scheme: light;
+
+  --background: #f6f8fa;
+  --foreground: #0e1a33;
+
+  --card: #ffffff;
+  --card-foreground: #0e1a33;
+  --card-hover: #eef3f7;
+
+  --popover: #ffffff;
+  --popover-foreground: #0e1a33;
+
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+
+  --secondary: #e9eef4;
+  --secondary-foreground: #1b2a47;
+
+  --muted: #e9eef4;
+  --muted-foreground: #4a5878;
+
+  --accent: #dff3f0;
+  --accent-foreground: #0b4f4a;
+
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+
+  --border: #cfd8e3;
+  --input: #74869f;
+  --ring: #0f766e;
+
+  /* Verdicts. bg = banner/chip background, fg = text on it, solid = meter/accent bar. */
+  --scam-bg: #fdeceb;
+  --scam-fg: #8a1410;
+  --scam-solid: #c62828;
+  --suspicious-bg: #fff3d1;
+  --suspicious-fg: #613b00;
+  --suspicious-solid: #b45309;
+  --nosigns-bg: #dff3f0;
+  --nosigns-fg: #0b4f4a;
+  --nosigns-solid: #0f766e;
+
+  --radius: 0.875rem;
+
+  --sidebar-w: 15rem;
+  --sidebar-w-mini: 4.5rem;
+  --topbar-h: 4rem;
+  --control-h: 2.75rem; /* 44px: minimum tap target */
+  --rail-item: 2.75rem;
+  --gutter: 1.5rem;
+
+  --dur-enter: 225ms;
+  --dur-exit: 195ms;
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --background: #0a1224;
+    --foreground: #e8edf6;
+
+    --card: #121c33;
+    --card-foreground: #e8edf6;
+    --card-hover: #1a2642;
+
+    --popover: #121c33;
+    --popover-foreground: #e8edf6;
+
+    --primary: #2dd4bf;
+    --primary-foreground: #04211d;
+
+    --secondary: #1b2846;
+    --secondary-foreground: #d3dcee;
+
+    --muted: #1b2846;
+    --muted-foreground: #a9b7d3;
+
+    --accent: #12403d;
+    --accent-foreground: #bff3ec;
+
+    --destructive: #f87171;
+    --destructive-foreground: #2a0705;
+
+    --border: #2a3857;
+    --input: #6f82a8;
+    --ring: #2dd4bf;
+
+    --scam-bg: #3d1517;
+    --scam-fg: #ffd9d6;
+    --scam-solid: #f87171;
+    --suspicious-bg: #3b2a08;
+    --suspicious-fg: #ffe3a6;
+    --suspicious-solid: #fbbf24;
+    --nosigns-bg: #0f3a37;
+    --nosigns-fg: #c4f4ee;
+    --nosigns-solid: #2dd4bf;
+  }
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-hover: var(--card-hover);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-scam-bg: var(--scam-bg);
+  --color-scam-fg: var(--scam-fg);
+  --color-scam: var(--scam-solid);
+  --color-suspicious-bg: var(--suspicious-bg);
+  --color-suspicious-fg: var(--suspicious-fg);
+  --color-suspicious: var(--suspicious-solid);
+  --color-nosigns-bg: var(--nosigns-bg);
+  --color-nosigns-fg: var(--nosigns-fg);
+  --color-nosigns: var(--nosigns-solid);
+
+  --font-sans: "Inter", "Noto Sans Devanagari", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --spacing-sidebar: var(--sidebar-w);
+  --spacing-rail: var(--sidebar-w-mini);
+  --spacing-topbar: var(--topbar-h);
+  --spacing-control: var(--control-h);
+  --spacing-rail-item: var(--rail-item);
+  --spacing-gutter: var(--gutter);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-size: 1rem; /* body text is never below 16px */
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+
+  svg {
+    vertical-align: middle;
+  }
+
+  button,
+  [role="button"],
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .shell-content {
+    transition: margin-left var(--shell-dur, var(--dur-enter)) var(--ease-emphasized);
+  }
+
+  @media (min-width: 768px) {
+    .shell-content {
+      margin-left: var(--shell-offset, var(--sidebar-w-mini));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shell-content {
+      transition: none;
+    }
+  }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bar {
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Wrap long unbroken strings (URLs, evidence quotes) instead of scrolling sideways. */
+  .break-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
