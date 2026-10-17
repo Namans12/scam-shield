@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils";
 // Every size is at least 44px tall: Scam Shield is used on phones, often by
 // people who are stressed and not used to small targets.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-lg text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-60 aria-disabled:opacity-60 aria-disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 rounded-lg text-base font-semibold transition-[background-color,box-shadow,transform] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-60 aria-disabled:opacity-60 aria-disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-[var(--primary-hover)] shadow-[var(--shadow-button)]",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border-2 border-input bg-card text-foreground hover:bg-secondary",
+        outline: "border border-input bg-card text-foreground hover:bg-secondary",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/70",
         ghost: "text-foreground hover:bg-secondary",
         link: "text-primary underline underline-offset-4 hover:no-underline",

@@ -1,8 +1,9 @@
 import { NavLink } from "react-router-dom";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
-import { Info, ScanSearch, TrendingUp, History, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Info, ScanSearch, TrendingUp, History, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ShieldMark } from "@/components/brand/ShieldMark";
+import { BrandLockup } from "@/components/brand/BrandLockup";
 import { useT, type MessageKey } from "@/i18n";
 import { useSidebar } from "./SidebarContext";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/", labelKey: "nav.check", icon: <ScanSearch size={22} />, end: true },
+  { to: "/check", labelKey: "nav.check", icon: <ScanSearch size={22} />, end: true },
   { to: "/trends", labelKey: "nav.trends", icon: <TrendingUp size={22} /> },
   { to: "/history", labelKey: "nav.history", icon: <History size={22} /> },
   { to: "/about", labelKey: "nav.about", icon: <Info size={22} /> },
@@ -80,12 +81,10 @@ function SidebarBody({
   const { toggle } = useSidebar();
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-topbar shrink-0 items-center gap-3 overflow-hidden border-b border-border px-4">
-        <span className="grid size-rail-item shrink-0 place-items-center">
-          <ShieldMark size={32} />
-        </span>
-        <span className="truncate text-lg font-bold tracking-tight text-foreground">{t("app.name")}</span>
+    <div className="app-sidebar flex h-full flex-col">
+      <div className="sidebar-brand flex h-topbar shrink-0 items-center overflow-hidden border-b border-border px-4">
+        {expanded ? <BrandLockup /> : <span className="grid size-rail-item shrink-0 place-items-center"><ShieldMark size={32} /></span>}
+        {onNavigate && <button type="button" onClick={onNavigate} aria-label={t("nav.close")} className="ml-auto grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"><X size={20} aria-hidden /></button>}
       </div>
 
       <nav aria-label={t("nav.label")} className="hide-scrollbar flex-1 overflow-y-auto overflow-x-hidden px-4 py-4">

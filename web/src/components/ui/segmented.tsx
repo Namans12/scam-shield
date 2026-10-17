@@ -84,6 +84,16 @@ export function Segmented<T extends string>({
             type="button"
             role="radio"
             aria-checked={active}
+            tabIndex={active ? 0 : -1}
+            onKeyDown={(event) => {
+              const direction = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
+              if (!direction && event.key !== "Home" && event.key !== "End") return;
+              event.preventDefault();
+              const next = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1 : (i + direction + options.length) % options.length;
+              const option = options[next];
+              if (option) onChange(option.id);
+              segmentRefs.current[next]?.focus();
+            }}
             aria-label={opt.ariaLabel}
             lang={opt.lang}
             onClick={() => onChange(opt.id)}
