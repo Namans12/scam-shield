@@ -624,16 +624,23 @@ html:lang(hi) .hero-subtitle { line-height: 1.95; }
   }
 }
 
-/* Input carousel: centre-snapping, so the first and last cards can be centred and highlighted like the rest */
-.input-carousel { position: relative; --slide-w: clamp(280px, 33vw, 400px); }
-.carousel-track { position: relative; display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 22px calc(50% - var(--slide-w) / 2) 30px; margin-block: -22px -8px; overscroll-behavior-x: contain; cursor: grab; outline-offset: -6px; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%); }
+/* Input carousel: edge-aware. The first card starts at the left edge of the section content and the last card ends at the
+   right edge, so the row is always full. The padding inside the scroller is room for the highlight glow (a scroller clips
+   its overflow on both axes), and the scroller is pulled outward by the same amount so the cards still line up with the
+   section content. */
+.input-carousel { position: relative; --cpad: 24px; --cgap: 20px; --cshow: 2.6; --cgaps: 2; }
+@media (min-width: 721px) and (max-width: 1023px) { .input-carousel { --cshow: 2.15; --cgap: 16px; } }
+.carousel-track { position: relative; display: flex; gap: var(--cgap); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 12px var(--cpad) 38px; margin: -12px calc(-1 * var(--cpad)) -24px; scroll-padding-inline: var(--cpad); overscroll-behavior-x: contain; cursor: grab; outline-offset: -4px; border-radius: 22px; -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--cpad) - var(--cgap)), #000 var(--cpad), #000 calc(100% - var(--cpad)), transparent calc(100% - var(--cpad) + var(--cgap))); mask-image: linear-gradient(90deg, transparent calc(var(--cpad) - var(--cgap)), #000 var(--cpad), #000 calc(100% - var(--cpad)), transparent calc(100% - var(--cpad) + var(--cgap))); }
 .carousel-track::-webkit-scrollbar { display: none; }
+/* the focus ring goes round the active card: the track's own edges are faded out */
+.carousel-track:focus-visible { outline: none; }
+.carousel-track:focus-visible .input-slide[data-current=true] { outline: 3px solid var(--ring); outline-offset: 3px; }
 .carousel-track.is-dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
-.input-slide { flex: 0 0 var(--slide-w); scroll-snap-align: center; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; background: linear-gradient(160deg, var(--card), var(--surface-subtle)); transform: scale(.93); transition: transform var(--dur-slow) var(--ease-emphasized), border-color var(--dur-enter), box-shadow var(--dur-enter); cursor: pointer; }
-.input-slide .slide-visual { opacity: .72; transition: opacity var(--dur-enter); }
-.input-slide:hover { border-color: color-mix(in srgb, var(--primary) 40%, var(--border)); }
-.input-slide[data-current=true] { transform: scale(1); border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent), 0 20px 44px -24px color-mix(in srgb, var(--primary) 55%, transparent); cursor: default; }
-.input-slide[data-current=true] .slide-visual { opacity: 1; }
+.input-slide { flex: 0 0 calc((100% - var(--cgaps) * var(--cgap)) / var(--cshow)); scroll-snap-align: start; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; background: linear-gradient(160deg, var(--card), var(--surface-subtle)); transition: border-color var(--dur-enter), box-shadow var(--dur-enter); cursor: pointer; }
+@media (hover: hover) { .input-slide:not([data-current=true]):hover { border-color: color-mix(in srgb, var(--primary) 34%, var(--border)); box-shadow: 0 10px 26px -18px color-mix(in srgb, var(--primary) 40%, transparent); } }
+.input-slide[data-current=true] { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 24%, transparent), 0 14px 30px -16px color-mix(in srgb, var(--primary) 46%, transparent); cursor: default; }
+.input-slide .slide-visual { transition: opacity var(--dur-enter); }
+.input-slide:not([data-current=true]) .slide-visual { opacity: .66; }
 .slide-visual { height: 168px; display: grid; place-items: center; background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 9%, var(--card)), color-mix(in srgb, var(--primary) 3%, var(--card))); border-bottom: 1px solid var(--border); }
 .slide-visual svg { width: min(100%, 280px); height: 150px; }
 .slide-body { padding: 22px 22px 26px; }
@@ -642,8 +649,8 @@ html:lang(hi) .hero-subtitle { line-height: 1.95; }
 .voice-bar { transform-box: fill-box; transform-origin: center; animation: voice-wave 1.6s ease-in-out infinite; }
 @keyframes voice-wave { 0%, 100% { transform: scaleY(.55); } 50% { transform: scaleY(1.08); } }
 .carousel-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 10px; }
-.carousel-dots { display: flex; align-items: center; }
-.carousel-dot { width: 32px; height: 44px; display: grid; place-items: center; }
+.carousel-dots { display: flex; align-items: center; margin-left: -9px; }
+.carousel-dot { width: 44px; height: 44px; display: grid; place-items: center; }
 .carousel-dot span { display: block; width: 8px; height: 8px; border-radius: 99px; background: var(--border); transition: width var(--dur-enter) var(--ease-emphasized), background var(--dur-enter); }
 .carousel-dot[aria-current=true] span { width: 26px; background: var(--primary); }
 .carousel-arrows { display: flex; gap: 10px; }
@@ -684,7 +691,7 @@ html:lang(hi) .hero-subtitle { line-height: 1.95; }
 .action-section .section-heading { position: sticky; top: 112px; margin-bottom: 0; }
 
 @media (max-width: 720px) {
-  .input-carousel { --slide-w: min(78vw, 300px); }
+  .input-carousel { --cpad: 20px; --cgap: 14px; --cshow: 1.16; --cgaps: 1; }
   .flow, .flow-cards { grid-template-columns: minmax(0, 1fr); gap: 26px; padding-top: 0; padding-left: 40px; }
   .flow::before, .flow::after { top: 7px; bottom: 0; left: 6px; right: auto; width: 2px; height: auto; }
   .flow::after { transform-origin: center top; transform: scaleY(var(--flow)); background: linear-gradient(180deg, #34c9e8, var(--primary)); }
@@ -696,8 +703,9 @@ html:lang(hi) .hero-subtitle { line-height: 1.95; }
   .flow-vertical .flow-node { top: 30px; left: -40px; }
   .action-section { display: block; }
   .action-section .section-heading { position: static; margin-bottom: 30px; }
-  .carousel-dots { display: none; }
-  .carousel-controls { justify-content: flex-end; }
+  .carousel-controls { gap: 8px; }
+  .carousel-arrows { gap: 8px; }
+  .carousel-arrow { width: 44px; height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -758,7 +766,7 @@ html:lang(hi) .landing-eyebrow { font-size: 14px; letter-spacing: .2px; }
 .landing-page { line-height: 1.7; }
 
 /* the carousel cards manage their own highlight (see .input-slide[data-current]) */
-@media (prefers-reduced-motion: reduce) { .input-slide { transition: none; transform: none !important; } }
+@media (prefers-reduced-motion: reduce) { .input-slide, .input-slide .slide-visual { transition: none; } }
 .qr-scan-line { animation: qr-scan 2.8s ease-in-out infinite; }
 @keyframes qr-scan { 0%, 100% { transform: translateY(0); opacity: .2; } 15%, 85% { opacity: .9; } 50% { transform: translateY(74px); } }
 @media (prefers-reduced-motion: reduce) { .qr-scan-line { animation: none; opacity: 0; } }
