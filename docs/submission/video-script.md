@@ -6,7 +6,7 @@ Record on the live site (phone-width window or a real phone), English UI first. 
 
 | Time | Screen | Say |
 |---|---|---|
-| 0:00-0:12 | Title card, then the landing page | "Indians lost nearly twenty thousand crore rupees to cyber fraud last year, and victims recover about two percent. Scam Shield checks what you were just sent, before you act." (verify the figure before use) |
+| 0:00-0:12 | Title card, then the landing page | "Indians reported nearly twenty thousand crore rupees lost to cyber fraud last year. Scam Shield checks what you were just sent, before you act." (figure: I4C data for 2025, Rs 19,813 crore across about 21.8 lakh complaints) |
 | 0:12-0:40 | Tap **Fake KYC SMS with a bank link**. Speed up the wait. Result: Scam, red flags with quotes, "Reported 3 times", link-scan screenshot | "A KYC message with a look-alike bank link. Gemini reads it, the link is opened in an isolated browser so I never have to, and the verdict is Scam, with the exact words that give it away. This number was already reported three times." |
 | 0:40-1:00 | **QR code to "receive" money**. Result: "This QR asks you to PAY" | "This QR says receive five thousand rupees. Scam Shield decodes it: it is a payment request. You never scan to receive money." |
 | 1:00-1:18 | **Voice note: "digital arrest" call**. Show transcript, then verdict | "A fake CBI officer in Hinglish. Gemini transcribes it, spots the arrest threat and the fee demand, and says hang up." |

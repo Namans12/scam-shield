@@ -28,7 +28,7 @@ export const en = {
   "landing.trustTitle": "A moment to check can matter.",
   "landing.loss": "₹19,813 crore",
   "landing.lossLabel": "reported cyber-fraud losses in India in 2025",
-  "landing.source": "I4C data · about 21.8 lakh complaints · about 2% recovered",
+  "landing.source": "I4C data · about 21.8 lakh complaints",
   "landing.guidance": "Guidance only. Every result explains what we found, with no guarantee.",
   "landing.carouselLabel": "Things you can check",
   "landing.carouselPrev": "Previous",

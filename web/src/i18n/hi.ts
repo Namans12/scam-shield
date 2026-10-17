@@ -28,7 +28,7 @@ export const hi: Record<MessageKey, string> = {
   "landing.trustTitle": "एक पल की जाँच मायने रखती है।",
   "landing.loss": "₹19,813 करोड़",
   "landing.lossLabel": "भारत में 2025 में रिपोर्ट हुआ साइबर धोखाधड़ी का नुकसान",
-  "landing.source": "I4C के आँकड़े · करीब 21.8 लाख शिकायतें · करीब 2% रकम वापस मिली",
+  "landing.source": "I4C के आँकड़े · करीब 21.8 लाख शिकायतें",
   "landing.guidance": "केवल मार्गदर्शन। हर नतीजा मिले संकेत समझाता है, कोई गारंटी नहीं देता।",
   "landing.carouselLabel": "आप क्या जाँच सकते हैं",
   "landing.carouselPrev": "पिछला",

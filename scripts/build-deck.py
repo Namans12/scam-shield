@@ -202,11 +202,11 @@ def slide4(prs):  # Opportunities
         p._p.getparent().remove(p._p)
     tb.height = Inches(0.55)
     box(s, 0.35, 1.3, 9.3, 0.62, fill=RED_TINT)
-    text_box(s, 0.45, 1.33, 9.1, 0.58, [[("Rs 19,813 crore", {"bold": True, "size": 18, "color": RED}), ("  reported cyber-fraud losses in 2025  |  about 21.8 lakh complaints  |  about 2% recovered (I4C data)", {"size": 12, "color": INK})]], anchor=MSO_ANCHOR.MIDDLE)
+    text_box(s, 0.45, 1.33, 9.1, 0.58, [[("Rs 19,813 crore", {"bold": True, "size": 18, "color": RED}), ("  reported cyber-fraud losses in 2025  |  about 21.8 lakh complaints (I4C data)", {"size": 12, "color": INK})]], anchor=MSO_ANCHOR.MIDDLE)
     cards = [
         ("How different is it?", [
-            "Truecaller Scam Checker (Sep 2026): matches links, numbers and text already reported; no screenshots, QR or voice.",
-            "Google scam detection: mostly Pixel phones.",
+            "Truecaller Scam Checker (Sep 2026): checks links, numbers and messages against community reports; screenshot upload is only planned, and it has no QR or voice.",
+            "Google scam detection: Messages on Pixel 6 and newer; call detection in India on Pixel 9 and newer.",
             "Chakshu: a reporting form; it gives no verdict.",
             "Scam Shield analyses the content itself.",
         ]),
@@ -219,7 +219,7 @@ def slide4(prs):  # Opportunities
             "Catches scams nobody has reported yet.",
             "UPI-aware: a QR that asks you to pay while the text says receive; fake payment receipts.",
             "Hinglish voice notes (fake police \"digital arrest\" calls).",
-            "Safe link scanning in an isolated browser.",
+            "Link scanning in an isolated browser.",
         ]),
     ]
     x = 0.35
