@@ -7,12 +7,14 @@ const brand = "var(--primary)";
 const soft = "var(--accent)";
 
 export function TextVisual() {
+  // Each tail is drawn first and the bubble on top, so it grows out of the bubble's edge with no seam.
   return (
     <svg viewBox="0 0 280 150" role="presentation">
+      <path d="M44 66 L34 90 L70 72 Z" fill="var(--card)" stroke={line} strokeLinejoin="round" />
       <rect x="26" y="20" width="176" height="56" rx="16" fill="var(--card)" stroke={line} />
       <rect x="44" y="37" width="124" height="7" rx="3.5" fill={ink} opacity=".72" />
       <rect x="44" y="53" width="82" height="7" rx="3.5" fill={line} />
-      <path d="M44 76l-8 10 18-6z" fill="var(--card)" stroke={line} />
+      <path d="M232 124 L246 144 L212 128 Z" fill={brand} stroke={brand} strokeLinejoin="round" />
       <rect x="86" y="92" width="168" height="40" rx="16" fill={brand} />
       <rect x="104" y="108" width="100" height="7" rx="3.5" fill="#fff" opacity=".92" />
       <circle cx="238" cy="30" r="9" fill={soft} />

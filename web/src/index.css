@@ -383,7 +383,7 @@ html:lang(hi) {
 .example-card { border: 1px solid #2c425c; border-radius: 14px; padding: 26px 22px 20px; background: #102b504a; transition: background var(--dur-enter), transform var(--dur-enter); }
 .example-card:hover { background: #163459; transform: translateY(-4px); }
 .example-card > svg { color: #7ed7ef; }
-.example-card h3 { margin-top: 28px; min-height: 70px; font-size: calc(17px * var(--fs)); line-height: 1.6; font-weight: 500; letter-spacing: -.3px; }
+.example-card h3 { margin-top: 28px; font-size: calc(17px * var(--fs)); line-height: 1.6; font-weight: 500; letter-spacing: -.3px; }
 .example-card > span { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; padding-top: 16px; border-top: 1px solid #2c425c; color: #a8bad2; font-size: calc(16px * var(--fs)); }
 .proof-section { display: grid; grid-template-columns: 1.65fr 1fr; gap: 80px; }
 .proof-main .section-heading { margin-bottom: 30px; }
@@ -403,11 +403,10 @@ html:lang(hi) {
 .cloud-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px 30px; padding-block: 28px; border-top: 1px solid var(--border); }
 .cloud-row { gap: 18px 36px; padding-block: 36px; }
 .cloud-badge { display: flex; align-items: center; gap: 12px; font-size: calc(18px * var(--fs)); font-weight: 600; letter-spacing: -.3px; }
-.google-cloud-mark { color: #4285f4; flex: none; }
+.cloud-badge img { flex: none; }
 .cloud-services { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; list-style: none; }
 .cloud-services li { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px 0 13px; border: 1px solid var(--border); border-radius: 99px; background: var(--card); color: var(--foreground); font-size: calc(15px * var(--fs)); font-weight: 500; box-shadow: var(--shadow-sm); transition: border-color var(--dur-enter), box-shadow var(--dur-enter), transform var(--dur-enter) var(--ease-emphasized); }
-.cloud-services li svg { color: var(--primary); }
-.cloud-services li span { color: var(--muted-foreground); font-weight: 400; }
+.cloud-services li img { flex: none; width: 22px; height: 22px; }
 @media (hover: hover) { .cloud-services li:hover { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); transform: translateY(-2px); } }
 .landing-final { background: radial-gradient(ellipse at 90% 30%, var(--hero-glow), transparent 55%), var(--surface-subtle); border-block: 1px solid var(--border); }
 .final-inner { display: flex; gap: 60px; align-items: center; justify-content: space-between; padding-block: 66px; }
@@ -431,7 +430,6 @@ html:lang(hi) .landing-eyebrow { letter-spacing: .3px; font-size: calc(12px * va
 html:lang(hi) .hero-copy h1 { line-height: 1.35; letter-spacing: -2px; }
 html:lang(hi) .section-heading h2, html:lang(hi) .final-inner h2 { line-height: 1.55; letter-spacing: -.8px; }
 html:lang(hi) .hero-subtitle { line-height: 1.95; }
-html:lang(hi) .example-card h3 { min-height: 90px; }
 @media (min-width: 1600px) { .hero-grid { min-height: 760px; } }
 @media (max-width: 1199px) {
   .landing-container { width: calc(100% - 64px); }
@@ -492,8 +490,7 @@ html:lang(hi) .example-card h3 { min-height: 90px; }
   .action-card h3 { font-size: calc(17px * var(--fs)); }
   .action-card p { font-size: calc(16px * var(--fs)); }
   .example-grid { grid-template-columns: repeat(2, 1fr); }
-  .example-card h3, html:lang(hi) .example-card h3 { min-height: 56px; }
-  .proof-section { grid-template-columns: 1.3fr 1fr; gap: 30px; }
+  .example-card h3,   .proof-section { grid-template-columns: 1.3fr 1fr; gap: 30px; }
   .proof-stats { gap: 13px; }
   .proof-stats dd { font-size: calc(34px * var(--fs)); }
   .proof-stats dd > span { font-size: calc(20px * var(--fs)); }
@@ -570,9 +567,8 @@ html:lang(hi) .example-card h3 { min-height: 90px; }
   .action-card p { font-size: calc(16px * var(--fs)); }
   .example-grid { gap: 12px; }
   .example-card { padding: 20px 16px 16px; }
-  .example-card h3 { font-size: calc(16px * var(--fs)); line-height: 1.65; min-height: 120px; margin-top: 22px; }
-  html:lang(hi) .example-card h3 { min-height: 120px; }
-  .example-card > span { font-size: calc(16px * var(--fs)); line-height: 1.5; margin-top: 10px; gap: 4px; }
+  .example-card h3 { font-size: calc(16px * var(--fs)); line-height: 1.65; margin-top: 22px; }
+    .example-card > span { font-size: calc(16px * var(--fs)); line-height: 1.5; margin-top: 10px; gap: 4px; }
   .proof-section { grid-template-columns: 1fr; gap: 30px; }
   .proof-stats { gap: 10px; }
   .proof-stats dd { font-size: calc(36px * var(--fs)); }
@@ -768,8 +764,6 @@ html:lang(hi) .landing-eyebrow { font-size: 14px; letter-spacing: .2px; }
 @media (prefers-reduced-motion: reduce) { .qr-scan-line { animation: none; opacity: 0; } }
 
 .scramble-number { font-variant-numeric: tabular-nums; display: inline-block; }
-html[data-theme=dark] .google-cloud-mark, .dark .google-cloud-mark { color: #8ab4f8; }
-@media (prefers-color-scheme: dark) { .google-cloud-mark { color: #8ab4f8; } }
 
 /* centre each language's text inside its shared cell so the spacing around it stays balanced in both languages */
 .hero-copy h1 .lang-slot, .hero-subtitle .lang-slot { align-self: center; }
@@ -779,3 +773,11 @@ html[data-theme=dark] .google-cloud-mark, .dark .google-cloud-mark { color: #8ab
 .lang-stack.lang-fit .lang-slot[data-active=false] { width: 0; overflow: hidden; white-space: nowrap; }
 .hero-preview figcaption .lang-stack { justify-items: end; }
 .preview-scan .lang-stack { justify-items: center; }
+
+/* Example cards: the "try" row always sits at the bottom of the card; no fixed heights, so no dead space in either language. */
+.example-card { display: flex; flex-direction: column; }
+.example-card h3 { min-height: 0; margin-bottom: 20px; }
+.example-card > span { margin-top: auto; }
+
+/* balance headings so a single word never sits alone on the last line */
+.final-inner h2, .section-heading h2 { text-wrap: balance; }

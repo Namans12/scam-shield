@@ -1,5 +1,5 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
-import { ArrowRight, ArrowUpRight, MessageSquareText, Image, QrCode, Link2, AudioLines, FileText, UsersRound, Send, ScanSearch, Eye, Route, LockKeyhole, Sparkles, Container, Database, Flame, OctagonAlert, TriangleAlert, Info } from "lucide-react";
+import { ArrowRight, ArrowUpRight, MessageSquareText, Image, QrCode, Link2, AudioLines, FileText, UsersRound, Send, ScanSearch, Eye, Route, LockKeyhole, OctagonAlert, TriangleAlert, Info } from "lucide-react";
 import { useT } from "@/i18n";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroPreview } from "@/components/landing/HeroPreview";
@@ -8,7 +8,6 @@ import { ImageVisual, LinkVisual, QrVisual, TextVisual, VoiceVisual } from "@/co
 import { ScrollFlow } from "@/components/landing/ScrollFlow";
 import { LangStack, LangText } from "@/components/landing/LangStack";
 import { ScrambleNumber } from "@/components/landing/ScrambleNumber";
-import { GoogleCloudMark } from "@/components/landing/GoogleCloudMark";
 import { translate } from "@/i18n";
 import { BrandLockup } from "@/components/brand/BrandLockup";
 
@@ -21,6 +20,7 @@ const inputs = [
 ] as const;
 const steps = [{ id: 1, icon: ScanSearch }, { id: 2, icon: Eye }, { id: 3, icon: Route }] as const;
 const actions = [{ id: "complaint", icon: FileText }, { id: "reports", icon: UsersRound }, { id: "share", icon: Send }] as const;
+const cloudServices = [{ file: "gemini", name: "Gemini" }, { file: "vertex-ai", name: "Vertex AI" }, { file: "cloud-run", name: "Cloud Run" }, { file: "firestore", name: "Firestore" }, { file: "firebase", name: "Firebase" }] as const;
 const examples = [{ id: "kyc_sms", icon: MessageSquareText }, { id: "fake_payment", icon: Image }, { id: "qr_receive", icon: QrCode }, { id: "digital_arrest", icon: AudioLines }] as const;
 
 export default function LandingPage() {
@@ -85,12 +85,9 @@ export default function LandingPage() {
         </section>
 
         <div className="landing-container cloud-row">
-          <p className="cloud-badge"><GoogleCloudMark size={34} /><span>{t("landing.cloud")}</span></p>
+          <p className="cloud-badge"><img src="/brand/third-party/google-cloud.svg" alt="" width="40" height="40" /><span>{t("landing.cloud")}</span></p>
           <ul className="cloud-services" aria-label={t("landing.cloudDetail")}>
-            <li><Sparkles size={18} strokeWidth={1.7} aria-hidden />Gemini <span>Vertex AI</span></li>
-            <li><Container size={18} strokeWidth={1.7} aria-hidden />Cloud Run</li>
-            <li><Database size={18} strokeWidth={1.7} aria-hidden />Firestore</li>
-            <li><Flame size={18} strokeWidth={1.7} aria-hidden />Firebase</li>
+            {cloudServices.map(({ file, name }) => <li key={file}><img src={`/brand/third-party/${file}.svg`} alt="" width="22" height="22" />{name}</li>)}
           </ul>
         </div>
         <section className="landing-final" aria-labelledby="final-title"><div className="landing-container final-inner"><div><p className="landing-eyebrow">SCAM SHIELD</p><h2 id="final-title">{t("landing.finalTitle")}</h2><p>{t("landing.finalBody")}</p></div><Link className="landing-button" to="/check">{t("landing.check")}<ArrowRight size={20} aria-hidden /></Link></div></section>
