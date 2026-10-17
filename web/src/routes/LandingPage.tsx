@@ -37,14 +37,14 @@ export default function LandingPage() {
         <section className="landing-hero" aria-labelledby="hero-title">
           <div className="landing-container hero-grid">
             <div className="hero-copy">
-              <p className="landing-eyebrow"><span className="eyebrow-line" /><LangText k="landing.eyebrow" /></p>
+              <p className="landing-eyebrow"><span className="eyebrow-line" /><LangText k="landing.eyebrow" fit /></p>
               <h1 id="hero-title"><LangStack>{(l) => <>{translate(l, "landing.title")}<br /><span className="lang-accent">{translate(l, "landing.titleAccent")}</span></>}</LangStack></h1>
               <p className="hero-subtitle"><LangText k="landing.subtitle" /></p>
               <div className="hero-actions">
                 <Link to="/check" className="landing-button">{t("landing.check")}<ArrowRight size={20} aria-hidden /></Link>
                 <Link to="/check?example=kyc_sms" className="landing-button landing-button-secondary">{t("landing.example")}<ArrowUpRight size={19} aria-hidden /></Link>
               </div>
-              <p className="hero-language"><span aria-hidden>अ / A</span><LangText k="landing.languageNote" /></p>
+              <p className="hero-language"><span aria-hidden>अ / A</span><LangText k="landing.languageNote" fit /></p>
             </div>
             <HeroPreview />
           </div>

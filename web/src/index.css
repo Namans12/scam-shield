@@ -773,3 +773,9 @@ html[data-theme=dark] .google-cloud-mark, .dark .google-cloud-mark { color: #8ab
 
 /* centre each language's text inside its shared cell so the spacing around it stays balanced in both languages */
 .hero-copy h1 .lang-slot, .hero-subtitle .lang-slot { align-self: center; }
+
+/* Single-line labels: the hidden language keeps its height but takes no width, so the label hugs its neighbours. */
+.lang-stack.lang-fit { justify-items: start; }
+.lang-stack.lang-fit .lang-slot[data-active=false] { width: 0; overflow: hidden; white-space: nowrap; }
+.hero-preview figcaption .lang-stack { justify-items: end; }
+.preview-scan .lang-stack { justify-items: center; }
