@@ -134,7 +134,7 @@ describe("createGeminiModel.analyze", () => {
   });
   it("sets the thinking level only when configured", async () => {
     const a = fake(async () => ({ text: JSON.stringify(good) }));
-    await createGeminiModel({ ...cfg, thinkingLevel: "LOW" }, a.client).analyze(input);
+    await createGeminiModel({ ...cfg, model: "gemini-3.7-flash", thinkingLevel: "LOW" }, a.client).analyze(input);
     expect(a.generateContent.mock.calls[0]![0].config.thinkingConfig).toEqual({ thinkingLevel: "LOW" });
     const b = fake(async () => ({ text: JSON.stringify(good) }));
     await createGeminiModel(cfg, b.client).analyze(input);
@@ -155,6 +155,50 @@ describe("createGeminiModel.analyze", () => {
     await createGeminiModel({ ...cfg, search: false }, client).analyze(urlInput);
     await createGeminiModel({ project: "p", location: "global", model: "m", combinedGrounding: true }, client).analyze(urlInput);
     for (const call of generateContent.mock.calls) expect(call[0].config.tools).toBeUndefined();
+  });
+  it("retries on the fallback model (its own quota) after a 429 on the primary", async () => {
+    let n = 0;
+    const { client, generateContent } = fake(async () => {
+      if (n++ === 0) throw Object.assign(new Error("Resource exhausted"), { status: 429 });
+      return { text: JSON.stringify(good) };
+    });
+    const m = createGeminiModel({ ...cfg, model: "primary-model", fallbackModel: "fallback-model" }, client);
+    expect(await m.analyze(input)).toEqual(good);
+    expect(generateContent.mock.calls[0]![0].model).toBe("primary-model");
+    expect(generateContent.mock.calls[1]![0].model).toBe("fallback-model");
+  });
+  it("retries on the fallback model after the primary hangs", async () => {
+    vi.useFakeTimers();
+    try {
+      let n = 0;
+      const { client, generateContent } = fake(() => (n++ === 0 ? new Promise(() => {}) : Promise.resolve({ text: JSON.stringify(good) })));
+      const p = createGeminiModel({ ...cfg, model: "primary-model", fallbackModel: "fallback-model" }, client).analyze(input);
+      await vi.advanceTimersByTimeAsync(15_001 + 400);
+      expect(await p).toEqual(good);
+      expect(generateContent.mock.calls[1]![0].model).toBe("fallback-model");
+    } finally { vi.useRealTimers(); }
+  });
+  it("retries on the same model when no fallback is configured or it equals the primary", async () => {
+    for (const fallbackModel of [undefined, "primary-model"]) {
+      let n = 0;
+      const { client, generateContent } = fake(async () => {
+        if (n++ === 0) throw Object.assign(new Error("unavailable"), { status: 503 });
+        return { text: JSON.stringify(good) };
+      });
+      await createGeminiModel({ ...cfg, model: "primary-model", fallbackModel }, client).analyze(input);
+      expect(generateContent.mock.calls[1]![0].model).toBe("primary-model");
+    }
+  });
+  it("sends the thinking level only to gemini-3 models (older models reject it)", async () => {
+    let n = 0;
+    const { client, generateContent } = fake(async () => {
+      if (n++ === 0) throw Object.assign(new Error("unavailable"), { status: 503 });
+      return { text: JSON.stringify(good) };
+    });
+    await createGeminiModel({ ...cfg, model: "gemini-3.7-flash", fallbackModel: "gemini-2.5-flash", thinkingLevel: "LOW" }, client).analyze(input);
+    expect(generateContent.mock.calls[0]![0].config.thinkingConfig).toEqual({ thinkingLevel: "LOW" });
+    expect(generateContent.mock.calls[1]![0].model).toBe("gemini-2.5-flash");
+    expect(generateContent.mock.calls[1]![0].config.thinkingConfig).toBeUndefined();
   });
   it("logs the failure without user content", async () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});

@@ -105,8 +105,14 @@ export function redact(text: string, keep: string[]): string {
     }
   }
 
-  edits.sort((a, b) => b.start - a.start);
-  let out = src;
-  for (const e of edits) out = out.slice(0, e.start) + e.text + out.slice(e.end);
-  return out;
+  // Edits never overlap (see `claimed`), so assemble the result in one pass.
+  edits.sort((a, b) => a.start - b.start);
+  const parts: string[] = [];
+  let pos = 0;
+  for (const e of edits) {
+    parts.push(src.slice(pos, e.start), e.text);
+    pos = e.end;
+  }
+  parts.push(src.slice(pos));
+  return parts.join("");
 }

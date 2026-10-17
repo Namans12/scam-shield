@@ -28,6 +28,8 @@ export class AnalysisError extends Error {
 
 export interface GeminiConfig {
   project: string; location: string; model: string; combinedGrounding: boolean;
+  /** Model for the retry. Quotas are per model, so a 429 or hang on the primary usually does not hit the fallback. Unset: retry the primary. */
+  fallbackModel?: string;
   /** Google Search grounding for inputs with a link (off by default: quota 429s and hangs, see HANDOFF section 10). */
   search?: boolean;
   /** Gemini 3 thinking level; unset leaves the model default (slower, ~3x). */
@@ -58,7 +60,7 @@ function buildParts(prompt: string, input: AnalyzeInput): Array<Record<string, u
 export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): VerdictModel {
   const ai: GenAiClient = client ?? (new GoogleGenAI({ vertexai: true, project: cfg.project, location: cfg.location }) as unknown as GenAiClient);
 
-  async function run(input: AnalyzeInput, signal: AbortSignal, grounded: boolean): Promise<GeminiVerdict> {
+  async function run(input: AnalyzeInput, signal: AbortSignal, grounded: boolean, model: string): Promise<GeminiVerdict> {
     const groundingPrompt = grounded && cfg.search ? buildGroundingPrompt(input) : undefined;
     let notes: string | undefined;
     const config: Record<string, unknown> = {
@@ -66,7 +68,8 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
       temperature: 0.2,
       responseMimeType: "application/json",
       responseJsonSchema: GEMINI_RESPONSE_JSON_SCHEMA,
-      ...(cfg.thinkingLevel && { thinkingConfig: { thinkingLevel: cfg.thinkingLevel } }),
+      // thinkingLevel is a Gemini 3 setting; older models (2.5) reject it.
+      ...(cfg.thinkingLevel && /^gemini-3/.test(model) && { thinkingConfig: { thinkingLevel: cfg.thinkingLevel } }),
     };
 
     if (groundingPrompt) {
@@ -75,7 +78,7 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
         config.tools = [{ googleSearch: {} }];
       } else {
         const g = await ai.models.generateContent({
-          model: cfg.model,
+          model,
           contents: [{ role: "user", parts: [{ text: groundingPrompt }] }],
           config: { abortSignal: signal, temperature: 0.2, tools: [{ googleSearch: {} }] },
         });
@@ -84,7 +87,7 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
     }
 
     const res = await ai.models.generateContent({
-      model: cfg.model,
+      model,
       contents: [{ role: "user", parts: buildParts(buildVerdictPrompt(input, notes), input) }],
       config,
     });
@@ -102,7 +105,7 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
   }
 
   /** One bounded attempt. Rejects with AnalysisError(kind) so the caller can decide whether to retry. */
-  async function attempt(input: AnalyzeInput, ms: number, grounded: boolean): Promise<GeminiVerdict> {
+  async function attempt(input: AnalyzeInput, ms: number, grounded: boolean, model: string): Promise<GeminiVerdict> {
     const ctrl = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
@@ -112,7 +115,7 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
       }, ms);
     });
     try {
-      return await Promise.race([run(input, ctrl.signal, grounded), timeout]);
+      return await Promise.race([run(input, ctrl.signal, grounded, model), timeout]);
     } catch (e) {
       if (e instanceof AnalysisError) throw e;
       throw new AnalysisError(`Gemini call failed: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
@@ -126,7 +129,7 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
       const started = Date.now();
       let first: unknown;
       try {
-        return await attempt(input, Math.min(ATTEMPT_TIMEOUT_MS, ANALYZE_TIMEOUT_MS), true);
+        return await attempt(input, Math.min(ATTEMPT_TIMEOUT_MS, ANALYZE_TIMEOUT_MS), true, cfg.model);
       } catch (e) {
         first = e;
       }
@@ -136,8 +139,9 @@ export function createGeminiModel(cfg: GeminiConfig, client?: GenAiClient): Verd
       await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
       try {
         // Google Search grounding is the usual culprit (project quota gives 429s after a few calls, and it can hang):
-        // the retry skips it, so a link still gets a verdict, just without the web lookup.
-        return await attempt(input, left, false);
+        // the retry skips it, so a link still gets a verdict, just without the web lookup. It also switches to the
+        // fallback model: a 429 or hang on the primary is usually specific to that model's quota.
+        return await attempt(input, left, false, cfg.fallbackModel || cfg.model);
       } catch (e) {
         logAttemptFailure(2, e);
         throw e;

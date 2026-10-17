@@ -102,7 +102,8 @@ export function buildDeps(env: NodeJS.ProcessEnv = process.env): AppDeps {
     model: createGeminiModel({
       project,
       location: env.GEMINI_LOCATION?.trim() || "global",
-      model: env.GEMINI_MODEL?.trim() || "gemini-3.8-flash",
+      model: env.GEMINI_MODEL?.trim() || "gemini-3.7-flash",
+      fallbackModel: env.GEMINI_FALLBACK_MODEL?.trim() || "gemini-2.5-flash",
       combinedGrounding: parseBool(env.GEMINI_COMBINED_GROUNDING, true),
       search: parseBool(env.GEMINI_SEARCH, false),
       // LOW cuts latency about 3x with the same verdicts on the examples (measured 16 Oct); "default" keeps the model's own setting.

@@ -71,7 +71,7 @@ deploy_api() {
   build_image api
   local scan_url; scan_url="$(service_url scam-shield-linkscan)"
   [ -n "$scan_url" ] || { echo "linkscan is not deployed yet; run: scripts/deploy.sh linkscan" >&2; exit 1; }
-  local env="GOOGLE_CLOUD_PROJECT=$PROJECT,GEMINI_MODEL=gemini-3.8-flash,GEMINI_LOCATION=global,GEMINI_COMBINED_GROUNDING=true,GEMINI_SEARCH=${GEMINI_SEARCH:-false},LINKSCAN_URL=$scan_url,STORAGE_BUCKET=$BUCKET,TRUSTED_PROXY_HOPS=${TRUSTED_PROXY_HOPS:-2}"
+  local env="GOOGLE_CLOUD_PROJECT=$PROJECT,GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.7-flash},GEMINI_FALLBACK_MODEL=${GEMINI_FALLBACK_MODEL:-gemini-2.5-flash},GEMINI_LOCATION=global,GEMINI_COMBINED_GROUNDING=true,GEMINI_SEARCH=${GEMINI_SEARCH:-false},LINKSCAN_URL=$scan_url,STORAGE_BUCKET=$BUCKET,TRUSTED_PROXY_HOPS=${TRUSTED_PROXY_HOPS:-2}"
   if [ "${DEBUG_XFF:-}" = "1" ]; then env="$env,DEBUG_XFF=1"; fi
   echo "== Deploying scam-shield-api"
   gc run deploy scam-shield-api --region "$REGION" --image "$REGISTRY/api:$TAG" \
