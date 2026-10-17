@@ -8,6 +8,7 @@ import { ImageVisual, LinkVisual, QrVisual, TextVisual, VoiceVisual } from "@/co
 import { ScrollFlow } from "@/components/landing/ScrollFlow";
 import { LangStack, LangText } from "@/components/landing/LangStack";
 import { ScrambleNumber } from "@/components/landing/ScrambleNumber";
+import { BENCHMARK } from "@/benchmark";
 import { translate } from "@/i18n";
 import { BrandLockup } from "@/components/brand/BrandLockup";
 
@@ -80,7 +81,7 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-section landing-container proof-section" aria-labelledby="proof-title">
-          <div className="proof-main"><div className="section-heading"><p className="landing-eyebrow">{t("landing.proofEyebrow")}</p><h2 id="proof-title">{t("landing.proofTitle")}</h2><p>{t("landing.proofBody")}</p></div><dl className="proof-stats"><div><dt>{t("landing.accuracy")}</dt><dd><ScrambleNumber value="98" /><span>%</span></dd></div><div><dt>{t("landing.recall")}</dt><dd><ScrambleNumber value="100" delay={250} duration={1700} /><span>%</span></dd></div><div><dt>{t("landing.falsePositive")}</dt><dd><ScrambleNumber value="4.2" delay={500} duration={1900} /><span>%</span></dd></div></dl><p className="proof-note"><Info size={18} aria-hidden />{t("landing.proofNote")}</p></div>
+          <div className="proof-main"><div className="section-heading"><p className="landing-eyebrow">{t("landing.proofEyebrow")}</p><h2 id="proof-title">{t("landing.proofTitle")}</h2><p>{t("landing.proofBody")}</p></div><dl className="proof-stats"><div><dt>{t("landing.accuracy")}</dt><dd><ScrambleNumber value={BENCHMARK.accuracy} /><span>%</span></dd></div><div><dt>{t("landing.recall")}</dt><dd><ScrambleNumber value={BENCHMARK.recall} delay={250} duration={1700} /><span>%</span></dd></div><div><dt>{t("landing.falsePositive")}</dt><dd><ScrambleNumber value={BENCHMARK.falsePositive} delay={500} duration={1900} /><span>%</span></dd></div></dl><p className="proof-note"><Info size={18} aria-hidden />{t("landing.proofNote")}</p></div>
           <aside className="privacy-panel"><span className="input-icon"><LockKeyhole size={25} strokeWidth={1.6} aria-hidden /></span><h3>{t("landing.privacyTitle")}</h3><ul><li>{t("landing.privacyBrowser")}</li><li>{t("landing.privacyDelete")}</li><li>{t("landing.privacyNumbers")}</li></ul></aside>
         </section>
 

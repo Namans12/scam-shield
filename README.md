@@ -63,9 +63,9 @@ One check: the app sends the text or an uploaded file path to the API. The API v
 | Accuracy | 100.0% (50 of 50 verdicts correct) |
 | Scam recall (scams flagged) | 100% (26 of 26) |
 | False-positive rate (genuine flagged) | 0.0% (0 of 24) |
-| Scam type correct (among flagged scams) | 96.2% (25 of 26; one QR scam was labelled "fake payment") |
-| Latency, text | p50 4.5 s, p95 12.9 s |
-| Latency, image / audio | p50 8.9 s / 14.2 s (image p95 9.5 s) |
+| Scam type correct (among flagged scams) | 100.0% (26 of 26) |
+| Latency, text | p50 4.5 s, p95 20.8 s |
+| Latency, image / audio | p50 7.3 s / 10.3 s (image p95 8.7 s) |
 
 Details, cases and raw results: [`eval/`](eval/) and [`eval/results/latest.md`](eval/results/latest.md). The first run exposed a real bug (the model did not know today's date and flagged 2026 dates as "in the future"); it is fixed and the earlier result is kept in `eval/results/run1-before-date-fix.md`. The cases are synthetic and small, so treat the numbers as a sanity check, not a guarantee. An earlier run on `gemini-3.8-flash` scored 98.0% accuracy, 100% recall and 4.2% false positives, with image checks up to 34 s (kept in `eval/results/run-gemini-3.8-flash.md`); that model was slow and sometimes rate-limited on this project, so the default is now `gemini-3.7-flash` with a fallback. With only 50 cases the difference between 98% and 100% is a single case. The same 50 cases run with the interface in Hindi also scored 100% accuracy, 100% recall and 0% false positives, with no errors (`eval/results/run-hindi.md`).
 
