@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" color="#272C59" role="img" aria-label="Scam Shield">
+<defs>
+    
+    <mask id="lens-clearance" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256"><rect width="256" height="256" fill="white"/><circle cx="126" cy="176" r="42" fill="black"/><path d="M149 199 L176 226" fill="none" stroke="black" stroke-width="26" stroke-linecap="round"/></mask>
+  </defs>
+  <g mask="url(#lens-clearance)">
+    <path d="M75 52 L36 68 V108 C36 162 70 203 128 232 C144 224 158 215 170 204 M210 153 C216 139 220 124 220 108 V68 L158 42" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M137 24 C100 36 64 57 64 87 C64 116 91 130 126 141 C160 152 183 166 183 185 C183 199 173 211 157 218 C184 214 202 194 202 170 C202 137 175 121 141 110 C109 100 88 91 88 76 C88 61 108 51 137 42 Z" fill="currentColor"/>
+    
+  </g>
+  <g fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round">
+    <path d="M149 199 L176 226"/>
+    <circle cx="126" cy="176" r="30"/>
+  </g>
+</svg>

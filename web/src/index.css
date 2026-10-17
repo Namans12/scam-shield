@@ -20,6 +20,11 @@
   --primary: #0f766e;
   --primary-foreground: #ffffff;
 
+  /* Logo (docs/brand/logo-final): shield outline + lens ring, flat mark, and the ribbon's dark end. */
+  --logo-outline: #102b50;
+  --logo-flat: #2374dc;
+  --logo-ribbon-end: #102b50;
+
   --secondary: #e9eef4;
   --secondary-foreground: #1b2a47;
 
@@ -64,6 +69,10 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
+
+    --logo-outline: #79ddf2;
+    --logo-flat: #4a9af0;
+    --logo-ribbon-end: #1764e8;
 
     --background: #0a1224;
     --foreground: #e8edf6;
