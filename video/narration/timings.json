@@ -1,0 +1,230 @@
+{
+  "engine": "Google Cloud Text-to-Speech en-IN-Chirp3-HD-Achird",
+  "scenes": {
+    "intro": {
+      "duration": 8.75102,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 4.9895,
+          "caption": "Indians reported losing nearly ₹20,000 crore to cyber fraud in 2025."
+        },
+        {
+          "start": 5.3095,
+          "end": 8.7055,
+          "caption": "Scam Shield checks what you were just sent, before you act."
+        }
+      ]
+    },
+    "landing": {
+      "duration": 7.314286,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 4.5975,
+          "caption": "Paste a message, or add a screenshot, a QR code, a link or a voice note."
+        },
+        {
+          "start": 4.9175,
+          "end": 7.2685,
+          "caption": "English, Hindi and Hinglish are understood."
+        }
+      ]
+    },
+    "kyc": {
+      "duration": 27.977143,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 4.96325,
+          "caption": "First, a fake KYC message with a look-alike bank link. One tap runs a real check."
+        },
+        {
+          "start": 5.283250000000001,
+          "end": 9.175500000000001,
+          "caption": "Gemini reads the message. The wait is sped up 4x."
+        },
+        {
+          "start": 9.4955,
+          "end": 12.96975,
+          "caption": "The verdict is Scam, with a risk score and the type of scam."
+        },
+        {
+          "start": 13.28975,
+          "end": 16.738,
+          "caption": "Every warning sign quotes the exact words that give it away."
+        },
+        {
+          "start": 17.058,
+          "end": 22.33475,
+          "caption": "The number and the link are already on the shared scam list: in this demo, three reports each."
+        },
+        {
+          "start": 22.65475,
+          "end": 27.9315,
+          "caption": "The link was opened in an isolated browser, so you see the fake bank form without opening it yourself."
+        }
+      ]
+    },
+    "qr": {
+      "duration": 14.889796,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 3.84,
+          "caption": "Now a QR code that says you will receive ₹5,000."
+        },
+        {
+          "start": 4.16,
+          "end": 8.07825,
+          "caption": "Scam Shield decodes it on the server, as part of the same check."
+        },
+        {
+          "start": 8.39825,
+          "end": 14.8505,
+          "caption": "The card shows what it really is: a payment request, to this UPI ID. You never scan a code to receive money."
+        }
+      ]
+    },
+    "voice": {
+      "duration": 14.915918,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 7.236,
+          "caption": "Next, a voice note: a synthetic fake CBI officer, in Hinglish. Gemini writes down what was said."
+        },
+        {
+          "start": 7.556,
+          "end": 10.8475,
+          "caption": "The verdict is Scam, a digital arrest threat."
+        },
+        {
+          "start": 11.1675,
+          "end": 14.877,
+          "caption": "It spots the arrest threat and the fee demand, and says to hang up."
+        }
+      ]
+    },
+    "payment": {
+      "duration": 16.64,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 7.68,
+          "caption": "Even a payment screenshot. A buyer says they have paid, and wants you to ship the item. Gemini reads the image to check."
+        },
+        {
+          "start": 8,
+          "end": 11.55275,
+          "caption": "The date is 31 September, which does not exist."
+        },
+        {
+          "start": 11.87275,
+          "end": 16.601,
+          "caption": "The transaction reference has the wrong length, and the sender name does not match the UPI ID."
+        }
+      ]
+    },
+    "actions": {
+      "duration": 17.502041,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 1.515,
+          "caption": "Then you can act."
+        },
+        {
+          "start": 1.835,
+          "end": 7.24225,
+          "caption": "To report it: sign in with Google, then add the scammer's number to the shared list."
+        },
+        {
+          "start": 7.562250000000001,
+          "end": 13.30925,
+          "caption": "Draft the complaint for 1930 or cybercrime.gov.in, with the amount lost."
+        },
+        {
+          "start": 13.62925,
+          "end": 17.469250000000002,
+          "caption": "And share a warning card with family. This is the card the app made."
+        }
+      ]
+    },
+    "phone": {
+      "duration": 6.217143,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 6.191,
+          "caption": "It fits a phone screen too. One tap runs the check, and Report, Complaint and Share sit in a bar at the bottom."
+        }
+      ]
+    },
+    "hindi": {
+      "duration": 14.733061,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 4.9895,
+          "caption": "It works in Hindi too. One tap switches the whole app."
+        },
+        {
+          "start": 5.3095,
+          "end": 8.78375,
+          "caption": "The check runs in Hindi, and the verdict comes back in Hindi."
+        },
+        {
+          "start": 9.10375,
+          "end": 14.693999999999999,
+          "caption": "The Trends page shows reports by scam type and state, with demo data while the app is new."
+        }
+      ]
+    },
+    "architecture": {
+      "duration": 16.352653,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 4.31025,
+          "caption": "Firebase Hosting serves the app and forwards API calls to a Cloud Run service."
+        },
+        {
+          "start": 4.63025,
+          "end": 12.9895,
+          "caption": "It checks the Firestore scam list, sends any link to a separate, isolated scanner, and asks Gemini on Vertex AI for a structured verdict."
+        },
+        {
+          "start": 13.3095,
+          "end": 16.3135,
+          "caption": "Firebase handles sign-in and file storage."
+        }
+      ]
+    },
+    "benchmark": {
+      "duration": 9.848163,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 7.20975,
+          "caption": "On 50 synthetic test cases: flagged all 26 scams, wrongly flagged none of 24 genuine messages."
+        },
+        {
+          "start": 7.52975,
+          "end": 9.8025,
+          "caption": "It is a small test, not a guarantee."
+        }
+      ]
+    },
+    "closing": {
+      "duration": 4.231837,
+      "sentences": [
+        {
+          "start": 0,
+          "end": 4.20575,
+          "caption": "Scam Shield. Check before you click, pay or scan."
+        }
+      ]
+    }
+  }
+}
