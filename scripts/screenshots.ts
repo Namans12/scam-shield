@@ -30,6 +30,10 @@ const browser = await chromium.launch();
 {
   const { ctx, page } = await newPage(browser, { mobile: false, lang: "en" });
   await page.goto(BASE);
+  await page.waitForTimeout(1800);
+  await shot(page, "00-landing-desktop");
+  await shot(page, "00b-landing-desktop-full", true);
+  await page.goto(`${BASE}/check`);
   await page.waitForTimeout(1500);
   await shot(page, "01-check-desktop");
   await page.goto(`${BASE}/trends`);
@@ -42,6 +46,9 @@ const browser = await chromium.launch();
 {
   const { ctx, page } = await newPage(browser, { mobile: true, lang: "en" });
   await page.goto(BASE);
+  await page.waitForTimeout(1800);
+  await shot(page, "02a-landing-mobile");
+  await page.goto(`${BASE}/check`);
   await page.waitForTimeout(1500);
   await shot(page, "02-check-mobile");
 
@@ -62,12 +69,12 @@ const browser = await chromium.launch();
   await shot(page, "07-report-dialog-mobile");
   await page.keyboard.press("Escape");
 
-  await page.goto(BASE);
+  await page.goto(`${BASE}/check`);
   await page.getByRole("button", { name: /QR code to/ }).click();
   await waitResult(page);
   await shot(page, "04-result-qr-mobile", true);
 
-  await page.goto(BASE);
+  await page.goto(`${BASE}/check`);
   await page.getByLabel("The message").fill("HDFC Bank: Rs 1,250.00 debited from A/c XX4521 on 14-10-26 at SWIGGY. Avl Bal Rs 18,430.55. If not you, call 18002586161.");
   await page.getByRole("button", { name: "Check", exact: true }).click();
   await waitResult(page);
@@ -78,7 +85,7 @@ const browser = await chromium.launch();
 // 3. Mobile Hindi: one result.
 {
   const { ctx, page } = await newPage(browser, { mobile: true, lang: "hi" });
-  await page.goto(BASE);
+  await page.goto(`${BASE}/check`);
   await page.waitForTimeout(1500);
   await shot(page, "09-check-hindi-mobile");
   await page.getByRole("button", { name: /डिजिटल अरेस्ट/ }).click();
