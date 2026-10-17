@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
 export interface SegmentedOption<T extends string> {
@@ -29,48 +29,27 @@ export function Segmented<T extends string>({
   className,
   "aria-label": ariaLabel,
 }: SegmentedProps<T>) {
-  const trackRef = useRef<HTMLDivElement>(null);
   const segmentRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
   const activeIndex = Math.max(
     0,
     options.findIndex((o) => o.id === value),
   );
 
-  const measure = useCallback(() => {
-    const seg = segmentRefs.current[activeIndex];
-    if (!seg) return;
-    setIndicator({ left: seg.offsetLeft, width: seg.offsetWidth });
-  }, [activeIndex]);
-
-  useLayoutEffect(measure, [measure, options.length]);
-
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(measure);
-    ro.observe(track);
-    segmentRefs.current.forEach((s) => s && ro.observe(s));
-    return () => ro.disconnect();
-  }, [measure]);
-
   return (
     <div
-      ref={trackRef}
       role="radiogroup"
       aria-label={ariaLabel}
-      className={cn("relative isolate flex h-12 shrink-0 items-center rounded-xl bg-secondary p-0.5", className)}
+      className={cn("relative isolate grid h-12 shrink-0 items-center rounded-xl bg-secondary p-0.5", className)}
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
+      {/* Equal columns and a percentage-based indicator: the pill always exactly covers the chosen segment, whatever font the label uses. */}
       <span
         aria-hidden
-        className="absolute inset-y-0.5 left-0 -z-10 rounded-lg bg-primary shadow-sm"
+        className="segmented-indicator absolute inset-y-0.5 left-0.5 -z-10 rounded-lg bg-primary shadow-sm"
         style={{
-          width: indicator.width,
-          transform: `translateX(${indicator.left}px)`,
-          transition: indicator.width
-            ? "transform var(--dur-enter) var(--ease-emphasized), width var(--dur-enter) var(--ease-emphasized)"
-            : "none",
+          width: `calc((100% - 4px) / ${options.length})`,
+          transform: `translateX(${activeIndex * 100}%)`,
         }}
       />
       {options.map((opt, i) => {
@@ -98,7 +77,7 @@ export function Segmented<T extends string>({
             lang={opt.lang}
             onClick={() => onChange(opt.id)}
             className={cn(
-              "relative z-10 inline-flex h-full min-w-11 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-3 text-base font-semibold leading-none transition-colors duration-200",
+              "segmented-option relative z-10 inline-flex h-full min-w-11 items-center justify-center whitespace-nowrap rounded-lg px-3 text-base font-semibold leading-none transition-colors duration-200",
               active ? "text-primary-foreground" : "text-secondary-foreground hover:text-foreground",
             )}
           >

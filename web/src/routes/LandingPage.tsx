@@ -3,14 +3,17 @@ import { ArrowRight, ArrowUpRight, MessageSquareText, Image, QrCode, Link2, Audi
 import { useT } from "@/i18n";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroPreview } from "@/components/landing/HeroPreview";
+import { InputCarousel } from "@/components/landing/InputCarousel";
+import { ImageVisual, LinkVisual, QrVisual, TextVisual, VoiceVisual } from "@/components/landing/InputVisuals";
+import { ScrollFlow } from "@/components/landing/ScrollFlow";
 import { BrandLockup } from "@/components/brand/BrandLockup";
 
 const inputs = [
-  { id: "text", icon: MessageSquareText },
-  { id: "image", icon: Image },
-  { id: "qr", icon: QrCode },
-  { id: "link", icon: Link2 },
-  { id: "voice", icon: AudioLines },
+  { id: "text", icon: MessageSquareText, visual: <TextVisual /> },
+  { id: "image", icon: Image, visual: <ImageVisual /> },
+  { id: "qr", icon: QrCode, visual: <QrVisual /> },
+  { id: "link", icon: Link2, visual: <LinkVisual /> },
+  { id: "voice", icon: AudioLines, visual: <VoiceVisual /> },
 ] as const;
 const steps = [{ id: 1, icon: ScanSearch }, { id: 2, icon: Eye }, { id: 3, icon: Route }] as const;
 const actions = [{ id: "complaint", icon: FileText }, { id: "reports", icon: UsersRound }, { id: "share", icon: Send }] as const;
@@ -52,20 +55,20 @@ export default function LandingPage() {
 
         <section className="landing-section landing-container" aria-labelledby="inputs-title">
           <div className="section-heading"><p className="landing-eyebrow">{t("landing.inputsEyebrow")}</p><h2 id="inputs-title">{t("landing.inputsTitle")}</h2><p>{t("landing.inputsSubtitle")}</p></div>
-          <div className="input-grid">{inputs.map(({ id, icon: Icon }) => <div className="input-tile" key={id}><span className="input-icon"><Icon size={25} strokeWidth={1.6} aria-hidden /></span><h3>{t(`landing.input.${id}`)}</h3><p>{t(`landing.input.${id}Desc`)}</p></div>)}</div>
+          <InputCarousel labelledBy="inputs-title" items={inputs.map(({ id, icon, visual }) => ({ id, icon, visual, title: t(`landing.input.${id}`), description: t(`landing.input.${id}Desc`) }))} />
         </section>
 
         <section className="landing-section landing-steps" aria-labelledby="steps-title">
           <div className="landing-container">
             <div className="section-heading"><p className="landing-eyebrow">{t("landing.stepsEyebrow")}</p><h2 id="steps-title">{t("landing.stepsTitle")}</h2></div>
-            <ol className="steps-grid">{steps.map(({ id, icon: Icon }) => <li key={id}><div className="step-top"><span className="step-number">0{id}</span><Icon size={26} strokeWidth={1.5} aria-hidden /></div><h3>{t(`landing.step${id}`)}</h3><p>{t(`landing.step${id}Desc`)}</p></li>)}</ol>
+            <ScrollFlow variant="steps" labelledBy="steps-title" items={steps.map(({ id, icon }) => ({ id: String(id), icon, title: t(`landing.step${id}`), description: t(`landing.step${id}Desc`) }))} />
             <div className="verdict-legend"><p>{t("landing.verdictIntro")}</p><div><span className="verdict-chip verdict-chip-scam"><OctagonAlert size={17} aria-hidden />{t("verdict.scam")}</span><span className="verdict-chip verdict-chip-suspicious"><TriangleAlert size={17} aria-hidden />{t("verdict.suspicious")}</span><span className="verdict-chip verdict-chip-nosigns"><Info size={17} aria-hidden />{t("verdict.no_signs")}</span></div></div>
           </div>
         </section>
 
         <section className="landing-section landing-container action-section" aria-labelledby="actions-title">
           <div className="section-heading"><p className="landing-eyebrow">{t("landing.actionEyebrow")}</p><h2 id="actions-title">{t("landing.actionTitle")}</h2><p>{t("landing.actionSubtitle")}</p></div>
-          <div className="actions-grid">{actions.map(({ id, icon: Icon }, index) => <article key={id} className="action-card"><div className="action-card-top"><Icon size={28} strokeWidth={1.5} aria-hidden /><span aria-hidden>0{index + 1}</span></div><h3>{t(`landing.action.${id}`)}</h3><p>{t(`landing.action.${id}Desc`)}</p></article>)}</div>
+          <ScrollFlow variant="cards" labelledBy="actions-title" items={actions.map(({ id, icon }) => ({ id, icon, title: t(`landing.action.${id}`), description: t(`landing.action.${id}Desc`) }))} />
         </section>
 
         <section className="landing-section examples-section" aria-labelledby="examples-title">

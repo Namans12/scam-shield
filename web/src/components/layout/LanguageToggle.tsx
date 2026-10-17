@@ -8,6 +8,7 @@ export function LanguageToggle() {
   const t = useT();
   return (
     <Segmented<Lang>
+      className="language-toggle"
       aria-label={t("lang.label")}
       value={lang}
       onChange={setLang}
