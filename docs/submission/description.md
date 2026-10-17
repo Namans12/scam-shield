@@ -10,4 +10,4 @@
 
 **Firebase** provides Authentication (anonymous to check, Google sign-in to report), Hosting for the installable web app and API rewrite, and Storage for uploads that auto-delete after 7 days.
 
-On a 50-case benchmark run against the live app, it flagged all 26 scams (100% recall) with a 4.2% false-positive rate and a 4.5 s median for text.
+On a 50-case benchmark run against the live app, it flagged all 26 scams (100% recall) with no false positives on 24 genuine messages and a 4.5 s median for text.

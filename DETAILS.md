@@ -6,6 +6,38 @@ Written for the next agent. State as of 17 Oct 2026. Companion docs: `HANDOFF.md
 - Live app: https://project-91260b43-6705-4176-b71.web.app . Demo bank page: https://bnb-kyc-update.web.app . GCP project `project-91260b43-6705-4176-b71`, region `asia-south1`.
 - Hackathon deadline: 18 Oct 2026, 23:59 IST (aim to submit by about 20:00 IST). Freeze deploys about 14:00 IST on the 18th.
 
+## 0. UPDATE, 17 Oct evening (Windows session): verification, model switch, deck, budget alert
+
+**This section supersedes the Gemini model and benchmark numbers further down.** Everything else below still holds.
+
+Verified independently (not just taken from the notes)
+- `npm ci` from a clean checkout **failed**: 8 lockfile entries resolved from `registry.npmmirror.com` (a third-party mirror; the other machine's npm config). Fixed by pointing them at `registry.npmjs.org`; every integrity hash still matched.
+- `npm run typecheck`: clean. Tests: shared 14, linkscan 94 (after installing Playwright Chromium 1193), web 195, eval 5, api 256 passed and 18 skipped. **The 18 skipped Firestore tests now pass too** (Java 21 is installed on this Windows machine: `npx firebase emulators:exec --only firestore --project demo-scam-shield "npm test -w api -- store"` gives 38 of 38). **`gemini.live.test.ts` passes** (`RUN_LIVE_GEMINI=1 npm test -w api -- gemini.live`, 2 of 2).
+- One flaky test fixed properly: `redact.test.ts` "is fast with many labels" failed at 211 ms against a 200 ms budget. `redact()` re-copied the whole string once per edit; it now assembles the result in one pass.
+- Dark mode on the live site checked at 375 px (Check page and a full Result page): readable, no horizontal overflow (`scrollWidth` equals `innerWidth`).
+
+Problem found and fixed: Gemini model reliability
+- The live smoke test **failed** when re-run: the KYC check took 34 s and the genuine alert returned 502 (`analysis_failed`). Logs: attempt 1 timed out at 15 s, attempt 2 got HTTP 429 "Resource exhausted".
+- Probing the models directly on this project: `gemini-3.8-flash` gave 8.5 s for a one-word reply, then a 429, then a 45 s hang. `gemini-3.7-flash`, `gemini-3.5-flash`, `gemini-2.5-flash` and `gemini-2.5-flash-lite` answered in 0.8 to 3.8 s every time (3 samples each).
+- Fix (commit `0deca06`): default model is now **`gemini-3.7-flash`**; the retry now goes to **`GEMINI_FALLBACK_MODEL` (default `gemini-2.5-flash`)** because quotas are per model (and `thinkingLevel` is only sent to `gemini-3*` models). `scripts/deploy.sh` sets both. API redeployed (revision `scam-shield-api-00013-h5z`).
+- After the fix: live smoke OK twice (KYC 10 to 11 s including the link scan, genuine alert 4 s).
+- **New benchmark** (`eval/results/latest.md`, 50 cases, sequential, live): accuracy **100.0%**, scam recall **100%** (26/26), false-positive rate **0.0%** (0/24), scam type correct **96.2%** (s05, a QR scam, was labelled `fake_payment`; still flagged Scam), errors 0. Latency: text p50 4.5 s / p95 12.9 s, image p50 8.9 s / p95 9.5 s, audio 14.2 s; slowest single case 23.7 s. The previous `gemini-3.8-flash` run (98.0% / 100% / 4.2%, image p95 33.8 s) is kept in `eval/results/run-gemini-3.8-flash.md`. With 50 cases, 98% vs 100% is one case: do not oversell the difference.
+- README, `docs/submission/description.md` (248 words) and `docs/submission/deck-outline.md` updated with the new model and numbers.
+
+Done in this session
+- **Budget alert created**: Rs 1,000 per month on billing account `01F164-CA107B-D85742`, alerts at 50%, 90% and 100% (Budget API enabled on the project for this).
+- **Deck built on the organisers' template**: `docs/submission/Scam-Shield-deck.pptx` and `docs/submission/Scam-Shield-deck.pdf` (16 pages, 1.15 MB, under the 5 MB limit). All 16 template slides kept; slides 1 and 3 to 14 filled; rendered with PowerPoint and checked slide by slide for overflow. Regenerate with `python scripts/build-deck.py <template.pptx> <out.pptx>` (the template is the organisers' Google Slides export, not stored in the repo; numbers are read from `eval/results/latest.md`). Export the PDF from PowerPoint (File > Export) after any change.
+
+Needs the owner before submitting
+- **Slide 1: confirm "Team name: Scam Shield" and "Team leader name: Naman Shrimal"**; both were filled in without being given (leader inferred from the owner's email, team name set to the product name).
+- Slide 14 still says `[add the demo video link before submitting]`; same placeholder in `README.md`.
+- Everything else under "Owner only" in section 3 (real Google sign-in and report test, Android share and install on a phone, the video, the form).
+
+Small issues noticed, not fixed
+- On the live Result page, a red flag whose evidence was taken from the scanned page's text is still labelled "From the message" (example: "OTP received on mobile" from the demo bank page). Cosmetic; the label should say "From the page" when the quote comes from the link scan.
+- `scripts/deploy.sh` builds the image from the working tree, so image tags end in `-dirty`; commit before deploying if tags matter.
+- `firestore-debug.log` is written to the repo root by the Firestore emulator (now git-ignored).
+
 ## 1. What was done (this machine, 16 to 17 Oct)
 
 Setup and deploy

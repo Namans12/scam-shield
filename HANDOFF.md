@@ -42,7 +42,7 @@ Required Google tech (judges check the submission description): **Gemini on Vert
 - API (Cloud Run `scam-shield-api`, public, gen2, 1 CPU/1 GiB, min 1/max 5): https://scam-shield-api-2dpycjnpeq-el.a.run.app
 - Link scanner (Cloud Run `scam-shield-linkscan`, **private**, gen2, 2 CPU/2 GiB, concurrency 4, min 0/max 3, runs as dedicated zero-role SA `linkscan-sa@…`; `run.invoker` granted only to the API's SA).
 - Firestore (native, asia-south1) with rules + composite index `checks(uid asc, createdAt desc)`; Storage bucket `project-91260b43-6705-4176-b71.firebasestorage.app` with rules + 7-day lifecycle on `uploads/`; Artifact Registry repo `scam-shield`; Auth: Anonymous + Google enabled.
-- Gemini: model `gemini-3.8-flash`, location `global`, combined JSON-schema + Google Search grounding works (~13 s with search, ~5 s without). Fallback `gemini-3.7-flash` two-call path.
+- Gemini: now `gemini-3.7-flash` with automatic fallback `gemini-2.5-flash` (see DETAILS.md section 0; `gemini-3.8-flash` was slow and rate-limited on this project).
 - Firebase web config is public and committed in `web/.env.production`.
 
 **Unknown / not verified (the deploy agent was stopped before reporting):**

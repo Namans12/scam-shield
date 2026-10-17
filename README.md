@@ -30,7 +30,7 @@ Also: public **Trends** page, per-person **History**, one-click **examples** for
 
 ## How Google services are used
 
-- **Gemini on Vertex AI** (`gemini-3.8-flash`): one multimodal call per check returns a schema-validated verdict (structured JSON output) for text, images and audio, including audio transcription and the link-scan screenshot. Hard signals from our own checks can only raise a verdict, never lower it. Google Search grounding is built in but switched off by default (see `GEMINI_SEARCH`) because of project quota.
+- **Gemini on Vertex AI** (`gemini-3.7-flash`, with `gemini-2.5-flash` as an automatic fallback): one multimodal call per check returns a schema-validated verdict (structured JSON output) for text, images and audio, including audio transcription and the link-scan screenshot. Hard signals from our own checks can only raise a verdict, never lower it. If the first attempt is slow or rate-limited, the retry goes to the fallback model, which has its own quota. Google Search grounding is built in but switched off by default (see `GEMINI_SEARCH`) because of project quota.
 - **Cloud Run:** `scam-shield-api` (public API, Hono on Node) and `scam-shield-linkscan` (a private Playwright/Chromium service that opens suspicious links in isolation, with a validating proxy, DNS pinning and its own zero-role service account).
 - **Firestore:** `checks` (a person's own results), `entities` (the shared scam list: phones, UPI IDs, domains, accounts, with report counts and links between identifiers), `reports`, `stats` (public daily trend counters) and `usage` (per-user and global daily limits). Clients can read only their own checks and the public stats; everything else is server-only.
 - **Firebase:** Authentication (anonymous for checks, Google sign-in to report), Hosting (the web app and the `/api/**` rewrite to Cloud Run, plus the demo-bank site), Storage (uploads, deleted automatically after 7 days).
@@ -60,14 +60,14 @@ One check: the app sends the text or an uploaded file path to the API. The API v
 
 | Metric | Result |
 |---|---|
-| Accuracy | 98.0% |
-| Scam recall (scams flagged) | 100% |
-| False-positive rate (genuine flagged) | 4.2% (1 of 24: a payment screenshot judged Suspicious) |
-| Scam type correct (among flagged scams) | 100% |
-| Latency, text | p50 4.5 s, p95 8.6 s |
-| Latency, image / audio | p50 7.4 s / 11.8 s (image p95 33.8 s) |
+| Accuracy | 100.0% (50 of 50 verdicts correct) |
+| Scam recall (scams flagged) | 100% (26 of 26) |
+| False-positive rate (genuine flagged) | 0.0% (0 of 24) |
+| Scam type correct (among flagged scams) | 96.2% (25 of 26; one QR scam was labelled "fake payment") |
+| Latency, text | p50 4.5 s, p95 12.9 s |
+| Latency, image / audio | p50 8.9 s / 14.2 s (image p95 9.5 s) |
 
-Details, cases and raw results: [`eval/`](eval/) and [`eval/results/latest.md`](eval/results/latest.md). The first run exposed a real bug (the model did not know today's date and flagged 2026 dates as "in the future"); it is fixed and the earlier result is kept in `eval/results/run1-before-date-fix.md`. The cases are synthetic and small, so treat the numbers as a sanity check, not a guarantee.
+Details, cases and raw results: [`eval/`](eval/) and [`eval/results/latest.md`](eval/results/latest.md). The first run exposed a real bug (the model did not know today's date and flagged 2026 dates as "in the future"); it is fixed and the earlier result is kept in `eval/results/run1-before-date-fix.md`. The cases are synthetic and small, so treat the numbers as a sanity check, not a guarantee. An earlier run on `gemini-3.8-flash` scored 98.0% accuracy, 100% recall and 4.2% false positives, with image checks up to 34 s (kept in `eval/results/run-gemini-3.8-flash.md`); that model was slow and sometimes rate-limited on this project, so the default is now `gemini-3.7-flash` with a fallback. With only 50 cases the difference between 98% and 100% is a single case.
 
 ## Privacy and safety
 
@@ -106,7 +106,7 @@ bash scripts/smoke.sh https://project-91260b43-6705-4176-b71.web.app
 npx tsx eval/run.ts            # the benchmark (sequential, paced)
 ```
 
-Important settings (API environment): `GEMINI_MODEL`, `GEMINI_LOCATION`, `GEMINI_THINKING_LEVEL` (default LOW), `GEMINI_SEARCH` (default off), `TRUSTED_PROXY_HOPS` (2 behind Firebase Hosting), `LINKSCAN_URL`, `STORAGE_BUCKET`.
+Important settings (API environment): `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GEMINI_LOCATION`, `GEMINI_THINKING_LEVEL` (default LOW), `GEMINI_SEARCH` (default off), `TRUSTED_PROXY_HOPS` (2 behind Firebase Hosting), `LINKSCAN_URL`, `STORAGE_BUCKET`.
 
 ## Known limits
 

@@ -7,3 +7,5 @@ dist/
 !web/.env.production
 eval/results/*.raw.json
 .firebase/
+firestore-debug.log
+firebase-debug.log
