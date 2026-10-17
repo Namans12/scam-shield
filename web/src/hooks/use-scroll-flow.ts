@@ -31,18 +31,29 @@ export function useScrollFlow<T extends HTMLElement>(count: number) {
       const vh = window.innerHeight || 800;
       const centres = nodes.map((n) => n.getBoundingClientRect());
       const vertical = centres.length > 1 && centres[1]!.top - centres[0]!.top > 4;
-      const length = Math.max(1, (vertical ? rect.height : rect.width) - RAIL_INSET);
+      // Vertical rails run exactly from the first node's centre to the last node's centre (their positions depend on
+      // the content of each item, so they are measured, not guessed); horizontal rails run on to the end of the row.
+      const axisCentre = (c: DOMRect) => c.top + c.height / 2 - rect.top;
+      const railTop = vertical ? axisCentre(centres[0]!) : RAIL_INSET;
+      const length = vertical ? Math.max(1, axisCentre(centres[centres.length - 1]!) - railTop) : Math.max(1, rect.width - RAIL_INSET);
+      if (vertical) {
+        el.style.setProperty("--rail-top", `${railTop.toFixed(1)}px`);
+        el.style.setProperty("--rail-len", `${length.toFixed(1)}px`);
+      } else {
+        el.style.removeProperty("--rail-top");
+        el.style.removeProperty("--rail-len");
+      }
 
       let p: number;
       if (vertical) {
-        p = (vh * 0.5 - rect.top - RAIL_INSET) / length; // the fill's front sits on the middle of the screen
+        p = (vh * 0.5 - rect.top - railTop) / length; // the fill's front sits on the middle of the screen
       } else {
         p = (vh * 0.5 - rect.top) / Math.max(rect.height, vh * 0.4);
       }
       p = Math.min(1, Math.max(0, p));
       el.style.setProperty("--flow", p.toFixed(3));
 
-      const front = RAIL_INSET + p * length;
+      const front = railTop + p * length;
       let n = 0;
       centres.forEach((c, i) => {
         const centre = vertical ? c.top + c.height / 2 - rect.top : c.left + c.width / 2 - rect.left;
@@ -56,9 +67,16 @@ export function useScrollFlow<T extends HTMLElement>(count: number) {
     update();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
+    // The rail is measured from real positions, so measure again whenever the list changes size (web fonts arriving,
+    // a language switch, text wrapping differently) and once the fonts are ready.
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    observer?.observe(el);
+    el.querySelectorAll(".flow-item").forEach((item) => observer?.observe(item));
+    void document.fonts?.ready.then(schedule);
     return () => {
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
+      observer?.disconnect();
       if (frame) window.cancelAnimationFrame(frame);
     };
   }, [count]);

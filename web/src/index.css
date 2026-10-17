@@ -679,7 +679,7 @@ html:lang(hi) .hero-subtitle { line-height: 1.95; }
 
 /* Vertical flow: used for the "next actions" on every screen size, and for both flows on phones. Rail on the left, from the first node's centre. */
 .flow-vertical, .flow-vertical.flow-cards { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 0; padding-left: 52px; }
-.flow-vertical::before, .flow-vertical::after { top: 7px; bottom: 0; left: 6px; right: auto; width: 2px; height: auto; }
+.flow-vertical::before, .flow-vertical::after { top: var(--rail-top, 7px); bottom: auto; left: 6px; right: auto; width: 2px; height: var(--rail-len, calc(100% - 7px)); }
 .flow-vertical::after { transform-origin: center top; transform: scaleY(var(--flow)); background: linear-gradient(180deg, #34c9e8, var(--primary)); }
 .flow-vertical .flow-node { top: 30px; left: -52px; }
 .flow-vertical .flow-top { padding: 0 0 22px; }
@@ -693,7 +693,7 @@ html:lang(hi) .hero-subtitle { line-height: 1.95; }
 @media (max-width: 720px) {
   .input-carousel { --cpad: 20px; --cgap: 14px; --cshow: 1.16; --cgaps: 1; }
   .flow, .flow-cards { grid-template-columns: minmax(0, 1fr); gap: 26px; padding-top: 0; padding-left: 40px; }
-  .flow::before, .flow::after { top: 7px; bottom: 0; left: 6px; right: auto; width: 2px; height: auto; }
+  .flow::before, .flow::after { top: var(--rail-top, 7px); bottom: auto; left: 6px; right: auto; width: 2px; height: var(--rail-len, calc(100% - 7px)); }
   .flow::after { transform-origin: center top; transform: scaleY(var(--flow)); background: linear-gradient(180deg, #34c9e8, var(--primary)); }
   .flow-node { top: 6px; left: -40px; }
   .flow-top { padding: 0 0 12px; }
@@ -789,3 +789,10 @@ html:lang(hi) .landing-eyebrow { font-size: 14px; letter-spacing: .2px; }
 
 /* balance headings so a single word never sits alone on the last line */
 .final-inner h2, .section-heading h2 { text-wrap: balance; }
+
+/* Cards have a 1px border and absolutely positioned nodes are placed from inside it: compensate so the circle centres sit exactly on the rail. */
+.flow-cards .flow-node { left: -1px; top: -39px; }
+.flow-vertical.flow-cards .flow-node { left: -53px; top: 29px; }
+@media (max-width: 720px) {
+  .flow-cards .flow-node, .flow-vertical.flow-cards .flow-node { left: -41px; top: 29px; }
+}
