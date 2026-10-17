@@ -672,7 +672,7 @@ def slide10(prs):  # Estimated cost
     cols = [
         ("Limits bound the bill", "30 checks per user per day, 60 per IP per minute, 3,000 per day overall."),
         ("Ceiling at the daily cap", "3,000 checks at the per-check estimate is about US$11 to 23 per day for Gemini."),
-        ("Budget alert", "Rs 1,000 per month, with alerts at 50%, 90% and 100% of the budget."),
+        ("Budget alert", "Planned: Rs 1,000 per month, alerts at 50%, 90% and 100% of the budget. A hard daily cap already applies."),
     ]
     w3 = (CW - 0.4) / 3
     for i, (t, b) in enumerate(cols):
@@ -685,7 +685,7 @@ def slide10(prs):  # Estimated cost
              "Cloud Run: https://cloud.google.com/run/pricing , asia-south1 (Mumbai) is Tier 1; idle minimum-instance time is US$0.0000025 per vCPU-second and per GiB-second (request-based billing). "
              "1 vCPU + 1 GiB x 2,592,000 s (30 days) x US$0.0000025 x 2 = US$12.96 per month before any free tier; active request time is billed on top and is small. "
              "Deployed API settings (scripts/deploy.sh): 1 vCPU, 1 GiB, min 1, max 5 instances. Free tier claims for Firebase Hosting, Auth, Firestore and Storage are expectations at this volume, not measured bills. "
-             "Budget alert (Rs 1,000 per month; 50/90/100%) is recorded in DETAILS.md. Currency: USD as listed by Google; no INR conversion is claimed.")
+             "Budget alert (Rs 1,000 per month; 50/90/100%): OWNER TO CONFIRM it has been created in Google Cloud Billing, then change 'Planned:' on this slide to 'Set:' (command in docs/setup-notes.md). Currency: USD as listed by Google; no INR conversion is claimed.")
 
 
 def slide11(prs):  # Snapshots
