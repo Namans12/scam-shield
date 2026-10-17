@@ -22,6 +22,7 @@ Problem found and fixed: Gemini model reliability
 - Fix (commit `0deca06`): default model is now **`gemini-3.7-flash`**; the retry now goes to **`GEMINI_FALLBACK_MODEL` (default `gemini-2.5-flash`)** because quotas are per model (and `thinkingLevel` is only sent to `gemini-3*` models). `scripts/deploy.sh` sets both. API redeployed (revision `scam-shield-api-00013-h5z`).
 - After the fix: live smoke OK twice (KYC 10 to 11 s including the link scan, genuine alert 4 s).
 - **New benchmark** (`eval/results/latest.md`, 50 cases, sequential, live): accuracy **100.0%**, scam recall **100%** (26/26), false-positive rate **0.0%** (0/24), scam type correct **96.2%** (s05, a QR scam, was labelled `fake_payment`; still flagged Scam), errors 0. Latency: text p50 4.5 s / p95 12.9 s, image p50 8.9 s / p95 9.5 s, audio 14.2 s; slowest single case 23.7 s. The previous `gemini-3.8-flash` run (98.0% / 100% / 4.2%, image p95 33.8 s) is kept in `eval/results/run-gemini-3.8-flash.md`. With 50 cases, 98% vs 100% is one case: do not oversell the difference.
+- **Hindi benchmark** (same 50 cases, `--lang hi`, `eval/results/run-hindi.md`): accuracy 100.0%, recall 100%, false positives 0%, scam type correct 100%, errors 0; text p50 5.0 s / p95 8.6 s, image p50 8.0 s, audio 11.6 s.
 - README, `docs/submission/description.md` (248 words) and `docs/submission/deck-outline.md` updated with the new model and numbers.
 
 Done in this session
