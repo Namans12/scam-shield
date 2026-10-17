@@ -1,6 +1,7 @@
+import { StrictMode, useState } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CheckPage from "./CheckPage";
 import { setLang } from "@/i18n";
@@ -51,6 +52,59 @@ beforeEach(() => {
 });
 
 describe("CheckPage", () => {
+  it("auto-runs /check?example once, clears it with replace, and preserves other parameters", async () => {
+    checkContent.mockReturnValue(new Promise(() => {}));
+    function Intake() {
+      const location = useLocation();
+      const navigate = useNavigate();
+      const [key, setKey] = useState(0);
+      return <><CheckPage key={key} /><output data-testid="query">{location.search}</output>
+        <button onClick={() => setKey((value) => value + 1)}>Remount checker</button>
+        <button onClick={() => navigate(-1)}>Go back</button></>;
+    }
+    render(<StrictMode><MemoryRouter initialEntries={["/previous", "/check?example=kyc_sms&source=home"]} initialIndex={1}>
+      <Routes><Route path="/check" element={<Intake />} /><Route path="/previous" element={<p>Previous page</p>} /></Routes>
+    </MemoryRouter></StrictMode>);
+    await waitFor(() => expect(checkContent).toHaveBeenCalledTimes(1));
+    expect(checkContent).toHaveBeenCalledWith(expect.objectContaining({ text: expect.stringContaining("bnb-kyc-update.web.app"), lang: "en" }));
+    expect(screen.getByTestId("query")).toHaveTextContent("?source=home");
+    fireEvent.click(screen.getByRole("button", { name: "Remount checker" }));
+    expect(checkContent).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Go back" }));
+    expect(await screen.findByText("Previous page")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["fake_payment", "/examples/fake-payment.png", "image/png"],
+    ["qr_receive", "/examples/qr-receive.png", "image/png"],
+    ["digital_arrest", "/examples/digital-arrest.mp3", "audio/mpeg"],
+  ])("auto-runs the %s attachment example once under StrictMode without cancelling its upload", async (id, asset, mimeType) => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(new Blob(["example"], { type: mimeType })));
+    vi.stubGlobal("fetch", fetchMock);
+    uploadForCheck.mockImplementation((_file: File, opts: { signal: AbortSignal }) => {
+      expect(opts.signal.aborted).toBe(false);
+      return Promise.resolve({ storagePath: "uploads/u/example", mimeType });
+    });
+    checkContent.mockResolvedValue(makeResult({ id: "example-result" }));
+    try {
+      render(<StrictMode><MemoryRouter initialEntries={[`/check?example=${id}`]}>
+        <Routes><Route path="/check" element={<CheckPage />} /><Route path="/result/:id" element={<ResultProbe />} /></Routes>
+      </MemoryRouter></StrictMode>);
+      expect(await screen.findByText(/result page \/result\/example-result/)).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledExactlyOnceWith(asset);
+      expect(uploadForCheck).toHaveBeenCalledTimes(1);
+      expect(checkContent).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("ignores an unknown example without starting a check", async () => {
+    renderCheck("/?example=unknown");
+    expect(checkContent).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("The message")).toHaveValue("");
+  });
+
   it("links the message box to its character count and, at the limit, to the limit note", async () => {
     renderCheck();
     const box = screen.getByLabelText("The message");

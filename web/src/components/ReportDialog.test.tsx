@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -32,6 +33,22 @@ beforeEach(() => {
 const open = () => render(<ReportDialog result={makeResult()} open onOpenChange={() => {}} />);
 
 describe("ReportDialog", () => {
+  it("returns keyboard focus to the action that opened it when dismissed", async () => {
+    const user = userEvent.setup();
+    ensureAnonymousUser.mockResolvedValue(anon);
+    function Controlled() {
+      const [opened, setOpened] = useState(false);
+      return <><button onClick={() => setOpened(true)}>Open report</button><ReportDialog result={makeResult()} open={opened} onOpenChange={setOpened} /></>;
+    }
+    render(<Controlled />);
+    const trigger = screen.getByRole("button", { name: "Open report" });
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(trigger).toHaveFocus());
+  });
+
   it("asks an anonymous visitor to sign in with Google before anything else", async () => {
     ensureAnonymousUser.mockResolvedValue(anon);
     open();

@@ -16,18 +16,18 @@ export function RedFlagList({ flags, lang }: { flags: RedFlag[]; lang?: Lang }) 
   return (
     <ul className="flex flex-col gap-4">
       {flags.map((f, i) => (
-        <li key={i} className="rounded-xl border border-border bg-card p-4">
-          <h3 lang={lang} className="text-base font-bold leading-snug break-anywhere">{f.flag}</h3>
+        <li key={i} className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+          <h3 lang={lang} className="text-lg font-semibold leading-relaxed break-anywhere">{f.flag}</h3>
           {f.evidence && (
             <figure className="mt-3">
               <figcaption className="text-sm font-medium text-muted-foreground">{t("result.evidence")}</figcaption>
-              <blockquote lang={lang} className="mt-1 flex gap-2 rounded-lg border-l-4 border-primary bg-secondary px-3 py-2 text-base italic break-anywhere">
+              <blockquote lang={lang} className="mt-1 flex gap-2 rounded-xl border-l-2 border-primary/60 bg-secondary/60 px-4 py-3 text-base leading-relaxed break-anywhere">
                 <Quote size={16} aria-hidden className="mt-1.5 shrink-0 text-muted-foreground" />
                 <span>{f.evidence}</span>
               </blockquote>
             </figure>
           )}
-          {f.why_it_matters && <p lang={lang} className="mt-3 text-base break-anywhere">{f.why_it_matters}</p>}
+          {f.why_it_matters && <p lang={lang} className="mt-4 text-base leading-relaxed text-muted-foreground break-anywhere">{f.why_it_matters}</p>}
         </li>
       ))}
     </ul>

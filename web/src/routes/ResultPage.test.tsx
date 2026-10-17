@@ -155,7 +155,7 @@ describe("ResultPage", () => {
     renderResult(undefined);
     expect(await screen.findByText("This result is no longer on this device")).toBeInTheDocument();
     const again = screen.getByRole("link", { name: "Check again" });
-    expect(again).toHaveAttribute("href", "/");
+    expect(again).toHaveAttribute("href", "/check");
   });
 
   it("does not show a result for a different id", async () => {

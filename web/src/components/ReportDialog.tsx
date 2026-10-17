@@ -38,6 +38,7 @@ export function ReportDialog({ result, open, onOpenChange }: Props) {
   const t = useT();
   const ids = useId();
   const mounted = useRef(true);
+  const returnFocus = useRef<HTMLElement | null>(null);
   const [google, setGoogle] = useState(false);
   const [phase, setPhase] = useState<"idle" | "signing" | "sending" | "done">("idle");
   const [errorKey, setErrorKey] = useState<MessageKey | null>(null);
@@ -97,10 +98,22 @@ export function ReportDialog({ result, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
+      <DialogContent
+        className="max-h-[90vh] w-[calc(100%_-_2rem)] max-w-lg overflow-y-auto rounded-3xl border-border p-6 shadow-xl sm:p-8"
+        onOpenAutoFocus={() => {
+          returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        }}
+        onCloseAutoFocus={(event) => {
+          // This controlled dialog is opened from the result actions, without a Radix trigger.
+          if (returnFocus.current?.isConnected) {
+            event.preventDefault();
+            returnFocus.current.focus();
+          }
+        }}
+      >
         <DialogHeader>
-          <DialogTitle>{t("report.title")}</DialogTitle>
-          <DialogDescription className="text-base">{t("report.intro")}</DialogDescription>
+          <DialogTitle className="pr-8 text-2xl font-bold leading-relaxed tracking-tight">{t("report.title")}</DialogTitle>
+          <DialogDescription className="mt-3 text-base leading-relaxed">{t("report.intro")}</DialogDescription>
         </DialogHeader>
 
         {phase === "done" ? (
@@ -116,10 +129,10 @@ export function ReportDialog({ result, open, onOpenChange }: Props) {
         ) : (
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
             {!google ? (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4 rounded-2xl border border-border bg-secondary/50 p-4">
                 <p className="text-base">{t("report.signInNote")}</p>
                 <Button type="button" size="lg" onClick={onSignIn} disabled={phase === "signing"}>
-                  {phase === "signing" && <Loader2 className="animate-spin" aria-hidden />}
+                  {phase === "signing" && <Loader2 className="motion-safe:animate-spin" aria-hidden />}
                   {phase === "signing" ? t("report.signingIn") : t("report.signIn")}
                 </Button>
               </div>
@@ -145,7 +158,7 @@ export function ReportDialog({ result, open, onOpenChange }: Props) {
                   <Input id={`${ids}-city`} value={city} maxLength={60} autoComplete="off" onChange={(e) => setCity(e.target.value)} />
                 </div>
                 <Button type="submit" size="lg" disabled={phase === "sending"}>
-                  {phase === "sending" && <Loader2 className="animate-spin" aria-hidden />}
+                  {phase === "sending" && <Loader2 className="motion-safe:animate-spin" aria-hidden />}
                   {phase === "sending" ? t("report.submitting") : t("report.submit")}
                 </Button>
               </>

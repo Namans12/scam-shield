@@ -101,7 +101,7 @@ export const en = {
   "lang.label": "Language",
 
   "check.title": "Got a message that feels wrong?",
-  "check.subtitle": "Paste it here, or add a screenshot, QR code or voice note. We look for the warning signs of a scam and tell you what to do next.",
+  "check.subtitle": "Paste a message, or add a screenshot, QR code or voice note. See the warning signs and what to do next.",
   "check.textLabel": "The message",
   "check.textPlaceholder": "Paste the SMS, WhatsApp message or email here",
   "check.linkLabel": "A link you were sent (optional)",
@@ -129,7 +129,7 @@ export const en = {
   "dropzone.multiple": "Only one file is checked at a time. Using the first one.",
   "dropzone.drop": "You can also drag a file here, or paste a screenshot with Ctrl+V.",
   "dropzone.dropActive": "Drop the file here to add it",
-  "dropzone.hint": "One file. Pictures (PNG, JPEG, WebP) up to 10 MB. Voice notes (MP3, M4A, AAC, OGG, WAV, WebM) up to 15 MB. Anything you type in the message box above is sent along with it, for example what you were told about the QR code.",
+  "dropzone.hint": "One image (PNG, JPEG, WebP), up to 10 MB. Or one voice note, up to 15 MB. Add any context in the message box.",
   "dropzone.previewAlt": "Preview of {name}",
   "dropzone.audioLabel": "Preview of your voice note",
   "dropzone.remove": "Remove",
@@ -308,6 +308,18 @@ export const en = {
   "notfound.cta": "Go to Check",
 
   "footer.text": "Scam Shield gives guidance only. It is not a police or legal service.",
+
+  // Page refinement copy.
+  "pages.check.eyebrow": "Check before you act",
+  "pages.result.eyebrow": "Your check result",
+  "pages.result.actions": "Actions for this result",
+  "pages.action.report": "Report",
+  "pages.action.complaint": "Complaint",
+  "pages.action.share": "Share",
+  "pages.trends.period": "Community reports · Last 7 days",
+  "pages.complaint.details": "Add your details",
+  "pages.complaint.review": "Review, copy and report",
+  "pages.notfound.label": "A wrong turn",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -20,7 +20,7 @@ export function QrCard({ qr }: { qr: QrInfo }) {
   if (qr.upi) {
     const { pa, pn, am, tn } = qr.upi;
     return (
-      <div className="rounded-xl border-l-8 border-suspicious bg-suspicious-bg p-4 text-suspicious-fg">
+      <div className="rounded-2xl border border-l-4 border-suspicious bg-suspicious-bg p-4 text-suspicious-fg">
         <p className="flex items-center gap-2 text-lg font-bold">
           <QrCode size={22} aria-hidden />
           {t("qr.payTitle")}
@@ -58,7 +58,7 @@ export function QrCard({ qr }: { qr: QrInfo }) {
   const cut = qr.raw.length > MAX_RAW;
   const shown = cut ? `${qr.raw.slice(0, MAX_RAW - 1)}…` : qr.raw;
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
       <p className="flex items-center gap-2 text-base font-medium">
         <QrCode size={20} aria-hidden />
         {t("qr.contains")}
@@ -67,11 +67,11 @@ export function QrCard({ qr }: { qr: QrInfo }) {
         {shown}
       </p>
       {cut && (
-        <p className="mt-1 text-sm text-muted-foreground" data-testid="qr-shortened">
+        <p className="mt-1 text-base leading-relaxed text-muted-foreground" data-testid="qr-shortened">
           {t("qr.shortened")}
         </p>
       )}
-      <p className="mt-2 text-sm text-muted-foreground">{t("qr.textOnly")}</p>
+      <p className="mt-2 text-base leading-relaxed text-muted-foreground">{t("qr.textOnly")}</p>
     </div>
   );
 }
