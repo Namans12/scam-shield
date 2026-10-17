@@ -1,4 +1,4 @@
-# Deck content, slide by slide (use the organisers' template, export PDF under 5 MB)
+# Deck content, slide by slide (use the organisers' prescribed template exactly: submissions that do not follow it may be disqualified; export PDF under 5 MB)
 
 Numbers marked (est.) are estimates to confirm in the billing console before the deck goes out.
 
@@ -17,3 +17,14 @@ Numbers marked (est.) are estimates to confirm in the billing console before the
 13. **Future development.** More Indian languages; call-recording upload and on-device checks; bank and telecom partnerships to feed verified reports; Web Risk and URL reputation feeds; Android app with SMS and notification sharing; misinformation mode; Google Search grounding once quota allows.
 14. **Links.** GitHub: https://github.com/Namans12/scam-shield . Live: https://project-91260b43-6705-4176-b71.web.app . Demo video: _add link_.
 15-16. Leave blank (template).
+
+
+## Add to the existing deck (judging asks for feasibility and scalability, explained in detail)
+
+The criteria weigh **Technical merit and Gen AI 40%**, problem alignment and impact 25%, innovation 25%, UX 10%. Make these points explicit (they are not all in the current PDF; check it):
+
+- **Meaningful Gen AI (slides 3, 6, 9):** one multimodal Gemini call reads text, screenshots and audio (Hinglish transcription); structured, schema-validated output; every red flag quotes evidence from the input; answers in English or Hindi; deterministic checks (scam-list hits, QR pay-versus-receive) can only raise a verdict, never lower it. Say what Gemini does that rules cannot: catch unreported scams and read an image or a voice note.
+- **Feasibility and scalability (slides 9, 10, 13):** stateless API on Cloud Run (autoscaling, one warm instance), the link scanner scales to zero, Firestore for the shared scam list and counters, Firebase Hosting in front; per-user, per-IP and global daily limits bound cost; a rough per-check cost; storage auto-deletes uploads after 7 days. Roadmap: partnerships with banks and telecoms to feed verified reports, Web Risk and URL reputation feeds, more Indian languages, an Android app with SMS and notification sharing.
+- **Evidence (slide 12):** the 50-case benchmark (English 98% accuracy, 100% scam recall, 4.2% false positives; Hindi run in `eval/results/run-hindi.md`), and say plainly that it is small and synthetic.
+- **Problem statement (slide 1):** name it exactly as "BFSI: Intelligent Risk, Fraud & Financial Experiences". Also mention the community benefit (people who lose savings to scams).
+- Every statistic or competitor claim (I4C figures, Truecaller, Google scam detection, Chakshu) needs a source on the slide notes; the numbers were taken from earlier research and have not been re-verified.

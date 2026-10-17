@@ -23,25 +23,23 @@ export function InputCarousel({ items, labelledBy }: { items: readonly CarouselI
   const slides = useRef<(HTMLElement | null)[]>([]);
   const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null);
   const [current, setCurrent] = useState(0);
-  const [edges, setEdges] = useState({ start: true, end: false });
 
   const sync = useCallback(() => {
     const el = track.current;
     if (!el) return;
+    const middle = el.scrollLeft + el.clientWidth / 2;
     let best = 0;
     let bestDistance = Infinity;
     slides.current.forEach((slide, i) => {
       if (!slide) return;
-      const distance = Math.abs(slide.offsetLeft - el.scrollLeft);
+      const distance = Math.abs(slide.offsetLeft + slide.offsetWidth / 2 - middle);
       if (distance < bestDistance) {
         bestDistance = distance;
         best = i;
       }
     });
-    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
-    setCurrent(atEnd ? items.length - 1 : best);
-    setEdges({ start: el.scrollLeft <= 2, end: atEnd });
-  }, [items.length]);
+    setCurrent(best);
+  }, []);
 
   useEffect(() => {
     sync();
@@ -65,11 +63,12 @@ export function InputCarousel({ items, labelledBy }: { items: readonly CarouselI
     const slide = slides.current[Math.max(0, Math.min(items.length - 1, index))];
     if (!el || !slide) return;
     const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollTo({ left: slide.offsetLeft, behavior: reduce ? "auto" : "smooth" });
+    // Every slide can be centred (the track is padded), so any slide, first and last included, is always reachable.
+    el.scrollTo({ left: slide.offsetLeft + slide.offsetWidth / 2 - el.clientWidth / 2, behavior: reduce ? "auto" : "smooth" });
   };
 
   return (
-    <div className="input-carousel" role="region" aria-roledescription="carousel" aria-labelledby={labelledBy} data-start={edges.start} data-end={edges.end}>
+    <div className="input-carousel" role="region" aria-roledescription="carousel" aria-labelledby={labelledBy} data-start={current === 0} data-end={current === items.length - 1}>
       <div
         ref={track}
         className="carousel-track"
@@ -113,11 +112,12 @@ export function InputCarousel({ items, labelledBy }: { items: readonly CarouselI
           <article
             key={id}
             ref={(node) => { slides.current[index] = node; }}
-            className="input-slide glow-hover"
+            className="input-slide"
             role="group"
             aria-roledescription="slide"
             aria-label={t("landing.carouselPosition", { n: index + 1, total: items.length })}
             data-current={index === current}
+            onClick={() => { if (index !== current) goTo(index); }}
           >
             <div className="slide-visual" aria-hidden>{visual}</div>
             <div className="slide-body">
@@ -137,8 +137,8 @@ export function InputCarousel({ items, labelledBy }: { items: readonly CarouselI
           ))}
         </div>
         <div className="carousel-arrows">
-          <button type="button" className={cn("carousel-arrow")} aria-label={t("landing.carouselPrev")} disabled={edges.start} onClick={() => goTo(current - 1)}><ChevronLeft size={22} aria-hidden /></button>
-          <button type="button" className={cn("carousel-arrow")} aria-label={t("landing.carouselNext")} disabled={edges.end} onClick={() => goTo(current + 1)}><ChevronRight size={22} aria-hidden /></button>
+          <button type="button" className={cn("carousel-arrow")} aria-label={t("landing.carouselPrev")} disabled={current === 0} onClick={() => goTo(current - 1)}><ChevronLeft size={22} aria-hidden /></button>
+          <button type="button" className={cn("carousel-arrow")} aria-label={t("landing.carouselNext")} disabled={current === items.length - 1} onClick={() => goTo(current + 1)}><ChevronRight size={22} aria-hidden /></button>
         </div>
       </div>
     </div>

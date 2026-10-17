@@ -77,6 +77,10 @@ Details, cases and raw results: [`eval/`](eval/) and [`eval/results/latest.md`](
 - Link scanning is isolated and private: every request and redirect hop goes through a validating proxy that blocks private and internal addresses; the scanner has no cloud permissions. See [`linkscan/SECURITY.md`](linkscan/SECURITY.md).
 - All names, numbers and IDs in examples and tests are fictional ("Bharat National Bank").
 
+## Provenance
+
+Scam Shield was designed and built for the AI Builder Cup (first commit 16 Oct 2026; the history is in this repository). Some general-purpose front-end building blocks (basic UI components, the app shell and the toast setup) were adapted from the author's own earlier personal project; the product itself (the AI pipeline, scam list, QR and link handling, the isolated link scanner, reporting and complaint flows, evaluation and deployment) was written during the hackathon. *(Owner: confirm this wording is accurate before submitting.)*
+
 ## Repository layout
 
 | Path | What |

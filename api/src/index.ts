@@ -12,7 +12,9 @@ import { createGeminiModel } from "./gemini";
 import type { GeminiConfig } from "./gemini";
 import { createLinkScanClient } from "./linkscanClient";
 
-export const DEFAULT_LIMITS = { perUidPerDay: 30, globalPerDay: 3000, perIpPerMinute: 10, perIpReportPerMinute: 60 } as const;
+// perIpPerMinute is best-effort abuse protection and many judges or office users can share one IP, so it is generous;
+// the real cost guards are the per-user and global daily counters.
+export const DEFAULT_LIMITS = { perUidPerDay: 30, globalPerDay: 3000, perIpPerMinute: 60, perIpReportPerMinute: 60 } as const;
 /** The link scan gets its own budget so scan (<= 12 s) plus Gemini (<= 30 s) fits inside the 45 s check limit. */
 export const LINKSCAN_TIMEOUT_MS = 12_000;
 export const SHUTDOWN_GRACE_MS = 8_000;

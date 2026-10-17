@@ -1,11 +1,15 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
-import { ArrowRight, ArrowUpRight, MessageSquareText, Image, QrCode, Link2, AudioLines, FileText, UsersRound, Send, ScanSearch, Eye, Route, LockKeyhole, Cloud, OctagonAlert, TriangleAlert, Info } from "lucide-react";
+import { ArrowRight, ArrowUpRight, MessageSquareText, Image, QrCode, Link2, AudioLines, FileText, UsersRound, Send, ScanSearch, Eye, Route, LockKeyhole, Sparkles, Container, Database, Flame, OctagonAlert, TriangleAlert, Info } from "lucide-react";
 import { useT } from "@/i18n";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroPreview } from "@/components/landing/HeroPreview";
 import { InputCarousel } from "@/components/landing/InputCarousel";
 import { ImageVisual, LinkVisual, QrVisual, TextVisual, VoiceVisual } from "@/components/landing/InputVisuals";
 import { ScrollFlow } from "@/components/landing/ScrollFlow";
+import { LangStack, LangText } from "@/components/landing/LangStack";
+import { ScrambleNumber } from "@/components/landing/ScrambleNumber";
+import { GoogleCloudMark } from "@/components/landing/GoogleCloudMark";
+import { translate } from "@/i18n";
 import { BrandLockup } from "@/components/brand/BrandLockup";
 
 const inputs = [
@@ -33,14 +37,14 @@ export default function LandingPage() {
         <section className="landing-hero" aria-labelledby="hero-title">
           <div className="landing-container hero-grid">
             <div className="hero-copy">
-              <p className="landing-eyebrow"><span className="eyebrow-line" />{t("landing.eyebrow")}</p>
-              <h1 id="hero-title">{t("landing.title")}<br /><span>{t("landing.titleAccent")}</span></h1>
-              <p className="hero-subtitle">{t("landing.subtitle")}</p>
+              <p className="landing-eyebrow"><span className="eyebrow-line" /><LangText k="landing.eyebrow" /></p>
+              <h1 id="hero-title"><LangStack>{(l) => <>{translate(l, "landing.title")}<br /><span className="lang-accent">{translate(l, "landing.titleAccent")}</span></>}</LangStack></h1>
+              <p className="hero-subtitle"><LangText k="landing.subtitle" /></p>
               <div className="hero-actions">
                 <Link to="/check" className="landing-button">{t("landing.check")}<ArrowRight size={20} aria-hidden /></Link>
                 <Link to="/check?example=kyc_sms" className="landing-button landing-button-secondary">{t("landing.example")}<ArrowUpRight size={19} aria-hidden /></Link>
               </div>
-              <p className="hero-language"><span aria-hidden>अ / A</span>{t("landing.languageNote")}</p>
+              <p className="hero-language"><span aria-hidden>अ / A</span><LangText k="landing.languageNote" /></p>
             </div>
             <HeroPreview />
           </div>
@@ -68,7 +72,7 @@ export default function LandingPage() {
 
         <section className="landing-section landing-container action-section" aria-labelledby="actions-title">
           <div className="section-heading"><p className="landing-eyebrow">{t("landing.actionEyebrow")}</p><h2 id="actions-title">{t("landing.actionTitle")}</h2><p>{t("landing.actionSubtitle")}</p></div>
-          <ScrollFlow variant="cards" labelledBy="actions-title" items={actions.map(({ id, icon }) => ({ id, icon, title: t(`landing.action.${id}`), description: t(`landing.action.${id}Desc`) }))} />
+          <ScrollFlow variant="cards" vertical labelledBy="actions-title" items={actions.map(({ id, icon }) => ({ id, icon, title: t(`landing.action.${id}`), description: t(`landing.action.${id}Desc`) }))} />
         </section>
 
         <section className="landing-section examples-section" aria-labelledby="examples-title">
@@ -76,11 +80,19 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-section landing-container proof-section" aria-labelledby="proof-title">
-          <div className="proof-main"><div className="section-heading"><p className="landing-eyebrow">{t("landing.proofEyebrow")}</p><h2 id="proof-title">{t("landing.proofTitle")}</h2><p>{t("landing.proofBody")}</p></div><dl className="proof-stats"><div><dt>{t("landing.accuracy")}</dt><dd>98<span>%</span></dd></div><div><dt>{t("landing.recall")}</dt><dd>100<span>%</span></dd></div><div><dt>{t("landing.falsePositive")}</dt><dd>4.2<span>%</span></dd></div></dl><p className="proof-note"><Info size={18} aria-hidden />{t("landing.proofNote")}</p></div>
+          <div className="proof-main"><div className="section-heading"><p className="landing-eyebrow">{t("landing.proofEyebrow")}</p><h2 id="proof-title">{t("landing.proofTitle")}</h2><p>{t("landing.proofBody")}</p></div><dl className="proof-stats"><div><dt>{t("landing.accuracy")}</dt><dd><ScrambleNumber value="98" /><span>%</span></dd></div><div><dt>{t("landing.recall")}</dt><dd><ScrambleNumber value="100" delay={250} duration={1700} /><span>%</span></dd></div><div><dt>{t("landing.falsePositive")}</dt><dd><ScrambleNumber value="4.2" delay={500} duration={1900} /><span>%</span></dd></div></dl><p className="proof-note"><Info size={18} aria-hidden />{t("landing.proofNote")}</p></div>
           <aside className="privacy-panel"><span className="input-icon"><LockKeyhole size={25} strokeWidth={1.6} aria-hidden /></span><h3>{t("landing.privacyTitle")}</h3><ul><li>{t("landing.privacyBrowser")}</li><li>{t("landing.privacyDelete")}</li><li>{t("landing.privacyNumbers")}</li></ul></aside>
         </section>
 
-        <div className="landing-container cloud-row"><p><Cloud size={24} strokeWidth={1.6} aria-hidden />{t("landing.cloud")}</p><p>{t("landing.cloudDetail")}</p></div>
+        <div className="landing-container cloud-row">
+          <p className="cloud-badge"><GoogleCloudMark size={34} /><span>{t("landing.cloud")}</span></p>
+          <ul className="cloud-services" aria-label={t("landing.cloudDetail")}>
+            <li><Sparkles size={18} strokeWidth={1.7} aria-hidden />Gemini <span>Vertex AI</span></li>
+            <li><Container size={18} strokeWidth={1.7} aria-hidden />Cloud Run</li>
+            <li><Database size={18} strokeWidth={1.7} aria-hidden />Firestore</li>
+            <li><Flame size={18} strokeWidth={1.7} aria-hidden />Firebase</li>
+          </ul>
+        </div>
         <section className="landing-final" aria-labelledby="final-title"><div className="landing-container final-inner"><div><p className="landing-eyebrow">SCAM SHIELD</p><h2 id="final-title">{t("landing.finalTitle")}</h2><p>{t("landing.finalBody")}</p></div><Link className="landing-button" to="/check">{t("landing.check")}<ArrowRight size={20} aria-hidden /></Link></div></section>
       </main>
       <footer className="landing-footer landing-container"><div className="landing-footer-top"><BrandLockup /><div className="footer-help"><a href="tel:1930">{t("landing.helpline")}</a><a href="https://cybercrime.gov.in" target="_blank" rel="noreferrer">{t("landing.portal")}<ArrowUpRight size={16} aria-hidden /></a></div></div><div className="landing-footer-bottom"><p>{t("landing.footerNote")}</p><nav aria-label={t("nav.label")}><Link to="/about">{t("nav.about")}</Link><Link to="/trends">{t("nav.trends")}</Link></nav></div></footer>

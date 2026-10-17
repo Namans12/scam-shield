@@ -23,9 +23,10 @@ export function useScrollFlow<T extends HTMLElement>(count: number) {
       frame = 0;
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight || 800;
-      // Starts as the list enters the lower part of the screen and finishes about half a screen of scrolling later.
-      const span = Math.max(rect.height * 0.9, vh * 0.5);
-      const p = Math.min(1, Math.max(0, (vh * 0.84 - rect.top) / span));
+      // The rail's leading edge follows a reading line at the middle of the screen: it starts when the list reaches
+      // mid-screen and finishes when the last item has passed that line.
+      const span = Math.max(rect.height, vh * 0.4);
+      const p = Math.min(1, Math.max(0, (vh * 0.5 - rect.top) / span));
       el.style.setProperty("--flow", p.toFixed(3));
       setReached(p <= 0.02 ? 0 : Math.min(count, 1 + Math.floor(p * count * 0.999)));
     };

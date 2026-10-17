@@ -13,10 +13,10 @@ export interface FlowItem {
  * An ordered list with a rail that fills as the reader scrolls (horizontal on wide screens, vertical on phones).
  * Each item lights up when the rail reaches it. All text is always fully readable: only the rail, node, number and icon change.
  */
-export function ScrollFlow({ items, variant, labelledBy }: { items: readonly FlowItem[]; variant: "steps" | "cards"; labelledBy: string }) {
+export function ScrollFlow({ items, variant, labelledBy, vertical = false }: { items: readonly FlowItem[]; variant: "steps" | "cards"; labelledBy: string; vertical?: boolean }) {
   const { ref, reached } = useScrollFlow<HTMLOListElement>(items.length);
   return (
-    <ol ref={ref} aria-labelledby={labelledBy} className={cn("flow", variant === "steps" ? "flow-steps" : "flow-cards")}>
+    <ol ref={ref} aria-labelledby={labelledBy} className={cn("flow", variant === "steps" ? "flow-steps" : "flow-cards", vertical && "flow-vertical")}>
       {items.map(({ id, icon: Icon, title, description }, index) => (
         <li
           key={id}
