@@ -403,10 +403,9 @@ html:lang(hi) {
 .cloud-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px 30px; padding-block: 28px; border-top: 1px solid var(--border); }
 .cloud-row { gap: 18px 36px; padding-block: 36px; }
 .cloud-badge { display: flex; align-items: center; gap: 12px; font-size: calc(18px * var(--fs)); font-weight: 600; letter-spacing: -.3px; }
-.cloud-badge img { flex: none; }
 .cloud-services { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; list-style: none; }
-.cloud-services li { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px 0 13px; border: 1px solid var(--border); border-radius: 99px; background: var(--card); color: var(--foreground); font-size: calc(15px * var(--fs)); font-weight: 500; box-shadow: var(--shadow-sm); transition: border-color var(--dur-enter), box-shadow var(--dur-enter), transform var(--dur-enter) var(--ease-emphasized); }
-.cloud-services li img { flex: none; width: 22px; height: 22px; }
+.cloud-services li { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: 99px; background: var(--card); color: var(--foreground); font-size: calc(15px * var(--fs)); font-weight: 500; box-shadow: var(--shadow-sm); transition: border-color var(--dur-enter), box-shadow var(--dur-enter), transform var(--dur-enter) var(--ease-emphasized); }
+.cloud-notice { margin-top: -18px; padding-bottom: 32px; text-align: center; color: var(--muted-foreground); font-size: calc(13px * var(--fs)); line-height: 1.6; text-wrap: balance; }
 @media (hover: hover) { .cloud-services li:hover { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); transform: translateY(-2px); } }
 .landing-final { background: radial-gradient(ellipse at 90% 30%, var(--hero-glow), transparent 55%), var(--surface-subtle); border-block: 1px solid var(--border); }
 .final-inner { display: flex; gap: 60px; align-items: center; justify-content: space-between; padding-block: 66px; }
@@ -579,6 +578,7 @@ html:lang(hi) .hero-subtitle { line-height: 1.95; }
   .privacy-panel li { font-size: calc(16px * var(--fs)); }
   .cloud-row { justify-content: flex-start; gap: 12px; padding-block: 27px; }
   .cloud-services { justify-content: flex-start; }
+  .cloud-notice { text-align: left; margin-top: -10px; }
   .final-inner { flex-direction: column; align-items: flex-start; gap: 27px; padding-block: 46px; }
   .final-inner h2 { font-size: calc(31px * var(--fs)); }
   .final-inner > div > p:last-child { font-size: calc(16px * var(--fs)); }

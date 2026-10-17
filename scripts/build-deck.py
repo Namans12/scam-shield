@@ -561,6 +561,11 @@ def node(slide, x, y, w, h, title, sub, logos=(), fill=WHITE, line_=BORDER, tcol
     tx(slide, tx0, ty, x + w - tx0 - 0.1, y + h - ty - 0.04, [P([(title, {"size": tsize, "font": "b", "color": tcolor})], after=1), P([(sub, {"size": ssize, "color": scolor})])])
 
 
+def tm_footnote(slide):
+    """Trademark and non-affiliation footnote for slides that show Google product icons."""
+    tx(slide, MX, 5.4, CW, 0.14, [P([("Product names and icons are trademarks of Google LLC, shown only to identify the technologies used. No endorsement or affiliation implied.", {"size": 7.5, "color": MUTED})])], anchor=MSO_ANCHOR.MIDDLE)
+
+
 def slide8(prs):  # Architecture
     s = slide_at(prs, 8)
     title_style(s)
@@ -586,11 +591,12 @@ def slide8(prs):  # Architecture
     line(s, bx + bw, 3.8, cx, 3.8, color=BLUE, width=1.75, head=True)
     polyline(s, [(bx + bw, 3.98), (5.35, 3.98), (5.35, 5.0), (cx, 5.0)], color=BLUE, width=1.75)
     line(s, cx + 3.0, 4.36, cx + 3.0, 4.62, color=RED, width=1.75, head=True)
+    tm_footnote(s)
     notes(s, "Architecture as deployed (scripts/deploy.sh, region asia-south1): Firebase Hosting serves the React PWA and forwards /api/** to the Cloud Run API. "
              "The API is stateless (1 vCPU, 1 GiB, concurrency 20, min 1 and max 5 instances) and calls Gemini on Vertex AI, Firestore and the private link scanner. "
              "The link scanner (2 vCPU, 2 GiB, min 0, max 3 instances, private, no unauthenticated access) runs under its own service account with no project roles and can be invoked only by the API's service account. "
              "Cloud Storage uploads are deleted after 7 days by a lifecycle rule (scripts/storage-lifecycle.json). Limits: 30 per user per day, 60 per IP per minute, 3,000 per day overall. "
-             "Product logos are the official Google Cloud, Firebase, Gemini and Vertex AI marks (web/public/brand/third-party). Uploads go straight from the browser to Storage.")
+             "Product icons are shown only to identify the technologies used; no endorsement by Google is implied (trademark footnote on the slide). The icon files are kept in docs/brand/third-party. Uploads go straight from the browser to Storage.")
 
 
 def chips(slide, x, y, w, labels, size=11, h=0.28, gap=0.08, fill=TINT2, color=INK):
@@ -641,6 +647,7 @@ def slide9(prs):  # Technologies
     tx(s, rx + 0.2, y2 + 0.14, rw - 0.4, 0.26, [P([("Application", {"size": 13, "font": "b", "color": BLUE})])])
     cy = chips(s, rx + 0.2, y2 + 0.5, rw - 0.4, ["React 18", "Vite", "Tailwind", "Workbox PWA", "Node 22", "TypeScript", "Hono", "zod", "Playwright", "sharp + jsQR"], size=10.5, h=0.26, gap=0.07)
     tx(s, rx + 0.2, cy + 0.1, rw - 0.4, 0.3, [P([("590+ automated tests", {"size": 12, "font": "b", "color": NAVY}), (", plus a 50-case live benchmark", {"size": 12})])])
+    tm_footnote(s)
     notes(s, "Meaningful Gen AI: a single multimodal Gemini call on Vertex AI (api/src/gemini.ts; default model gemini-3.7-flash, automatic fallback gemini-2.5-flash, location global) reads text, image or audio. "
              "Output is schema-validated (zod schemas in shared/), every red flag quotes evidence, answers come in English or Hindi. Deterministic checks can only raise the verdict. "
              "WebMCP tools: check_message and report_scam (web/src/webmcp/registerTools.ts). "

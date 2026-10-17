@@ -2,7 +2,7 @@
 
 The landing page's "Built on Google Cloud" row shows the logos of the Google products Scam Shield runs on, so people can see what it is built with. The names and logos belong to Google LLC; they are used only to identify those products.
 
-| File in `web/public/brand/third-party/` | Product | Fetched from (Iconify API, 18 Oct 2026) | Set licence |
+| File in `docs/brand/third-party/` | Product | Fetched from (Iconify API, 18 Oct 2026) | Set licence |
 |---|---|---|---|
 | `google-cloud.svg` | Google Cloud | `logos:google-cloud` (SVG Logos by Gil Barbara) | CC0 |
 | `cloud-run.svg` | Cloud Run | `logos:google-cloud-run` | CC0 |

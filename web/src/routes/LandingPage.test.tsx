@@ -31,6 +31,18 @@ describe("LandingPage", () => {
       expect(screen.getByRole("radiogroup", { name: translate(lang, "lang.label") })).toBeInTheDocument();
     });
   }
+  for (const lang of ["en", "hi"] as Lang[]) {
+    it(`shows technology names as plain text with a trademark and non-affiliation note in ${lang}`, () => {
+      setLang(lang);
+      const { container } = renderLanding();
+      expect(container.querySelector('img[src*="third-party"]')).toBeNull();
+      expect(container.querySelector(".cloud-row img")).toBeNull();
+      for (const name of ["Gemini", "Vertex AI", "Cloud Run", "Firestore", "Firebase"]) expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+      expect(screen.getByText(translate(lang, "landing.trademark"))).toBeInTheDocument();
+      expect(translate(lang, "landing.trademark")).toContain("Google LLC");
+      expect(container.textContent).not.toMatch(/built on google cloud|powered by google/i);
+    });
+  }
   it("links every primary CTA to /check and every example to its agreed query", () => {
     renderLanding();
     for (const link of screen.getAllByRole("link", { name: "Check a message" })) expect(link).toHaveAttribute("href", "/check");

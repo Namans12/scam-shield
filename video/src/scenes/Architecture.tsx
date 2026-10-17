@@ -110,11 +110,13 @@ export const Architecture: React.FC<{ frames: number }> = ({ frames }) => {
         <Audio src={staticFile("audio/architecture.mp3")} />
       </Sequence>
       <div style={{ position: "absolute", left: 90, top: 52, opacity: head, display: "flex", alignItems: "center", gap: 18 }}>
-        <Img src={staticFile("brand/google-cloud.svg")} style={{ width: 52, height: 52, background: "#fff", borderRadius: 14, padding: 8 }} />
         <div>
           <div style={{ color: C.cyan, fontWeight: 700, fontSize: 20, letterSpacing: 3, textTransform: "uppercase" }}>How a check works</div>
-          <div style={{ color: C.white, fontWeight: 800, fontSize: 40, letterSpacing: -0.8 }}>Built on Google Cloud and Firebase</div>
+          <div style={{ color: C.white, fontWeight: 800, fontSize: 40, letterSpacing: -0.8 }}>Cloud Run, Gemini, Firestore and Firebase</div>
         </div>
+      </div>
+      <div style={{ position: "absolute", left: 90, right: 90, bottom: 22, color: C.muted, fontWeight: 500, fontSize: 17, opacity: head }}>
+        Product names and icons are trademarks of Google LLC, shown only to identify the technologies used. No endorsement or affiliation implied.
       </div>
       <svg width="1920" height="1080" style={{ position: "absolute", left: 0, top: 0 }}>
         <defs>

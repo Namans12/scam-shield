@@ -21,7 +21,7 @@ const inputs = [
 ] as const;
 const steps = [{ id: 1, icon: ScanSearch }, { id: 2, icon: Eye }, { id: 3, icon: Route }] as const;
 const actions = [{ id: "complaint", icon: FileText }, { id: "reports", icon: UsersRound }, { id: "share", icon: Send }] as const;
-const cloudServices = [{ file: "gemini", name: "Gemini" }, { file: "vertex-ai", name: "Vertex AI" }, { file: "cloud-run", name: "Cloud Run" }, { file: "firestore", name: "Firestore" }, { file: "firebase", name: "Firebase" }] as const;
+const cloudServices = ["Gemini", "Vertex AI", "Cloud Run", "Firestore", "Firebase"] as const;
 const examples = [{ id: "kyc_sms", icon: MessageSquareText }, { id: "fake_payment", icon: Image }, { id: "qr_receive", icon: QrCode }, { id: "digital_arrest", icon: AudioLines }] as const;
 
 export default function LandingPage() {
@@ -86,11 +86,12 @@ export default function LandingPage() {
         </section>
 
         <div className="landing-container cloud-row">
-          <p className="cloud-badge"><img src="/brand/third-party/google-cloud.svg" alt="" width="40" height="40" /><span>{t("landing.cloud")}</span></p>
+          <p className="cloud-badge"><span>{t("landing.cloud")}</span></p>
           <ul className="cloud-services" aria-label={t("landing.cloudDetail")}>
-            {cloudServices.map(({ file, name }) => <li key={file}><img src={`/brand/third-party/${file}.svg`} alt="" width="22" height="22" />{name}</li>)}
+            {cloudServices.map((name) => <li key={name}>{name}</li>)}
           </ul>
         </div>
+        <p className="landing-container cloud-notice">{t("landing.trademark")}</p>
         <section className="landing-final" aria-labelledby="final-title"><div className="landing-container final-inner"><div><p className="landing-eyebrow">SCAM SHIELD</p><h2 id="final-title">{t("landing.finalTitle")}</h2><p>{t("landing.finalBody")}</p></div><Link className="landing-button" to="/check">{t("landing.check")}<ArrowRight size={20} aria-hidden /></Link></div></section>
       </main>
       <footer className="landing-footer landing-container"><div className="landing-footer-top"><BrandLockup /><div className="footer-help"><a href="tel:1930">{t("landing.helpline")}</a><a href="https://cybercrime.gov.in" target="_blank" rel="noreferrer">{t("landing.portal")}<ArrowUpRight size={16} aria-hidden /></a></div></div><div className="landing-footer-bottom"><p>{t("landing.footerNote")}</p><nav aria-label={t("nav.label")}><Link to="/about">{t("nav.about")}</Link><Link to="/trends">{t("nav.trends")}</Link></nav></div></footer>

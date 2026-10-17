@@ -4,13 +4,7 @@ import { C, fontFamily } from "../theme";
 import { ease, easeOut } from "../components/common";
 import { LEAD } from "../plan";
 
-const LOGOS = [
-  { f: "gemini.svg", n: "Gemini" },
-  { f: "vertex-ai.svg", n: "Vertex AI" },
-  { f: "cloud-run.svg", n: "Cloud Run" },
-  { f: "firestore.svg", n: "Firestore" },
-  { f: "firebase.svg", n: "Firebase" },
-];
+const TECH = ["Gemini", "Vertex AI", "Cloud Run", "Firestore", "Firebase"];
 
 export const Closing: React.FC<{ frames: number }> = ({ frames }) => {
   const f = useCurrentFrame();
@@ -35,15 +29,15 @@ export const Closing: React.FC<{ frames: number }> = ({ frames }) => {
           <Row label="Code" value="github.com/Namans12/scam-shield" />
         </div>
         <div style={{ marginTop: 50, display: "flex", justifyContent: "center", alignItems: "center", gap: 26, opacity: a(46) }}>
-          <span style={{ color: C.muted, fontWeight: 600, fontSize: 22, letterSpacing: 2.4, textTransform: "uppercase" }}>Built on Google Cloud</span>
-          {LOGOS.map((l) => (
-            <div key={l.f} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", borderRadius: 14, background: "rgba(255,255,255,.95)" }}>
-              <Img src={staticFile(`brand/${l.f}`)} style={{ width: 30, height: 30 }} />
-              <span style={{ color: C.ink, fontWeight: 600, fontSize: 20 }}>{l.n}</span>
+          <span style={{ color: C.muted, fontWeight: 600, fontSize: 22, letterSpacing: 2.4, textTransform: "uppercase" }}>Technologies used</span>
+          {TECH.map((n) => (
+            <div key={n} style={{ padding: "8px 20px", borderRadius: 14, background: "rgba(255,255,255,.95)" }}>
+              <span style={{ color: C.ink, fontWeight: 600, fontSize: 20 }}>{n}</span>
             </div>
           ))}
         </div>
         <div style={{ marginTop: 28, color: C.muted, fontWeight: 500, fontSize: 22, opacity: a(56) }}>Guidance only, not a police or legal service. Lost money? Call 1930.</div>
+        <div style={{ marginTop: 18, color: C.muted, fontWeight: 500, fontSize: 17, opacity: a(56) }}>Google Cloud, Gemini, Vertex AI, Cloud Run, Firestore and Firebase are trademarks of Google LLC. Scam Shield is independent and not endorsed by or affiliated with Google.</div>
       </div>
     </AbsoluteFill>
   );

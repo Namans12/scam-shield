@@ -29,7 +29,7 @@ writeFileSync(resolve(ROOT, "src/generated/bench.json"), JSON.stringify(bench, n
 console.log("benchmark:", JSON.stringify(bench));
 
 for (const f of ["mark-on-dark.svg", "lockup-on-dark.svg", "mark.svg"]) cp(resolve(REPO, "docs/brand/logo-final", f), resolve(ROOT, "public/brand", f));
-for (const f of readdirSync(resolve(REPO, "web/public/brand/third-party")).filter((f) => f.endsWith(".svg"))) cp(resolve(REPO, "web/public/brand/third-party", f), resolve(ROOT, "public/brand", f));
+for (const f of readdirSync(resolve(REPO, "docs/brand/third-party")).filter((f) => f.endsWith(".svg"))) cp(resolve(REPO, "docs/brand/third-party", f), resolve(ROOT, "public/brand", f));
 
 // Audio: regenerate timings with the right source when needed.
 const timings = JSON.parse(readFileSync(resolve(ROOT, "narration/timings.json"), "utf8"));
