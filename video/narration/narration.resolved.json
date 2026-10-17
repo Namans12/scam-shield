@@ -1,0 +1,201 @@
+{
+  "voice": {
+    "languageCode": "en-IN",
+    "name": "en-IN-Chirp3-HD-Achird",
+    "speakingRate": 1
+  },
+  "scenes": [
+    {
+      "id": "intro",
+      "sentences": [
+        {
+          "say": "Indians reported nearly twenty thousand crore rupees lost to cyber fraud in twenty twenty-five.",
+          "caption": "Indians reported losing nearly ₹20,000 crore to cyber fraud in 2025."
+        },
+        {
+          "say": "Scam Shield checks what you were just sent, before you act.",
+          "caption": "Scam Shield checks what you were just sent, before you act."
+        }
+      ]
+    },
+    {
+      "id": "landing",
+      "sentences": [
+        {
+          "say": "Paste a message, or add a screenshot, a Q R code, a link or a voice note.",
+          "caption": "Paste a message, or add a screenshot, a QR code, a link or a voice note."
+        },
+        {
+          "say": "English, Hindi and Hinglish are understood.",
+          "caption": "English, Hindi and Hinglish are understood."
+        }
+      ]
+    },
+    {
+      "id": "kyc",
+      "sentences": [
+        {
+          "say": "First, a fake K Y C message with a look-alike bank link. One tap runs a real check.",
+          "caption": "First, a fake KYC message with a look-alike bank link. One tap runs a real check."
+        },
+        {
+          "say": "Gemini reads the message. The wait is sped up four times.",
+          "caption": "Gemini reads the message. The wait is sped up 4x."
+        },
+        {
+          "say": "The verdict is Scam, with a risk score and the type of scam.",
+          "caption": "The verdict is Scam, with a risk score and the type of scam."
+        },
+        {
+          "say": "Every warning sign quotes the exact words that give it away.",
+          "caption": "Every warning sign quotes the exact words that give it away."
+        },
+        {
+          "say": "The number and the link are already on the shared scam list: in this demo, three reports each.",
+          "caption": "The number and the link are already on the shared scam list: in this demo, three reports each."
+        },
+        {
+          "say": "The link was opened in an isolated browser, so you see the fake bank form without opening it yourself.",
+          "caption": "The link was opened in an isolated browser, so you see the fake bank form without opening it yourself."
+        }
+      ]
+    },
+    {
+      "id": "qr",
+      "sentences": [
+        {
+          "say": "Now a Q R code that says you will receive five thousand rupees.",
+          "caption": "Now a QR code that says you will receive ₹5,000."
+        },
+        {
+          "say": "Scam Shield decodes it on the server, as part of the same check.",
+          "caption": "Scam Shield decodes it on the server, as part of the same check."
+        },
+        {
+          "say": "The card shows what it really is: a payment request, to this U P I I D. You never scan a code to receive money.",
+          "caption": "The card shows what it really is: a payment request, to this UPI ID. You never scan a code to receive money."
+        }
+      ]
+    },
+    {
+      "id": "voice",
+      "sentences": [
+        {
+          "say": "Next, a voice note: a synthetic fake C B I officer, in Hinglish. Gemini writes down what was said.",
+          "caption": "Next, a voice note: a synthetic fake CBI officer, in Hinglish. Gemini writes down what was said."
+        },
+        {
+          "say": "The verdict is Scam, a digital arrest threat.",
+          "caption": "The verdict is Scam, a digital arrest threat."
+        },
+        {
+          "say": "It spots the arrest threat and the fee demand, and says to hang up.",
+          "caption": "It spots the arrest threat and the fee demand, and says to hang up."
+        }
+      ]
+    },
+    {
+      "id": "payment",
+      "sentences": [
+        {
+          "say": "Even a payment screenshot. A buyer says they have paid, and wants you to ship the item. Gemini reads the image to check.",
+          "caption": "Even a payment screenshot. A buyer says they have paid, and wants you to ship the item. Gemini reads the image to check."
+        },
+        {
+          "say": "The date is the thirty-first of September, which does not exist.",
+          "caption": "The date is 31 September, which does not exist."
+        },
+        {
+          "say": "The transaction reference has the wrong length, and the sender name does not match the U P I I D.",
+          "caption": "The transaction reference has the wrong length, and the sender name does not match the UPI ID."
+        }
+      ]
+    },
+    {
+      "id": "actions",
+      "sentences": [
+        {
+          "say": "Then you can act.",
+          "caption": "Then you can act."
+        },
+        {
+          "say": "To report the scam, sign in with Google, then add the scammer's number to the shared list.",
+          "caption": "To report it: sign in with Google, then add the scammer's number to the shared list."
+        },
+        {
+          "say": "Draft the complaint for one nine three zero, or the cybercrime portal, with the amount lost.",
+          "caption": "Draft the complaint for 1930 or cybercrime.gov.in, with the amount lost."
+        },
+        {
+          "say": "And share a warning card with family. This is the card the app made.",
+          "caption": "And share a warning card with family. This is the card the app made."
+        }
+      ]
+    },
+    {
+      "id": "phone",
+      "sentences": [
+        {
+          "say": "It fits a phone screen too. One tap runs the check, and Report, Complaint and Share sit in a bar at the bottom.",
+          "caption": "It fits a phone screen too. One tap runs the check, and Report, Complaint and Share sit in a bar at the bottom."
+        }
+      ]
+    },
+    {
+      "id": "hindi",
+      "sentences": [
+        {
+          "say": "It works in Hindi too. One tap switches the whole app.",
+          "caption": "It works in Hindi too. One tap switches the whole app."
+        },
+        {
+          "say": "The check runs in Hindi, and the verdict comes back in Hindi.",
+          "caption": "The check runs in Hindi, and the verdict comes back in Hindi."
+        },
+        {
+          "say": "The Trends page shows reports by scam type and state, with demo data while the app is new.",
+          "caption": "The Trends page shows reports by scam type and state, with demo data while the app is new."
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "sentences": [
+        {
+          "say": "Firebase Hosting serves the app and forwards API calls to a Cloud Run service.",
+          "caption": "Firebase Hosting serves the app and forwards API calls to a Cloud Run service."
+        },
+        {
+          "say": "It checks the Firestore scam list, sends any link to a separate, isolated scanner, and asks Gemini on Vertex A I for a structured verdict.",
+          "caption": "It checks the Firestore scam list, sends any link to a separate, isolated scanner, and asks Gemini on Vertex AI for a structured verdict."
+        },
+        {
+          "say": "Firebase handles sign-in and file storage.",
+          "caption": "Firebase handles sign-in and file storage."
+        }
+      ]
+    },
+    {
+      "id": "benchmark",
+      "sentences": [
+        {
+          "say": "On fifty synthetic test cases, Scam Shield flagged all twenty-six scams, and wrongly flagged none of the twenty-four genuine messages.",
+          "caption": "On 50 synthetic test cases: flagged all 26 scams, wrongly flagged none of 24 genuine messages."
+        },
+        {
+          "say": "It is a small test, not a guarantee.",
+          "caption": "It is a small test, not a guarantee."
+        }
+      ]
+    },
+    {
+      "id": "closing",
+      "sentences": [
+        {
+          "say": "Scam Shield. Check before you click, pay or scan.",
+          "caption": "Scam Shield. Check before you click, pay or scan."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+node_modules/
+out/
+.cache/
+*.log
+# raw recordings and everything generated from them
+footage/raw/
+footage/clips/
+public/
+src/generated/
