@@ -1,6 +1,6 @@
 # Third-party logos
 
-The landing page's "Built on Google Cloud" row shows the logos of the Google products Scam Shield runs on, so people can see what it is built with. The names and logos belong to Google LLC; they are used only to identify those products.
+These icons are NOT used on the website (it shows plain-text names and a trademark note). They are used only in the pitch deck (slides 8-9) and the demo video's architecture scene, each with a footnote, and kept here as the source files. The names and logos belong to Google LLC; they are used only to identify those products.
 
 | File in `docs/brand/third-party/` | Product | Fetched from (Iconify API, 18 Oct 2026) | Set licence |
 |---|---|---|---|
