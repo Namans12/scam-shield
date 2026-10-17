@@ -18,7 +18,7 @@ export const hi: Record<MessageKey, string> = {
   "lang.label": "भाषा",
 
   "check.title": "कोई मैसेज गड़बड़ लग रहा है?",
-  "check.subtitle": "उसे यहाँ पेस्ट करें, या स्क्रीनशॉट, QR कोड या वॉइस नोट जोड़ें। हम धोखाधड़ी के संकेत ढूँढेंगे और बताएँगे कि आगे क्या करना है।",
+  "check.subtitle": "मैसेज पेस्ट करें, या स्क्रीनशॉट, QR कोड या वॉइस नोट जोड़ें। चेतावनी के संकेत और आगे के कदम जानें।",
   "check.textLabel": "मैसेज",
   "check.textPlaceholder": "SMS, WhatsApp या ईमेल का मैसेज यहाँ पेस्ट करें",
   "check.linkLabel": "आपको मिला लिंक (ज़रूरी नहीं)",
@@ -46,7 +46,7 @@ export const hi: Record<MessageKey, string> = {
   "dropzone.multiple": "एक बार में सिर्फ़ एक फ़ाइल जाँची जाती है। पहली फ़ाइल ले ली गई है।",
   "dropzone.drop": "आप फ़ाइल को यहाँ खींचकर छोड़ भी सकते हैं, या Ctrl+V से स्क्रीनशॉट पेस्ट कर सकते हैं।",
   "dropzone.dropActive": "फ़ाइल जोड़ने के लिए उसे यहाँ छोड़ें",
-  "dropzone.hint": "सिर्फ़ एक फ़ाइल। फ़ोटो (PNG, JPEG, WebP) 10 MB तक। वॉइस नोट (MP3, M4A, AAC, OGG, WAV, WebM) 15 MB तक। ऊपर मैसेज वाले डिब्बे में आप जो भी लिखेंगे, वह फ़ाइल के साथ भेजा जाएगा, जैसे QR कोड के बारे में आपको क्या बताया गया था।",
+  "dropzone.hint": "एक फ़ोटो (PNG, JPEG, WebP), अधिकतम 10 MB, या एक वॉइस नोट, अधिकतम 15 MB। मैसेज के डिब्बे में ज़रूरी जानकारी जोड़ सकते हैं।",
   "dropzone.previewAlt": "{name} का प्रीव्यू",
   "dropzone.audioLabel": "आपके वॉइस नोट का प्रीव्यू",
   "dropzone.remove": "हटाएँ",
@@ -225,4 +225,16 @@ export const hi: Record<MessageKey, string> = {
   "notfound.cta": "जाँच पेज पर जाएँ",
 
   "footer.text": "Scam Shield केवल मार्गदर्शन देता है। यह पुलिस या कानूनी सेवा नहीं है।",
+
+  // Page refinement copy.
+  "pages.check.eyebrow": "कोई कदम उठाने से पहले जाँचें",
+  "pages.result.eyebrow": "आपकी जाँच का नतीजा",
+  "pages.result.actions": "इस नतीजे पर आगे के कदम",
+  "pages.action.report": "रिपोर्ट करें",
+  "pages.action.complaint": "शिकायत",
+  "pages.action.share": "साझा करें",
+  "pages.trends.period": "लोगों की रिपोर्ट · पिछले 7 दिन",
+  "pages.complaint.details": "अपनी जानकारी जोड़ें",
+  "pages.complaint.review": "पढ़ें, कॉपी करें और शिकायत भेजें",
+  "pages.notfound.label": "रास्ता भटक गए?",
 };

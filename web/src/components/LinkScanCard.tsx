@@ -20,7 +20,7 @@ export function LinkScanCard({ scan }: { scan: LinkScan }) {
   const finalUrl = scan.finalUrl ?? scan.requestedUrl;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
         <Link2 size={18} aria-hidden />
         {t("linkscan.finalUrl")}
@@ -28,7 +28,7 @@ export function LinkScanCard({ scan }: { scan: LinkScan }) {
       <p className="mt-1 font-mono text-base font-medium break-anywhere" data-testid="final-url">
         {finalUrl}
       </p>
-      <p className="mt-1 text-sm text-muted-foreground">{t("linkscan.textOnly")}</p>
+      <p className="mt-1 text-base leading-relaxed text-muted-foreground">{t("linkscan.textOnly")}</p>
 
       <p className="mt-3 text-base">
         {redirects === 0
@@ -56,9 +56,9 @@ export function LinkScanCard({ scan }: { scan: LinkScan }) {
           <img
             src={scan.screenshotDataUrl}
             alt={t("linkscan.screenshotAlt")}
-            className="max-h-96 w-full rounded-lg border border-border object-cover object-top"
+            className="max-h-96 w-full bg-secondary rounded-xl border border-border object-contain object-top"
           />
-          <figcaption className="mt-1 text-sm text-muted-foreground">{t("linkscan.screenshotNote")}</figcaption>
+          <figcaption className="mt-1 text-base leading-relaxed text-muted-foreground">{t("linkscan.screenshotNote")}</figcaption>
         </figure>
       )}
     </div>

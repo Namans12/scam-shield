@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { ArrowUpRight, Clock3, Info, OctagonAlert, TriangleAlert } from "lucide-react";
 import type { CheckResult } from "@scam-shield/shared";
+import { CheckIndicator } from "@/components/check/CheckIndicator";
 import { Button } from "@/components/ui/button";
 import { fetchHistory } from "@/data";
 import { scamTypeKey, useLang, useT } from "@/i18n";
@@ -31,15 +32,12 @@ export default function HistoryPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold leading-tight">{t("history.title")}</h1>
-      <p className="mt-2 text-lg text-muted-foreground">{t("history.subtitle")}</p>
+      <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{t("history.title")}</h1>
+      <p className="mt-3 text-lg leading-relaxed text-muted-foreground">{t("history.subtitle")}</p>
 
       <div role="status" aria-live="polite">
         {!items && !failed && (
-          <p className="mt-6 flex items-center gap-3 text-base">
-            <Loader2 className="animate-spin text-primary" aria-hidden />
-            {t("trends.loading")}
-          </p>
+          <div className="mt-6"><CheckIndicator text={t("trends.loading")} /></div>
         )}
       </div>
 
@@ -53,36 +51,37 @@ export default function HistoryPage() {
       )}
 
       {items && items.length === 0 && (
-        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
-          <p className="text-lg">{t("history.empty")}</p>
+        <div className="mt-7 rounded-3xl border border-border bg-card p-7 text-center">
+          <Clock3 size={36} className="mx-auto mb-4 text-primary" aria-hidden /><p className="text-lg">{t("history.empty")}</p>
           <Button asChild size="lg" className="mt-4">
-            <Link to="/">{t("about.cta")}</Link>
+            <Link to="/check">{t("about.cta")}</Link>
           </Button>
         </div>
       )}
 
       {items && items.length > 0 && (
-        <ul className="mt-6 flex flex-col gap-3">
+        <ul className="mt-7 flex flex-col gap-4">
           {items.map((c) => (
             <li key={c.id}>
               <Link
                 to={`/result/${c.id}`}
                 state={{ result: c }}
-                className="block rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 sm:p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className={cn("rounded-full px-3 py-1 text-sm font-bold", BADGE[c.verdict])}>{t(`verdict.${c.verdict}`)}</span>
+                  <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-base font-semibold", BADGE[c.verdict])}>{c.verdict === "scam" ? <OctagonAlert size={16} aria-hidden /> : c.verdict === "suspicious" ? <TriangleAlert size={16} aria-hidden /> : <Info size={16} aria-hidden />}{t(`verdict.${c.verdict}`)}</span>
                   <time dateTime={c.createdAt} className="text-sm text-muted-foreground">{when(c.createdAt)}</time>
                 </div>
-                {c.scam_type !== "none" && <p className="mt-2 text-base font-semibold">{t(scamTypeKey(c.scam_type))}</p>}
-                <p lang={c.language} className="mt-1 line-clamp-2 text-base text-muted-foreground break-anywhere">{c.summary}</p>
+                {c.scam_type !== "none" && <p className="mt-4 text-lg font-semibold">{t(scamTypeKey(c.scam_type))}</p>}
+                <p lang={c.language} className="mt-2 line-clamp-2 text-base leading-relaxed text-muted-foreground break-anywhere">{c.summary}</p>
+                <span aria-hidden="true" className="mt-4 flex justify-end text-primary"><ArrowUpRight size={20} /></span>
               </Link>
             </li>
           ))}
         </ul>
       )}
 
-      <p className="mt-8 text-sm text-muted-foreground">{t("history.note")}</p>
+      <p className="mt-7 rounded-2xl border border-border bg-secondary/40 p-4 text-base leading-relaxed text-muted-foreground">{t("history.note")}</p>
     </div>
   );
 }

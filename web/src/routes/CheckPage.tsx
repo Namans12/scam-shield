@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, ScanSearch } from "lucide-react";
+import { ScanSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,8 @@ import { ApiError, checkContent, errorMessageKey } from "@/api";
 import { useLang, useT, type MessageKey } from "@/i18n";
 import { uploadForCheck, validateFile } from "@/upload";
 import { ExampleRow } from "@/components/ExampleRow";
-import type { Example } from "@/examples";
+import { EXAMPLES, type Example } from "@/examples";
+import { CheckIndicator } from "@/components/check/CheckIndicator";
 import { takeSharedPayload } from "@/share-target/sw-share";
 
 const MAX_TEXT = 5000;
@@ -74,7 +75,9 @@ export default function CheckPage() {
   useEffect(() => {
     if (params.get("shared") !== "1" || sharedHandled.current) return;
     sharedHandled.current = true;
-    setParams({}, { replace: true });
+    const next = new URLSearchParams(params);
+    next.delete("shared");
+    setParams(next, { replace: true });
     if (typeof caches === "undefined") return;
     void takeSharedPayload(caches).then((shared) => {
       if (!shared || !mounted.current) return;
@@ -83,6 +86,26 @@ export default function CheckPage() {
       setFile(shared.file ?? null);
       void run({ text: shared.text ?? "", url: shared.url ?? "", file: shared.file ?? null });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
+
+  // Consume a landing-page example once, including under React StrictMode's effect replay.
+  const exampleHandled = useRef(false);
+  useEffect(() => {
+    const id = params.get("example");
+    if (!id || exampleHandled.current || params.get("shared") === "1") return;
+    exampleHandled.current = true;
+    const next = new URLSearchParams(params);
+    next.delete("example");
+    setParams(next, { replace: true });
+    const example = EXAMPLES.find((item) => item.id === id);
+    if (example) {
+      // Start after StrictMode's mount/cleanup replay, so its cleanup cannot cancel this upload.
+      queueMicrotask(() => {
+        if (mounted.current) onExample(example);
+      });
+    }
+    // The example is an intake event, not a reaction to form or phase changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
@@ -187,16 +210,18 @@ export default function CheckPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold leading-tight">{t("check.title")}</h1>
-      <p className="mt-2 text-lg text-muted-foreground">{t("check.subtitle")}</p>
+      <p className="mb-3 flex items-center gap-2 text-base font-semibold text-primary"><ScanSearch size={20} aria-hidden />{t("pages.check.eyebrow")}</p>
+      <h1 className="max-w-xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{t("check.title")}</h1>
+      <p className="mt-3 max-w-2xl text-lg leading-relaxed text-muted-foreground">{t("check.subtitle")}</p>
 
-      <form onSubmit={onSubmit} noValidate className="mt-6 flex flex-col gap-5" aria-busy={loading}>
+      <form onSubmit={onSubmit} noValidate className="mt-7 flex flex-col gap-6 rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-7" aria-busy={loading}>
         <div>
           <label htmlFor={`${ids}-text`} className="mb-2 block text-base font-semibold">
             {t("check.textLabel")}
           </label>
           <Textarea
             id={`${ids}-text`}
+            className="min-h-48 rounded-2xl border border-input bg-background/50 text-lg sm:min-h-52"
             value={text}
             onChange={(e) => setText(e.target.value)}
             maxLength={MAX_TEXT}
@@ -204,7 +229,7 @@ export default function CheckPage() {
             placeholder={t("check.textPlaceholder")}
             readOnly={loading}
           />
-          <p id={`${ids}-count`} className="mt-1 text-right text-sm text-muted-foreground">
+          <p id={`${ids}-count`} className="mt-2 text-right text-sm tabular-nums text-muted-foreground">
             {t("check.charCount", { n: text.length, max: MAX_TEXT })}
           </p>
           {text.length >= MAX_TEXT && (
@@ -220,6 +245,7 @@ export default function CheckPage() {
           </label>
           <Input
             id={`${ids}-url`}
+            className="h-12 border bg-background/50"
             type="url"
             inputMode="url"
             autoComplete="off"
@@ -244,19 +270,11 @@ export default function CheckPage() {
         )}
 
         {/* Always mounted so screen readers announce text changes inside it. */}
-        <p role="status" aria-live="polite" className="flex min-h-6 items-center gap-3 text-base font-medium">
-          {loading && (
-            <>
-              <Loader2 className="animate-spin text-primary" size={24} aria-hidden />
-              <span>
-                {phase === "uploading"
-                  ? t("check.uploading", { pct: Math.floor((progress * 100) / 25) * 25 })
-                  : t("check.checking")}
-                {slow && <span className="mt-1 block font-normal text-muted-foreground">{t("check.slow")}</span>}
-              </span>
-            </>
-          )}
-        </p>
+        <div role="status" aria-live="polite">
+          {loading && <CheckIndicator text={phase === "uploading"
+            ? t("check.uploading", { pct: Math.floor((progress * 100) / 25) * 25 })
+            : t("check.checking")} note={slow ? t("check.slow") : undefined} />}
+        </div>
 
         {/* Enabled on purpose (not aria-disabled): a stalled upload must always be cancellable. */}
         {phase === "uploading" && (
@@ -272,7 +290,7 @@ export default function CheckPage() {
           size="lg"
           disabled={!hasInput && !loading}
           aria-disabled={loading || undefined}
-          className="w-full sm:w-auto sm:self-start"
+          className="min-h-14 w-full rounded-xl shadow-sm"
         >
           <ScanSearch aria-hidden />
           {t("check.submit")}

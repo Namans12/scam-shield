@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Camera, Upload, X } from "lucide-react";
+import { Camera, Upload, X, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT, type MessageKey } from "@/i18n";
 import { validateFile } from "@/upload";
@@ -140,12 +140,12 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
         setManyDropped(!disabled && (dropped?.length ?? 0) > 1);
       }}
       className={cn(
-        "rounded-xl border-2 border-dashed bg-card p-4 transition-colors",
-        dragging ? "border-primary bg-secondary" : "border-input",
+        "rounded-2xl border border-dashed p-4 transition-colors sm:p-5",
+        dragging ? "border-primary bg-primary/10 ring-4 ring-primary/10" : file ? "border-border bg-background/60" : "border-input bg-background/40",
       )}
     >
-      <p id={`${ids}-label`} className="text-base font-semibold">
-        {t("dropzone.label")}
+      <p id={`${ids}-label`} className="flex items-center gap-2 text-base font-semibold leading-relaxed">
+        <Upload size={20} className="shrink-0 text-primary" aria-hidden />{t("dropzone.label")}
       </p>
 
       <input
@@ -182,15 +182,16 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
       />
 
       {file ? (
-        <div className="mt-3 flex flex-wrap items-start gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           {!isAudio && previewUrl && (
             <img
               src={previewUrl}
               alt={t("dropzone.previewAlt", { name: file.name })}
-              className="size-20 shrink-0 rounded-lg border border-border object-cover"
+              className="size-24 shrink-0 rounded-xl border border-border object-cover"
             />
           )}
-          <div className="min-w-0 flex-1 basis-40">
+          {isAudio && <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Mic size={26} aria-hidden /></span>}
+          <div className="min-w-0 flex-1 basis-32">
             <p className="text-base font-medium break-anywhere">{file.name}</p>
             <p className="text-sm text-muted-foreground">{formatSize(file.size)}</p>
           </div>
@@ -201,7 +202,7 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
             type="button"
             variant="outline"
             size="sm"
-            className="w-full sm:ml-auto sm:w-auto"
+            className="w-full border-border sm:ml-auto sm:w-auto"
             aria-label={t("dropzone.removeLabel", { name: file.name })}
             aria-disabled={disabled || undefined}
             onClick={() => {
@@ -217,21 +218,21 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
         </div>
       ) : (
         <div className="mt-3 flex flex-col items-start gap-2">
-          <div className="flex w-full flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={() => inputRef.current?.click()} aria-disabled={disabled || undefined}>
+          <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+            <Button type="button" variant="outline" className="border-border" onClick={() => inputRef.current?.click()} aria-disabled={disabled || undefined}>
               <Upload aria-hidden />
               {t("dropzone.choose")}
             </Button>
-            <Button type="button" variant="outline" onClick={() => cameraRef.current?.click()} aria-disabled={disabled || undefined}>
+            <Button type="button" variant="outline" className="border-border" onClick={() => cameraRef.current?.click()} aria-disabled={disabled || undefined}>
               <Camera aria-hidden />
               {t("dropzone.camera")}
             </Button>
           </div>
           {/* Drag and drop and Ctrl+V make no sense on a phone: show the touch hint there instead. */}
-          <p className="text-sm text-muted-foreground [@media(pointer:coarse)]:hidden">
+          <p className="text-base leading-relaxed text-muted-foreground [@media(pointer:coarse)]:hidden">
             {dragging ? t("dropzone.dropActive") : t("dropzone.drop")}
           </p>
-          <p className="hidden text-sm text-muted-foreground [@media(pointer:coarse)]:block">{t("dropzone.touchHint")}</p>
+          <p className="hidden text-base leading-relaxed text-muted-foreground [@media(pointer:coarse)]:block">{t("dropzone.touchHint")}</p>
         </div>
       )}
 
@@ -248,7 +249,7 @@ export function DropZone({ file, onFileChange, disabled = false, progress = null
         </div>
       )}
 
-      <p id={hintId} className="mt-3 text-sm text-muted-foreground">
+      <p id={hintId} className="mt-4 text-base leading-relaxed text-muted-foreground">
         {t("dropzone.hint")}
       </p>
 

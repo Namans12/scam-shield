@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { FileText, Flag, Loader2 } from "lucide-react";
+import { FileText, Flag, ArrowLeft, AudioLines } from "lucide-react";
 import type { CheckResult } from "@scam-shield/shared";
 import { Button } from "@/components/ui/button";
 import { VerdictBanner } from "@/components/VerdictBanner";
@@ -11,14 +11,15 @@ import { LinkScanCard } from "@/components/LinkScanCard";
 import { Disclaimer } from "@/components/Disclaimer";
 import { QrCard } from "@/components/QrCard";
 import { ReportDialog } from "@/components/ReportDialog";
+import { CheckIndicator } from "@/components/check/CheckIndicator";
 import { ShareWarning } from "@/components/ShareWarning";
 import { scamTypeKey, useLang, useT } from "@/i18n";
 import { fetchCheck } from "@/data";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-8">
-      <h2 className="mb-3 text-xl font-bold leading-snug">{title}</h2>
+    <section className="mt-9">
+      <h2 className="mb-4 text-xl font-bold leading-relaxed tracking-tight">{title}</h2>
       {children}
     </section>
   );
@@ -39,7 +40,7 @@ function ResultGone() {
       <h1 className="text-2xl font-bold">{t("result.gone.title")}</h1>
       <p className="mt-2 text-base text-muted-foreground">{t("result.gone.body")}</p>
       <Button asChild size="lg" className="mt-6">
-        <Link to="/">{t("result.gone.cta")}</Link>
+        <Link to="/check">{t("result.gone.cta")}</Link>
       </Button>
     </div>
   );
@@ -77,38 +78,37 @@ export default function ResultPage() {
 
   if (loading) {
     return (
-      <p role="status" className="flex items-center gap-3 text-base">
-        <Loader2 className="animate-spin text-primary" aria-hidden />
-        {t("result.loading")}
-      </p>
+      <div role="status" aria-live="polite"><CheckIndicator text={t("result.loading")} /></div>
     );
   }
   if (!result) return <ResultGone />;
 
   return (
-    <article>
-      <VerdictBanner verdict={result.verdict} lang={lang} headingRef={headingRef} />
+    <article className={result.verdict !== "no_signs" ? "pb-32 md:pb-0" : undefined}>
+      <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+        <VerdictBanner verdict={result.verdict} lang={lang} headingRef={headingRef} className="rounded-none border-x-0 border-t-0" />
 
-      <div className="mt-6">
-        <RiskMeter score={result.risk_score} verdict={result.verdict} />
+        <div className="p-5 sm:p-7">
+          <RiskMeter score={result.risk_score} verdict={result.verdict} />
+        </div>
+
+        {result.scam_type !== "none" && (
+          <p className="mx-5 mb-5 flex flex-wrap items-center gap-2 text-base sm:mx-7">
+            <span className="text-muted-foreground">{t("result.scamType")}</span>
+            <strong className="rounded-lg bg-secondary px-3 py-1.5 font-semibold">{t(scamTypeKey(result.scam_type))}</strong>
+          </p>
+        )}
+
+        <section className="border-t border-border p-5 sm:p-7">
+          <h2 className="mb-2 text-base font-semibold text-muted-foreground">{t("result.summary")}</h2>
+          <p lang={result.language} className="text-lg leading-relaxed break-anywhere">{result.summary}</p>
+        </section>
       </div>
-
-      {result.scam_type !== "none" && (
-        <p className="mt-5 text-base">
-          <span className="text-muted-foreground">{t("result.scamType")}: </span>
-          <strong>{t(scamTypeKey(result.scam_type))}</strong>
-        </p>
-      )}
-
-      <Section title={t("result.summary")}>
-        <p lang={result.language} className="text-lg leading-relaxed break-anywhere">
-          {result.summary}
-        </p>
-      </Section>
+      <div className="mt-5"><Disclaimer /></div>
 
       {result.inputKind === "audio" && result.transcript && (
-        <details className="mt-6 rounded-xl border border-border bg-card p-4">
-          <summary className="cursor-pointer text-base font-semibold">{t("result.transcript")}</summary>
+        <details className="mt-6 rounded-2xl border border-border bg-card p-5">
+          <summary className="min-h-11 cursor-pointer content-center text-lg font-semibold"><AudioLines size={20} className="mr-2 inline text-primary" aria-hidden />{t("result.transcript")}</summary>
           <p lang={result.language} className="mt-3 text-base leading-relaxed break-anywhere whitespace-pre-wrap">
             {result.transcript}
           </p>
@@ -121,10 +121,11 @@ export default function ResultPage() {
 
       {result.next_steps.length > 0 && (
         <Section title={t("result.nextSteps")}>
-          <ol className="flex list-decimal flex-col gap-2 pl-6 text-lg marker:font-bold marker:text-primary">
+          <ol role="list" className="flex flex-col gap-3">
             {result.next_steps.map((step, i) => (
-              <li key={i} lang={result.language} className="pl-1 break-anywhere">
-                {step}
+              <li key={i} lang={result.language} className="flex items-start gap-4 rounded-2xl border border-border bg-card p-4 text-lg leading-relaxed break-anywhere sm:p-5">
+                <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-bold tabular-nums text-primary">{i + 1}</span>
+                <span className="min-w-0 pt-0.5">{step}</span>
               </li>
             ))}
           </ol>
@@ -150,33 +151,29 @@ export default function ResultPage() {
       )}
 
       {result.verdict !== "no_signs" && (
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <div role="group" aria-label={t("pages.result.actions")} className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-center gap-1.5 border-t border-border bg-card/95 px-3 pt-3 pb-5 shadow-lg backdrop-blur-md md:static md:mt-8 md:flex-wrap md:justify-start md:gap-3 md:rounded-2xl md:border md:p-4 md:shadow-sm">
           {result.entityKeys.length > 0 && (
-            <Button variant="outline" onClick={() => setReportOpen(true)}>
+            <Button variant="outline" aria-label={t("action.report")} className="min-h-14 min-w-0 flex-1 flex-col gap-1 border-0 px-2 text-base md:flex-none text-primary md:flex-row md:border md:bg-primary md:px-4 md:text-primary-foreground" onClick={() => setReportOpen(true)}>
               <Flag aria-hidden />
-              {t("action.report")}
+              <span className="md:hidden">{t("pages.action.report")}</span><span className="hidden md:inline">{t("action.report")}</span>
             </Button>
           )}
-          <Button asChild variant="outline">
-            <Link to={`/complaint/${result.id}`} state={{ result }}>
+          <Button asChild variant="outline" className="min-h-14 min-w-0 flex-1 flex-col gap-1 border-0 px-2 text-base md:flex-none md:flex-row md:border md:px-4">
+            <Link to={`/complaint/${result.id}`} state={{ result }} aria-label={t("action.complaint")}>
               <FileText aria-hidden />
-              {t("action.complaint")}
+              <span className="md:hidden">{t("pages.action.complaint")}</span><span className="hidden md:inline">{t("action.complaint")}</span>
             </Link>
           </Button>
-          <ShareWarning result={result} />
+          <ShareWarning result={result} compact />
         </div>
       )}
       {result.verdict !== "no_signs" && result.entityKeys.length > 0 && (
         <ReportDialog result={result} open={reportOpen} onOpenChange={setReportOpen} />
       )}
 
-      <div className="mt-8">
-        <Disclaimer />
-      </div>
-
       <div className="mt-6">
         <Button asChild size="lg" className="w-full sm:w-auto">
-          <Link to="/">{t("result.checkAnother")}</Link>
+          <Link to="/check"><ArrowLeft aria-hidden />{t("result.checkAnother")}</Link>
         </Button>
       </div>
     </article>

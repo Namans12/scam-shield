@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { Check, Copy, ExternalLink, Phone } from "lucide-react";
+import { Check, Copy, ExternalLink, Phone, FileText } from "lucide-react";
 import type { CheckResult } from "@scam-shield/shared";
 import { buildComplaint } from "@scam-shield/shared/complaint";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ export default function ComplaintPage() {
         <h1 className="text-2xl font-bold">{t("result.gone.title")}</h1>
         <p className="mt-2 text-base text-muted-foreground">{t("result.gone.body")}</p>
         <Button asChild size="lg" className="mt-6">
-          <Link to="/">{t("result.gone.cta")}</Link>
+          <Link to="/check">{t("result.gone.cta")}</Link>
         </Button>
       </div>
     );
@@ -76,26 +76,34 @@ export default function ComplaintPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold leading-tight">{t("complaint.title")}</h1>
-      <p className="mt-2 text-lg text-muted-foreground">{t("complaint.intro")}</p>
+      <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{t("complaint.title")}</h1>
+      <p className="mt-3 text-lg leading-relaxed text-muted-foreground">{t("complaint.intro")}</p>
 
-      <div className="mt-6 flex flex-col gap-4">
-        <div>
-          <label htmlFor="c-amount" className="mb-2 block text-base font-semibold">
-            {t("complaint.amount")}
-          </label>
-          <Input id="c-amount" inputMode="decimal" autoComplete="off" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <div className="mt-6"><Disclaimer /></div>
+      <section className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7">
+        <h2 className="mb-5 text-xl font-bold tracking-tight">{t("pages.complaint.details")}</h2>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="c-amount" className="mb-2 block text-base font-semibold">
+              {t("complaint.amount")}
+            </label>
+            <Input id="c-amount" inputMode="decimal" autoComplete="off" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="c-when" className="mb-2 block text-base font-semibold">
+              {t("complaint.when")}
+            </label>
+            <Input id="c-when" autoComplete="off" value={when} placeholder={t("complaint.whenPlaceholder")} onChange={(e) => setWhen(e.target.value)} />
+          </div>
         </div>
-        <div>
-          <label htmlFor="c-when" className="mb-2 block text-base font-semibold">
-            {t("complaint.when")}
-          </label>
-          <Input id="c-when" autoComplete="off" value={when} placeholder={t("complaint.whenPlaceholder")} onChange={(e) => setWhen(e.target.value)} />
+      </section>
+      <section className="mt-6 overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+        <div className="border-b border-border bg-secondary/40 p-5 sm:px-7">
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight"><FileText size={22} className="shrink-0 text-primary" aria-hidden />{t("complaint.draft")}</h2>
+          <p className="mt-2 text-base text-muted-foreground">{t("pages.complaint.review")}</p>
         </div>
-      </div>
-
-      <h2 className="mt-8 mb-2 text-xl font-bold">{t("complaint.draft")}</h2>
-      <Textarea readOnly value={draft} lang={lang} className="min-h-80 font-mono text-sm" aria-label={t("complaint.draft")} />
+        <div className="p-4 sm:p-6"><Textarea readOnly value={draft} lang={lang} className="min-h-[28rem] rounded-xl border border-border bg-background/50 text-base leading-relaxed" aria-label={t("complaint.draft")} /></div>
+      </section>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <Button type="button" size="lg" onClick={onCopy}>
@@ -119,9 +127,6 @@ export default function ComplaintPage() {
         {copied ? t("complaint.copied") : ""}
       </p>
 
-      <div className="mt-8">
-        <Disclaimer />
-      </div>
       <div className="mt-6">
         <Button asChild variant="ghost" size="lg">
           <Link to={`/result/${result.id}`} state={{ result }}>

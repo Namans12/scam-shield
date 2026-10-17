@@ -32,7 +32,7 @@ export function EntityHits({ hits }: { hits: EntityHit[] }) {
     <div>
       <ul className="flex flex-col gap-3">
         {hits.map((h) => (
-          <li key={h.key} className="rounded-xl border border-border bg-card p-4">
+          <li key={h.key} className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Identifier k={h.key} />
               <span className="rounded-full bg-suspicious-bg px-3 py-1 text-sm font-semibold text-suspicious-fg">
@@ -40,7 +40,7 @@ export function EntityHits({ hits }: { hits: EntityHit[] }) {
               </span>
             </div>
             {h.scamTypes.filter((s) => s !== "none").length > 0 && (
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                 {h.scamTypes
                   .filter((s) => s !== "none")
                   .map((s) => t(scamTypeKey(s)))
@@ -62,7 +62,7 @@ export function EntityHits({ hits }: { hits: EntityHit[] }) {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-sm text-muted-foreground">{t("hits.note")}</p>
+      <p className="mt-3 text-base leading-relaxed text-muted-foreground">{t("hits.note")}</p>
     </div>
   );
 }

@@ -66,6 +66,6 @@ describe("HistoryPage", () => {
     fetchHistory.mockResolvedValue([]);
     wrap(<HistoryPage />);
     expect(await screen.findByText("You haven't checked anything yet.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Check a message" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Check a message" })).toHaveAttribute("href", "/check");
   });
 });

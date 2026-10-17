@@ -43,13 +43,14 @@ export function VerdictBanner({
   return (
     <section
       data-verdict={verdict}
-      className={cn("flex items-start gap-4 rounded-2xl border-l-8 p-5", s.box, className)}
+      className={cn("grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-4 rounded-3xl border border-l-4 p-5 sm:gap-x-5 sm:p-7", s.box, className)}
     >
-      <span className="mt-1 shrink-0">{s.icon}</span>
+      <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-current/15 bg-card/40 sm:size-16">{s.icon}</span>
       <div className="min-w-0">
-        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold leading-tight focus:outline-none">{translate(lang, s.label)}</h1>
-        <p className="mt-1 text-base leading-snug">{translate(lang, s.desc)}</p>
+        <p className="mb-2 text-base font-medium">{translate(lang, "pages.result.eyebrow")}</p>
+        <h1 ref={headingRef} tabIndex={-1} className="scroll-mt-24 text-3xl font-bold leading-tight tracking-tight focus:outline-none sm:text-4xl">{translate(lang, s.label)}</h1>
       </div>
+      <p className="col-span-2 max-w-xl text-lg leading-relaxed">{translate(lang, s.desc)}</p>
     </section>
   );
 }
