@@ -19,7 +19,7 @@ install if you see `EACCES`.
 
 ## Honesty rules the pipeline enforces
 
-* Product footage is a real recording of https://scam-shield-check.web.app doing real work (real API calls).
+* Product footage is a real recording of https://scam-shield-live.web.app doing real work (real API calls).
   Nothing in the UI is mocked or edited. Each window carries a "Real recording of the live app" tag.
 * Waiting for Gemini is sped up exactly 4x and a "Sped up 4x" badge is on screen the whole time (it is derived from the playback
   rate, so it cannot be forgotten). A failed check aborts the recording (`record.mjs` throws), so it is recorded again.

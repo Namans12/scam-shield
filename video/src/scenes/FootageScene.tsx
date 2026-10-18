@@ -62,7 +62,7 @@ const Chrome: React.FC<{ url: string; live: string }> = ({ url, live }) => (
           <path d="M3.6 6V4.2a2.4 2.4 0 0 1 4.8 0V6" stroke="#7B8AA0" strokeWidth="1.5" fill="none" />
         </svg>
         <span>
-          scam-shield-check.web.app<span style={{ color: "#0B1B32", fontWeight: 600 }}>{url === "/" ? "" : url}</span>
+          scam-shield-live.web.app<span style={{ color: "#0B1B32", fontWeight: 600 }}>{url === "/" ? "" : url}</span>
         </span>
       </div>
     </div>
