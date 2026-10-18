@@ -52,3 +52,36 @@ describe("percentile", () => {
     expect(percentile([], 50)).toBe(0);
   });
 });
+
+import { passed, tally } from "./metrics";
+
+describe("three-class scoring (v2)", () => {
+  it("passes ambiguous inputs unless the verdict is Scam", () => {
+    expect(passed({ label: "ambiguous", verdict: "no_signs" })).toBe(true);
+    expect(passed({ label: "ambiguous", verdict: "suspicious" })).toBe(true);
+    expect(passed({ label: "ambiguous", verdict: "scam" })).toBe(false);
+    expect(passed({ label: "ambiguous", error: "502 analysis_failed" })).toBe(false);
+  });
+  it("tallies scams, genuine and ambiguous rows separately", () => {
+    const t = tally([
+      { label: "scam", verdict: "scam" },
+      { label: "scam", verdict: "suspicious" },
+      { label: "scam", verdict: "no_signs" },
+      { label: "legit", verdict: "no_signs" },
+      { label: "legit", verdict: "suspicious" },
+      { label: "ambiguous", verdict: "no_signs" },
+      { label: "ambiguous", verdict: "scam" },
+      { label: "ambiguous", error: "x" },
+    ]);
+    expect(t).toMatchObject({ n: 8, errors: 1, passed: 4, scams: 3, scamsFlagged: 2, scamsStrict: 1, legit: 2, legitFlagged: 1, ambiguous: 3, ambiguousScam: 1, ambiguousNoSigns: 1 });
+    expect(t.falsePositiveRate).toBe(0.5);
+  });
+  it("computeMetrics ignores ambiguous rows", () => {
+    const m = computeMetrics([
+      { id: "a", label: "scam", scamType: "job_task", kind: "text", verdict: "scam", predictedType: "job_task", latencyMs: 1 },
+      { id: "b", label: "ambiguous", kind: "text", verdict: "scam", latencyMs: 1 },
+    ]);
+    expect(m.n).toBe(1);
+    expect(m.falsePositiveRate).toBe(0);
+  });
+});
