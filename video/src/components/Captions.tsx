@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
-import { C, FPS, fontFamily } from "../theme";
+import { C, CAPTION_BOTTOM, FPS, fontFamily } from "../theme";
 import { LEAD, narration, sceneStarts } from "../plan";
 import { ease } from "./common";
 
@@ -29,7 +29,7 @@ export const Captions: React.FC = () => {
   const a = interpolate(f, [cue.from - 2, cue.from + 6, cue.to + 2, cue.to + 8], [0, 1, 1, 0], { easing: ease, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const y = interpolate(f, [cue.from - 2, cue.from + 8], [8, 0], { easing: ease, extrapolateRight: "clamp" });
   return (
-    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 38, pointerEvents: "none" }}>
+    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: CAPTION_BOTTOM, pointerEvents: "none" }}>
       <div
         style={{
           opacity: a,
@@ -50,7 +50,12 @@ export const Captions: React.FC = () => {
           textWrap: "balance" as never,
         }}
       >
-        {cue.text}
+        {cue.text.split(" ").map((w, i, a) => (
+          <React.Fragment key={i}>
+            {w.includes("-") ? <span style={{ whiteSpace: "nowrap" }}>{w}</span> : w}
+            {i < a.length - 1 ? " " : ""}
+          </React.Fragment>
+        ))}
       </div>
     </AbsoluteFill>
   );

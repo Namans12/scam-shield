@@ -9,7 +9,7 @@ const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) ?? `--$
 const every = parseFloat(arg("every", 5));
 const scale = parseFloat(arg("scale", 1));
 const at = arg("at", "").split(",").filter(Boolean).map(Number);
-const out = join(ROOT, "out/stills");
+const out = join(ROOT, process.env.STILLS_DIR ?? "out/stills");
 if (!process.argv.includes("--keep")) rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 

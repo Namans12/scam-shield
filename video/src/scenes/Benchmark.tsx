@@ -50,7 +50,7 @@ export const Benchmark: React.FC<{ frames: number }> = ({ frames }) => {
       <div style={{ position: "absolute", left: 0, right: 0, top: 285, display: "flex", justifyContent: "center", gap: 36 }}>
         <Metric label="Accuracy" value={b.accuracy} sub={`${correct} of ${b.cases} verdicts correct`} good accent={C.cyan} at={at} />
         <Metric label="Scam recall" value={b.recall} sub={`${flagged} of ${b.scams} scams flagged`} good accent={C.cyan} at={at + 8} />
-        <Metric label="False positives" value={b.falsePositive} sub={`${fp} of ${b.genuine} genuine messages flagged`} good={false} accent={C.green} at={at + 16} />
+        <Metric label="False positives" value={b.falsePositive} sub={`${fp} of ${b.genuine} genuine flagged`} good={false} accent={C.green} at={at + 16} />
       </div>
       <div style={{ position: "absolute", left: 0, right: 0, top: 668, display: "flex", justifyContent: "center", gap: 18, opacity: interpolate(f, [at + 40, at + 60], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) }}>
         {[`Scam type correct: ${b.scamType}%`, `Text checks, median: ${b.textP50} s`, `Errors: ${b.errors}`, "Flagged = Scam or Suspicious"].map((t) => (
