@@ -193,6 +193,13 @@ describe("CountNumber", () => {
     expect(other.container.querySelector(".count-number")).toHaveAttribute("data-sizer", "100");
   });
 
+  it("keeps a suffix such as % right after the number, inside the reserved width and the spoken label", () => {
+    const { container } = render(<CountNumber value="5.0" from={90} suffix="%" />);
+    expect(container.querySelector(".count-number")).toHaveAttribute("data-sizer", "90.0%");
+    expect(screen.getByRole("img", { name: "5.0%" })).toBeInTheDocument();
+    expect(container.querySelector(".count-number-suffix")).toHaveTextContent("%");
+  });
+
   it("cancels the animation when it unmounts", () => {
     const { unmount } = render(<CountNumber value="100" />);
     intersect();

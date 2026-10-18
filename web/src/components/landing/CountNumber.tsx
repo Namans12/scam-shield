@@ -30,9 +30,9 @@ function canAnimate(): boolean {
  * A number that counts when it scrolls into view: from `from` (0 by default) to `value`, up or down, with an
  * ease-out curve. Before it starts it shows the start value, never the final one. Screen readers get the final value
  * only. With reduced motion, or where nothing can animate (as in tests), the final value shows at once.
- * `value` is a string so that its decimals ("97.6") are kept at every step and the last frame is exactly `value`.
+ * `suffix` (such as "%") sits right after the number, inside the reserved width. `value` is a string so that its decimals ("97.6") are kept at every step and the last frame is exactly `value`.
  */
-export function CountNumber({ value, from = 0, delay = 0, duration = 2000 }: { value: string; from?: number; delay?: number; duration?: number }) {
+export function CountNumber({ value, from = 0, delay = 0, duration = 2000, suffix = "" }: { value: string; from?: number; delay?: number; duration?: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const decimals = decimalsOf(value);
   const startText = from.toFixed(decimals);
@@ -78,8 +78,8 @@ export function CountNumber({ value, from = 0, delay = 0, duration = 2000 }: { v
   // The sizer holds the widest text (via a CSS pseudo-element, so it is not a second copy of the number in the DOM).
   const widest = [startText, value].reduce((a, b) => (b.length > a.length ? b : a));
   return (
-    <span ref={ref} className="count-number" role="img" aria-label={value} data-sizer={widest}>
-      <span className="count-number-text">{shown}</span>
+    <span ref={ref} className="count-number" role="img" aria-label={value + suffix} data-sizer={widest + suffix}>
+      <span className="count-number-line"><span className="count-number-text">{shown}</span>{suffix ? <span className="count-number-suffix">{suffix}</span> : null}</span>
     </span>
   );
 }

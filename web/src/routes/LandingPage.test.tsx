@@ -47,10 +47,10 @@ describe("LandingPage", () => {
   it("shows the three benchmark numbers as their final values when nothing can animate, with a labelled percent each", () => {
     const { container } = renderLanding();
     const stats = container.querySelector(".proof-stats")!;
-    const values = [...stats.querySelectorAll(".count-number")].map((n) => n.getAttribute("aria-label"));
-    expect(values).toEqual([BENCHMARK.accuracy, BENCHMARK.recall, BENCHMARK.falsePositive]);
+    const values = [BENCHMARK.accuracy, BENCHMARK.recall, BENCHMARK.falsePositive];
     expect([...stats.querySelectorAll(".count-number-text")].map((n) => n.textContent)).toEqual(values);
-    expect(stats.querySelectorAll("dd > span:not(.count-number):not(.count-number-text)")).toHaveLength(3);
+    expect([...stats.querySelectorAll(".count-number")].map((n) => n.getAttribute("aria-label"))).toEqual(values.map((v) => `${v}%`));
+    expect(stats.querySelectorAll(".count-number-suffix")).toHaveLength(3);
     expect(container.querySelector(".proof-note")).toBeInTheDocument();
   });
   it("shows the cases caption only when the benchmark has a case count, in both languages", () => {

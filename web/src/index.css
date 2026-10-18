@@ -391,7 +391,7 @@ html:lang(hi) {
 .proof-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .proof-stats > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; }
 .proof-stats dd { font-size: calc(52px * var(--fs-display)); letter-spacing: -2px; font-weight: 600; }
-.proof-stats dd > span { font-size: calc(24px * var(--fs)); letter-spacing: -1px; }
+.proof-stats dd .count-number-suffix { font-size: calc(24px * var(--fs)); letter-spacing: -1px; }
 .proof-stats dt { font-size: calc(16px * var(--fs)); line-height: 1.65; color: var(--muted-foreground); }
 .proof-note { display: flex; align-items: flex-start; gap: 8px; color: var(--muted-foreground); font-size: calc(16px * var(--fs)); line-height: 1.8; margin-top: 23px; }
 .proof-note svg { flex-shrink: 0; margin-top: 2px; }
@@ -492,7 +492,7 @@ html:lang(hi) .hero-subtitle { line-height: 1.95; }
   .example-card h3,   .proof-section { grid-template-columns: 1.3fr 1fr; gap: 30px; }
   .proof-stats { gap: 13px; }
   .proof-stats dd { font-size: calc(34px * var(--fs)); }
-  .proof-stats dd > span { font-size: calc(20px * var(--fs)); }
+  .proof-stats dd .count-number-suffix { font-size: calc(20px * var(--fs)); }
   .privacy-panel { padding: 24px; }
   .privacy-panel h3 { font-size: calc(20px * var(--fs)); }
   .final-inner { gap: 35px; }
@@ -773,7 +773,7 @@ html:lang(hi) .landing-eyebrow { font-size: 14px; letter-spacing: .2px; }
 
 .count-number { display: inline-grid; font-variant-numeric: tabular-nums; }
 .count-number::after { content: attr(data-sizer); grid-area: 1 / 1; visibility: hidden; height: 0; overflow: hidden; }
-.count-number-text { grid-area: 1 / 1; }
+.count-number-line { grid-area: 1 / 1; white-space: nowrap; }
 .proof-cases { color: var(--muted-foreground); font-size: calc(14px * var(--fs)); line-height: 1.7; margin-top: 16px; }
 
 /* centre each language's text inside its shared cell so the spacing around it stays balanced in both languages */
