@@ -30,7 +30,7 @@ const fill = (s) => s.replace(/\{\{(\w+)\}\}/g, (_, k) => {
   if (!(k in tokens)) throw new Error(`unknown token {{${k}}}`);
   return tokens[k];
 });
-const scenes = src.scenes.map((sc) => ({ id: sc.id, sentences: sc.sentences.map((s) => ({ say: fill(s.say), caption: fill(s.caption) })) }));
+const scenes = src.scenes.map((sc) => ({ id: sc.id, sentences: sc.sentences.map((s) => ({ say: fill(s.say), caption: fill(s.caption), ...(s.slot ? { slot: s.slot } : {}) })) }));
 writeFileSync(resolve(ROOT, "narration/narration.resolved.json"), JSON.stringify({ voice: src.voice, scenes }, null, 2));
 
 let ttsToken;
@@ -100,16 +100,19 @@ for (const sc of scenes) {
     }
     files.push(f);
   }
-  // Join: each sentence padded with GAP of silence (except the last), concatenated.
+  // Join: each sentence padded with GAP of silence (except the last), concatenated. A sentence with `slot` (seconds) keeps
+  // at least that long a slot: the speech is followed by extra silence, so everything after it keeps its absolute start time.
+  const dur = files.map((f) => duration(f));
+  const extra = sc.sentences.map((s, i) => (s.slot ? Math.max(0, s.slot - dur[i]) : 0));
   const inputs = files.flatMap((f) => ["-i", f]);
-  const chain = files.map((_, i) => `[${i}:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=mono${i < files.length - 1 ? `,apad=pad_dur=${GAP}` : ""}[a${i}]`).join(";");
+  const chain = files.map((_, i) => `[${i}:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=mono${i < files.length - 1 ? `,apad=pad_dur=${(GAP + extra[i]).toFixed(5)}` : ""}[a${i}]`).join(";");
   const cat = files.map((_, i) => `[a${i}]`).join("") + `concat=n=${files.length}:v=0:a=1[out]`;
   ffmpeg([...inputs, "-filter_complex", `${chain};${cat}`, "-map", "[out]", "-c:a", "libmp3lame", "-b:a", "160k", outFile]);
   let t = 0;
   const sentences = sc.sentences.map((s, i) => {
-    const d = duration(files[i]);
+    const d = dur[i];
     const r = { start: t, end: t + d, caption: s.caption };
-    t += d + GAP;
+    t += d + GAP + extra[i];
     return r;
   });
   timings.scenes[sc.id] = { duration: duration(outFile), sentences };
