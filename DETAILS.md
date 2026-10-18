@@ -20,7 +20,7 @@
 Written for the next agent. State as of 17 Oct 2026. Companion docs: `HANDOFF.md` (short current-state note), `docs/ARCHITECTURE.md` (how a check works, for judges), `docs/setup-notes.md` (cloud facts, deploy and hardening notes), `eval/results/latest.md` (benchmark), `README.md` (public description).
 
 - Repo (public): https://github.com/Namans12/scam-shield. Branches `build` and `main` are at the same commit; **`main` is the default branch and is what judges see**. Work on `build`, then fast-forward `main` (`git checkout main && git merge --ff-only build && git push origin main`).
-- Live app: https://project-91260b43-6705-4176-b71.web.app . Demo bank page: https://bnb-kyc-update.web.app . GCP project `project-91260b43-6705-4176-b71`, region `asia-south1`.
+- Live app: https://scam-shield-check.web.app (primary; hosting site `scam-shield-check`, target `app-named`, added 18 Oct). The original https://project-91260b43-6705-4176-b71.web.app serves the same build and also works. `/api/**` goes through the same-origin Hosting rewrite on both, so no API or CORS change was needed; `scam-shield-check.web.app` and `.firebaseapp.com` were added to Firebase Auth authorized domains. Demo bank page: https://bnb-kyc-update.web.app . GCP project `project-91260b43-6705-4176-b71`, region `asia-south1`.
 - Hackathon deadline: 18 Oct 2026, 23:59 IST (aim to submit by about 20:00 IST). Freeze deploys about 14:00 IST on the 18th.
 
 ## 0. UPDATE, 17 Oct evening (Windows session): verification, model switch, deck, budget alert
@@ -160,7 +160,7 @@ Response B: polish finished, then final benchmark and merge
 export PATH=/opt/homebrew/share/google-cloud-sdk/bin:$PATH   # gcloud on this Mac
 npm test && npm run typecheck
 bash scripts/deploy.sh all            # or: rules | api | linkscan | web
-bash scripts/smoke.sh https://project-91260b43-6705-4176-b71.web.app
+bash scripts/smoke.sh https://scam-shield-check.web.app
 npx tsx eval/run.ts                   # sequential benchmark, about 8 minutes
 npx tsx scripts/seed.ts               # idempotent demo data
 npx tsx scripts/screenshots.ts        # regenerate deck screenshots from the live site

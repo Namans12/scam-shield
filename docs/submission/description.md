@@ -11,3 +11,5 @@
 **Firebase** provides Authentication (anonymous to check, Google sign-in to report), Hosting for the installable web app and API rewrite, and Storage for uploads that auto-delete after 7 days.
 
 On our 50 synthetic test cases, run against the live app, it flagged all 26 scams with no false positives on 24 genuine messages (4.5 s median for text).
+
+**Live app:** https://scam-shield-check.web.app (the original default URL, https://project-91260b43-6705-4176-b71.web.app, serves the same app and also works).

@@ -85,9 +85,11 @@ deploy_web() {
   echo "== Building web"
   npm run build -w web
   [ -f web/dist/index.html ] || { echo "web/dist/index.html missing after build" >&2; exit 1; }
-  echo "== Deploying Hosting"
+  # "--only hosting" publishes every hosting target: app (default site), app-named (scam-shield-check, the
+  # primary link) and demo-bank. app and app-named serve the identical build and the same /api/** rewrite.
+  echo "== Deploying Hosting (app, app-named, demo-bank)"
   firebase deploy --only hosting --project "$PROJECT" --non-interactive
-  echo "hosting: https://$PROJECT.web.app"
+  echo "hosting: https://scam-shield-check.web.app (also https://$PROJECT.web.app)"
 }
 
 case "${1:-all}" in

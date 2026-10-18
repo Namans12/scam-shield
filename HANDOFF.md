@@ -25,7 +25,7 @@ Scam Shield lets anyone in India check a suspicious text, screenshot, QR code, l
 
 Project `project-91260b43-6705-4176-b71`, region `asia-south1`.
 
-- Web (Firebase Hosting): https://project-91260b43-6705-4176-b71.web.app (also rewrites `/api/**` to the API)
+- Web (Firebase Hosting): https://scam-shield-check.web.app (primary link; hosting site `scam-shield-check`, target `app-named`). The original default site https://project-91260b43-6705-4176-b71.web.app serves the same build and also works. Both rewrite `/api/**` to the API.
 - Demo bank page used by the examples (fictional): https://bnb-kyc-update.web.app
 - Cloud Run `scam-shield-api` (public, 1 vCPU, 1 GiB, 1 to 5 instances, one kept warm) and `scam-shield-linkscan` (private, run as a service account with no roles, scales to zero).
 - Firestore and Storage rules, the Firestore index and the 7-day lifecycle rule on `uploads/` are deployed.
@@ -40,7 +40,7 @@ npm test                  # all workspaces (the 18 Firestore-emulator tests need
 npm run typecheck
 npm run build -w web
 bash scripts/deploy.sh all                                   # rules, linkscan, api, web (needs gcloud and firebase CLIs, project access)
-bash scripts/smoke.sh https://project-91260b43-6705-4176-b71.web.app
+bash scripts/smoke.sh https://scam-shield-check.web.app
 npx tsx eval/run.ts       # the benchmark: sequential and paced, about 8 minutes, uses real Gemini calls
 ```
 
