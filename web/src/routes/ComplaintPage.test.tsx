@@ -54,7 +54,7 @@ describe("ComplaintPage", () => {
     unmount();
     setLang("hi");
     renderPage();
-    const hi = (screen.getByRole("textbox") as HTMLTextAreaElement).value;
+    const hi = document.querySelector("textarea")!.value;
     expect(hi).toContain("मुझे एक संदिग्ध संदेश मिला।");
     expect(hi).not.toContain("संलग्न");
   });
