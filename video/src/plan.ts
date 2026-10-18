@@ -42,7 +42,9 @@ export interface Seg {
   fade?: boolean;
   /** Text in the address bar while this segment plays. */
   url?: string;
-  /** Show "Sped up Nx" while it plays (set automatically when rate > 1). */
+  /** Part of a fast-forward ramp (see `ramp`): the speed panel with the real-time clock is shown while these play. */
+  ff?: boolean;
+  /** The segment is the owner-recorded clip. */
   owner?: boolean;
 }
 export interface Cam {
@@ -92,6 +94,18 @@ export interface Plan {
 const TLX = timeline as unknown as { ownerClip: { duration: number } | null };
 export const ownerClip = TLX.ownerClip;
 const R = "/result/…";
+
+/** Fast-forwards the wait for the result: eases 2x, 3x, 4x, then back down 3x, 2x, so the speed change is visible. The middle is exactly 4x. */
+export function ramp(clip: string, a: number, b: number, url: string, fadeFirst = false): Seg[] {
+  const r = 0.6;
+  return [
+    { clip, from: a, to: a + r, rate: 2, ff: true, fade: fadeFirst, url },
+    { clip, from: a + r, to: a + 2 * r, rate: 3, ff: true, url },
+    { clip, from: a + 2 * r, to: b - 2 * r, rate: 4, ff: true, url },
+    { clip, from: b - 2 * r, to: b - r, rate: 3, ff: true, url },
+    { clip, from: b - r, to: b, rate: 2, ff: true, url },
+  ];
+}
 const FADE = 8;
 
 // ---------------------------------------------------------------- scenes
@@ -122,8 +136,8 @@ plans.landing = {
     id: c,
     device: "desktop",
     segs: [
-      { clip: c, from: 0.3, to: click - 0.2, url: "/check" },
-      { clip: c, from: click - 0.2, to: sw, rate: 4, url: "/check" },
+      { clip: c, from: 0.9, to: click - 0.2, url: "/check" },
+      ...ramp(c, click - 0.2, sw, "/check"),
       { clip: c, from: sw, to: mark(c, "verdict") + 2.0, url: R },
       { clip: c, from: mark(c, "verdict") + 2.0, to: mark(c, "redflags") + 2.9, fade: true, url: R },
       { clip: c, from: mark(c, "hits") - 1.8, to: mark(c, "hits") + 2.8, fade: true, url: R },
@@ -133,7 +147,7 @@ plans.landing = {
       { at: 0.3, cx: 720, cy: 450, s: 1.0 },
       { at: mark(c, "examples-visible") + 0.2, cx: 840, cy: 690, s: 1.45, dur: 1.4 },
       { at: click + 0.6, cx: 840, cy: 420, s: 1.45, dur: 1.0 },
-      { at: sw, cx: 840, cy: 370, s: 1.3, dur: 1.0 },
+      { at: sw, cx: 840, cy: 370, s: 1.2, dur: 1.0 },
       { at: mark(c, "redflags"), cx: 840, cy: 480, s: 1.4, dur: 1.3 },
       { at: mark(c, "hits") - 0.4, cx: 840, cy: 340, s: 1.5, dur: 1.0 },
       { at: mark(c, "linkscan"), cx: 840, cy: 480, s: 1.3, dur: 1.0 },
@@ -164,14 +178,14 @@ plans.landing = {
     device: "desktop",
     segs: [
       { clip: c, from: 3.0, to: click - 0.2, url: "/check" },
-      { clip: c, from: click - 0.2, to: sw, rate: 4, url: "/check" },
+      ...ramp(c, click - 0.2, sw, "/check"),
       { clip: c, from: sw, to: sw + 1.0, url: R },
       { clip: c, from: mark(c, "verdict") + 2.2, to: mark(c, "qr") + 4.0, fade: true, url: R },
     ],
     cams: [
       { at: 3.0, cx: 720, cy: 450, s: 1.0 },
       { at: mark(c, "examples-visible") + 0.2, cx: 840, cy: 690, s: 1.4, dur: 1.4 },
-      { at: sw, cx: 840, cy: 360, s: 1.3, dur: 1.0 },
+      { at: sw, cx: 840, cy: 360, s: 1.2, dur: 1.0 },
       { at: mark(c, "qr"), cx: 840, cy: 370, s: 1.55, dur: 1.2 },
     ],
     rings: [
@@ -192,14 +206,14 @@ plans.landing = {
     device: "desktop",
     segs: [
       { clip: c, from: 3.0, to: click - 0.2, url: "/check" },
-      { clip: c, from: click - 0.2, to: sw, rate: 4, url: "/check" },
+      ...ramp(c, click - 0.2, sw, "/check"),
       { clip: c, from: sw, to: mark(c, "verdict") + 1.4, url: R },
       { clip: c, from: mark(c, "transcript-open") - 2.0, to: mark(c, "transcript-open") + 2.6, fade: true, url: R },
     ],
     cams: [
       { at: 3.0, cx: 720, cy: 450, s: 1.0 },
       { at: mark(c, "examples-visible") + 0.2, cx: 840, cy: 690, s: 1.4, dur: 1.4 },
-      { at: sw, cx: 840, cy: 360, s: 1.3, dur: 1.0 },
+      { at: sw, cx: 840, cy: 360, s: 1.2, dur: 1.0 },
       { at: mark(c, "transcript-open") + 0.2, cx: 840, cy: 360, s: 1.4, dur: 1.2 },
     ],
     rings: [
@@ -222,14 +236,14 @@ plans.landing = {
     device: "desktop",
     segs: [
       { clip: c, from: 3.0, to: click - 0.2, url: "/check" },
-      { clip: c, from: click - 0.2, to: sw, rate: 4, url: "/check" },
+      ...ramp(c, click - 0.2, sw, "/check"),
       { clip: c, from: sw, to: sw + 1.0, url: R },
       { clip: c, from: rf - 0.5, to: rf + 8.1, fade: true, url: R },
     ],
     cams: [
       { at: 3.0, cx: 720, cy: 450, s: 1.0 },
       { at: mark(c, "examples-visible") + 0.2, cx: 840, cy: 690, s: 1.4, dur: 1.4 },
-      { at: sw, cx: 840, cy: 360, s: 1.3, dur: 1.0 },
+      { at: sw, cx: 840, cy: 360, s: 1.2, dur: 1.0 },
       { at: rf, cx: 840, cy: 520, s: 1.35, dur: 0.8 },
     ],
     rings: [
@@ -285,13 +299,13 @@ plans.phone = {
   device: "phone",
   segs: [
     { clip: "mobile", from: 2.2, to: 3.9, url: "/check" },
-    { clip: "mobile", from: 3.9, to: 15.2, rate: 4, url: "/check" },
+    ...ramp("mobile", 3.9, 15.2, "/check"),
     { clip: "mobile", from: 15.2, to: 17.8, url: R },
   ],
   cams: [{ at: 2.2, cx: 195, cy: 422, s: 1.0 }],
-  rings: [{ from: 15.9, to: 18.3, box: [0, 745, 390, 99], label: "Report · Complaint · Share", dim: false, side: "right" }],
+  rings: [{ from: 15.9, to: 18.3, box: [6, 749, 378, 91], label: "Report · Complaint · Share", dim: false, side: "right" }],
   notes: [],
-  tail: 0.4,
+  tail: 0,
 };
 
 {
@@ -303,7 +317,7 @@ plans.phone = {
     device: "desktop",
     segs: [
       { clip: c, from: mark(c, "hindi-on") - 1.8, to: mark(c, "hindi-on") + 1.4, url: "/check" },
-      { clip: c, from: click - 1.0, to: sw, rate: 4, fade: true, url: "/check" },
+      ...ramp(c, click - 1.0, sw, "/check", true),
       { clip: c, from: sw, to: sw + 3.4, url: R },
       { clip: c, from: mark(c, "trends") - 0.3, to: mark(c, "trends") + 5.2, fade: true, url: "/trends" },
     ],
@@ -311,12 +325,12 @@ plans.phone = {
       { at: mark(c, "hindi-on") - 1.8, cx: 960, cy: 300, s: 1.0 },
       { at: mark(c, "hindi-on") + 0.5, cx: 800, cy: 330, s: 1.15, dur: 1.2, top: 0 },
       { at: click, cx: 840, cy: 690, s: 1.35, dur: 0.6 },
-      { at: sw, cx: 840, cy: 370, s: 1.3, dur: 1.0 },
+      { at: sw, cx: 840, cy: 370, s: 1.2, dur: 1.0 },
       { at: mark(c, "trends") + 0.3, cx: 840, cy: 400, s: 1.3, dur: 1.0 },
     ],
     rings: [
       { from: mark(c, "hindi-on") + 0.5, to: mark(c, "hindi-on") + 1.35, box: [1244, 8, 172, 48], label: "हिंदी on", dim: true, side: "below" },
-      { from: sw + 0.4, to: sw + 2.4, box: [480, 89, 720, 182], label: "धोखाधड़ी = Scam", dim: true },
+      { from: sw + 0.4, to: sw + 2.4, box: [480, 89, 720, 206], label: "Verdict: Scam", dim: true },
     ],
     notes: [
       { from: mark(c, "hindi-on") + 0.4, to: sw + 3.4, text: "Hindi interface, English captions" },

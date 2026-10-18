@@ -73,7 +73,7 @@
           "caption": "Scam Shield decodes it on the server, as part of the same check."
         },
         {
-          "say": "The card shows what it really is: a payment request, to this U P I I D. You never scan a code to receive money.",
+          "say": "The card shows what it really is: a payment request, to this U P I, I D. You never scan a code to receive money.",
           "caption": "The card shows what it really is: a payment request, to this UPI ID. You never scan a code to receive money."
         }
       ]
@@ -107,7 +107,7 @@
           "caption": "The date is 31 September, which does not exist."
         },
         {
-          "say": "The transaction reference has the wrong length, and the sender name does not match the U P I I D.",
+          "say": "The transaction reference has the wrong length, and the sender name does not match the U P I, I D.",
           "caption": "The transaction reference has the wrong length, and the sender name does not match the UPI ID."
         }
       ]

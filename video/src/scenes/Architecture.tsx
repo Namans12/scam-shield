@@ -80,8 +80,8 @@ export const Architecture: React.FC<{ frames: number }> = ({ frames }) => {
     { id: "a-f", from: right("api"), to: left("firestore"), label: "scam list", at: s2, until: s2 + s2d * 0.32, lx: 1280, ly: 400 },
     { id: "a-s", from: bottom("api"), to: left("scanner"), c1: [1100, 660], c2: [1300, 660], label: "private call", at: s2 + s2d * 0.3, until: s2 + s2d * 0.64, lx: 1180, ly: 632 },
     { id: "a-g", from: top("api"), to: left("gemini"), c1: [1100, 200], c2: [1300, 200], label: "structured verdict", at: s2 + s2d * 0.62, until: s2 + s2d + 0.5, lx: 1190, ly: 168 },
-    { id: "b-au", from: [N.browser.x, N.browser.y + NH / 2], to: left("auth"), c1: [230, 700], c2: [380, 560], label: "sign-in", at: s3, until: s3 + 2.4, lx: 300, ly: 700 },
-    { id: "b-st", from: [N.browser.x + 40, N.browser.y + NH / 2], to: left("storage"), c1: [320, 800], c2: [420, 790], label: "uploads", at: s3 + 0.5, until: s3 + 2.8, lx: 380, ly: 850 },
+    { id: "b-au", from: [N.browser.x, N.browser.y + NH / 2], to: left("auth"), c1: [230, 700], c2: [380, 560], label: "sign-in", at: s3, until: s3 + 2.4, lx: 398, ly: 636 },
+    { id: "b-st", from: [N.browser.x + 40, N.browser.y + NH / 2], to: left("storage"), c1: [320, 800], c2: [420, 790], label: "uploads", at: s3 + 0.5, until: s3 + 2.8, lx: 394, ly: 846 },
     { id: "a-au", from: [N.api.x - 80, N.api.y + NH / 2], to: right("auth"), c1: [1000, 560], c2: [900, 560], label: "verifies ID token", at: s3 + 0.2, until: s3 + 2.6, lx: 880, ly: 525 },
   ];
 
@@ -115,7 +115,7 @@ export const Architecture: React.FC<{ frames: number }> = ({ frames }) => {
           <div style={{ color: C.white, fontWeight: 800, fontSize: 40, letterSpacing: -0.8 }}>Cloud Run, Gemini, Firestore and Firebase</div>
         </div>
       </div>
-      <div style={{ position: "absolute", left: 90, right: 90, bottom: 22, color: C.muted, fontWeight: 500, fontSize: 17, opacity: head }}>
+      <div style={{ position: "absolute", left: 90, right: 90, bottom: 14, color: C.muted, fontWeight: 500, fontSize: 17, opacity: head }}>
         Product names and icons are trademarks of Google LLC, shown only to identify the technologies used. No endorsement or affiliation implied.
       </div>
       <svg width="1920" height="1080" style={{ position: "absolute", left: 0, top: 0 }}>

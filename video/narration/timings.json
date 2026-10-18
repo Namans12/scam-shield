@@ -67,7 +67,7 @@
       ]
     },
     "qr": {
-      "duration": 14.889796,
+      "duration": 15.072653,
       "sentences": [
         {
           "start": 0,
@@ -81,7 +81,7 @@
         },
         {
           "start": 8.39825,
-          "end": 14.8505,
+          "end": 15.03325,
           "caption": "The card shows what it really is: a payment request, to this UPI ID. You never scan a code to receive money."
         }
       ]
@@ -107,7 +107,7 @@
       ]
     },
     "payment": {
-      "duration": 16.64,
+      "duration": 16.875102,
       "sentences": [
         {
           "start": 0,
@@ -121,7 +121,7 @@
         },
         {
           "start": 11.87275,
-          "end": 16.601,
+          "end": 16.836,
           "caption": "The transaction reference has the wrong length, and the sender name does not match the UPI ID."
         }
       ]

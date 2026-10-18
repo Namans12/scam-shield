@@ -21,6 +21,8 @@ export const W = 1920;
 export const H = 1080;
 export const FPS = 30;
 
-/** The browser window: 1344x840 content (the 1440x900 recordings scaled by 0.9333), 44px chrome. */
-export const WIN = { x: 288, y: 26, w: 1344, h: 840, chrome: 44 };
+/** The browser window: 1296x810 content (the 1440x900 recordings scaled by 0.9), 44px chrome. Leaves room for a two-line caption and the footnote. */
+export const WIN = { x: 312, y: 16, w: 1296, h: 810, chrome: 44 };
+/** Bottom padding of the caption box (a two-line caption then starts at y 900, 40 px below the window). */
+export const CAPTION_BOTTOM = 54;
 export const BASE = WIN.w / 1440;
