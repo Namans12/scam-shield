@@ -56,20 +56,42 @@ One check: the app sends the text or an uploaded file path to the API. The API v
 
 ## Evaluation
 
-50 synthetic cases (26 scams covering all 13 scam types, including Hinglish text, a fake receipt, a QR trick and a voice note; 24 genuine messages such as bank alerts, OTPs that say "do not share", delivery updates and a real payment receipt), written by the authors, and run one at a time against the live app:
+**Headline: combined over three live runs, 185 synthetic cases** (90 scams, 90 genuine messages and 5 ambiguous inputs), written by the authors and sent one at a time to the live app. Ambiguous inputs are not scored as scam or genuine, so the metrics use the 180 scam and genuine cases; none of the 5 ambiguous inputs got a Scam verdict.
 
 | Metric | Result |
 |---|---|
-| Accuracy | 100.0% (50 of 50 verdicts correct) |
-| Scam recall (scams flagged) | 100% (26 of 26) |
-| False-positive rate (genuine flagged) | 0.0% (0 of 24) |
-| Scam type correct (among flagged scams) | 100.0% (26 of 26) |
-| Latency, text | p50 4.5 s, p95 20.8 s |
-| Latency, image / audio | p50 7.3 s / 10.3 s (image p95 8.7 s) |
+| Accuracy | 98.3% (177 of 180 correct) |
+| Scam recall (scams flagged) | 100% (90 of 90) |
+| False-positive rate (genuine flagged) | 3.3% (3 of 90) |
+| Scam type correct (among flagged scams) | 96.7% (87 of 90) |
+| Latency, text | p50 4.5 s, p95 18.2 s |
+| Errors | 0 |
 
-Details, cases and raw results: [`eval/`](eval/) and [`eval/results/latest.md`](eval/results/latest.md). The first run exposed a real bug (the model did not know today's date and flagged 2026 dates as "in the future"); it is fixed and the earlier result is kept in `eval/results/run1-before-date-fix.md`. The cases are synthetic, small and written by us, and a few of them (the demo examples, such as the fake KYC message and the QR case) contain identifiers that are also seeded in the demo scam list, so those are partly list-assisted. We also tuned the prompt and settings while working with these same cases, so this is not a held-out test. Treat the numbers as a sanity check, not a guarantee. How the benchmark is run and its limits are described in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#evaluation-method). An earlier run on `gemini-3.8-flash` scored 98.0% accuracy, 100% recall and 4.2% false positives, with image checks up to 34 s (kept in `eval/results/run-gemini-3.8-flash.md`); that model was slow and sometimes rate-limited on this project, so the default is now `gemini-3.7-flash` with a fallback. With only 50 cases the difference between 98% and 100% is a single case. The same 50 cases run with the interface in Hindi also scored 100% accuracy, 100% recall and 0% false positives, with no errors (`eval/results/run-hindi.md`).
+The same numbers are shown, with a count-up effect, on the landing page of the live app. They are generated from the raw results by `npx tsx eval/aggregate.ts` (list of official runs: [`eval/results/official.json`](eval/results/official.json); full report: [`eval/results/combined.md`](eval/results/combined.md)).
 
-**Eval v2 (harder, 35 new cases, live API):** 33 of 35 correct. All 14 adversarial scams were flagged, including English and Hinglish prompt injection and a disguised QR code, but 2 of 16 genuine look-alikes were wrongly flagged: a scam-awareness forward that quotes a scam link, and a courier tracking link. A keyword-only baseline scored the same 94.1% on text, with different mistakes (it rated four terse scams only Suspicious), so the first 50 cases overstate how much the model adds on easy inputs. The cases are written by the authors and small, so this is a sanity check, not a guarantee. Cases, baseline and raw results: [`eval/cases-v2.jsonl`](eval/cases-v2.jsonl), [`eval/baseline.ts`](eval/baseline.ts), [`eval/results/run-v2.md`](eval/results/run-v2.md).
+| Run | Cases | Result |
+|---|---|---|
+| v1 (17 Oct) | 50 original cases (26 scams, 24 genuine; includes Hinglish text, a fake receipt, a QR trick, a voice note) | 100% accuracy, 100% recall, 0 false positives |
+| v2 (18 Oct) | 35 harder cases (14 adversarial scams, 16 look-alike genuine messages, 5 ambiguous) | 33 of 35 correct; every scam flagged, 2 false positives |
+| v3 (18 Oct) | 100 new cases (50 realistic scams over all 13 types, 50 realistic genuine messages), nothing tuned after seeing results | 99 of 100 correct; 100% recall, 1 false positive |
+
+**The three false positives, plainly:** a scam-awareness forward that quotes a scam link (`l03`, rated Scam); a courier update with a tracking link (`l08`, Suspicious); a friend asking to borrow Rs 3,000 (`v3g40`, Suspicious). Scams were never missed in 90 of 90, but genuine messages can be over-flagged, so a "Suspicious" result is a prompt to check, not a finding.
+
+**Baseline.** A keyword-only detector (`eval/baseline.ts`, about 30 patterns, text only) scored the same 94.1% as Gemini on the v2 text cases, with different mistakes (it rated four terse scams only Suspicious). On the larger v3 text set it scored 84.0% accuracy and 72.0% scam recall, against Gemini's 99.0% and 100% (see [`eval/results/run-v2.md`](eval/results/run-v2.md) and [`run-v3.md`](eval/results/run-v3.md)). On textbook scams a keyword filter already does well, which is why the first 50 cases overstate what the model adds.
+
+**History.** The first run exposed a real bug (the model did not know today's date and flagged 2026 dates as "in the future"); it is fixed and the earlier result is kept in `eval/results/run1-before-date-fix.md`. An earlier run on `gemini-3.8-flash` scored 98.0% accuracy, 100% recall and 4.2% false positives on the first 50 cases, with image checks up to 34 s (`eval/results/run-gemini-3.8-flash.md`); that model was slow and sometimes rate-limited on this project, so the default is now `gemini-3.7-flash` with a fallback. The first 50-case run ([`eval/results/latest.md`](eval/results/latest.md)) and the same 50 cases with the interface in Hindi (100% accuracy, 100% recall, 0% false positives, `eval/results/run-hindi.md`) remain valid history, but cover only those first 50 cases.
+
+**Honest limits.** All cases are synthetic, written by the authors and small in number, with few images and one voice note. A few cases (the demo examples, such as the fake KYC message and the QR case) contain identifiers that are also seeded in the demo scam list, so those are partly list-assisted. We tuned the prompt and settings while working with the v1 cases, so v1 is not a held-out test; the run reports for v2 and v3 state that nothing was tuned after seeing their results. Each run is a single pass without confidence intervals; with 180 scored cases one case is about 0.6 percentage points. Treat the numbers as a sanity check, not a guarantee. Method: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#evaluation-method).
+
+**Rerun and test.**
+
+```bash
+npx tsx eval/run.ts --cases cases-v3.jsonl --gap 2500 --out run-v3   # live run (sequential, paced)
+npx tsx eval/aggregate.ts            # regenerate combined.md and web/src/benchmark.generated.json
+npx tsx eval/aggregate.ts --check    # verify only
+npm test                             # includes eval/aggregate.test.ts, eval/metrics.large.test.ts (up to 100k synthetic rows)
+                                     # and web/src/benchmark.test.ts, which fails if the landing page drifts from the raw results
+```
 
 ## Privacy and safety
 
@@ -93,7 +115,7 @@ Scam Shield was designed and built for the AI Builder Cup (first commit 16 Oct 2
 | `api/` | Hono API on Cloud Run: extraction, redaction, QR decode, Gemini, scam-list store |
 | `linkscan/` | Isolated Playwright link scanner on Cloud Run |
 | `shared/` | Types, schema, masking and complaint template used by web and api |
-| `eval/` | 50-case benchmark and results |
+| `eval/` | Benchmark cases (185 in three sets), harness, and results |
 | `scripts/` | Deploy, smoke test, example-asset generators, seed data, screenshots |
 | `docs/` | [Architecture for judges](docs/ARCHITECTURE.md), design, plan, setup notes, submission material, screenshots |
 
@@ -111,7 +133,7 @@ Deploying needs the Google Cloud and Firebase CLIs and access to the project:
 ```bash
 bash scripts/deploy.sh all     # rules, linkscan, api, web
 bash scripts/smoke.sh https://scam-shield-check.web.app
-npx tsx eval/run.ts            # the benchmark (sequential, paced)
+npx tsx eval/run.ts            # the first 50-case benchmark (sequential, paced); see Evaluation for v2 and v3
 ```
 
 Important settings (API environment): `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GEMINI_LOCATION`, `GEMINI_THINKING_LEVEL` (default LOW), `GEMINI_SEARCH` (default off), `TRUSTED_PROXY_HOPS` (2 behind Firebase Hosting), `LINKSCAN_URL`, `STORAGE_BUCKET`.

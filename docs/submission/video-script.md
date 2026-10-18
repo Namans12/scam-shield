@@ -28,12 +28,12 @@ Narration length is the length of the voice-over for that scene (from `timings.j
 | Phone | 6.2 s | A phone-sized window: one tap runs a check; the bottom bar | It fits a phone screen too. |
 | Hindi and Trends | 14.7 s | Switch to Hindi, run the check, verdict in Hindi (English caption); the Trends page, labelled as including demo data | It works in Hindi too; the Trends page shows reports by scam type and state, with demo data while the app is new. |
 | Architecture | 16.4 s | Animated diagram: browser, Firebase Hosting, Cloud Run API, Firestore, isolated link scanner, Gemini on Vertex AI, Firebase Auth and Storage; trademark footnote | Hosting serves the app and forwards API calls to Cloud Run. It checks the Firestore scam list, sends any link to a separate isolated scanner, and asks Gemini on Vertex AI for a structured verdict. Firebase handles sign-in and file storage. |
-| Benchmark | 9.8 s | The benchmark numbers read from `eval/results/latest.md`, with the caveat on screen | "On fifty synthetic test cases, Scam Shield flagged all twenty-six scams, and wrongly flagged none of the twenty-four genuine messages. It is a small test, not a guarantee." |
+| Benchmark | 9.8 s | The combined benchmark numbers (from `eval/results/combined.md`), with the caveat on screen | "On one hundred eighty-five synthetic test cases, Scam Shield flagged all ninety scams, and wrongly flagged three point three percent of the ninety genuine messages." |
 | Closing | 4.2 s | Closing card with the live link and the repository | "Scam Shield. Check before you click, pay or scan." |
 
 ## Numbers the video uses
 
-All come from `eval/results/latest.md` (run on 17 Oct 2026 against the live app, `gemini-3.7-flash`): 50 synthetic cases, 26 scams and 24 genuine messages, every scam flagged, 0 of 24 genuine messages flagged (false-positive rate 0.0%). The narration sentence is generated from that file by `video/scripts/bench.mjs`, so it follows the file when the benchmark is re-run.
+All come from `eval/results/combined.md` (three live runs on 17 and 18 Oct 2026, `gemini-3.7-flash`): 185 synthetic cases, 90 scams, 90 genuine messages and 5 ambiguous inputs; every scam flagged (90 of 90), 3 of 90 genuine messages wrongly flagged (3.3%), accuracy 98.3%. The sentence above is the intended narration; the video code that generates it (`video/scripts/bench.mjs`) is owned separately and may still read the older first-run file until it is updated, so check the rendered sentence matches before submitting.
 
 ## Before you re-render or replace it
 
