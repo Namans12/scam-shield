@@ -326,4 +326,8 @@ export const hi: Record<MessageKey, string> = {
   "pages.complaint.details": "अपनी जानकारी जोड़ें",
   "pages.complaint.review": "पढ़ें, कॉपी करें और शिकायत भेजें",
   "pages.notfound.label": "रास्ता भटक गए?",
+  // Added by fix/web2: complaint., update. and trends. keys.
+  "update.available": "नया वर्शन उपलब्ध है।",
+  "update.refresh": "रीफ़्रेश करें",
+  "update.dismiss": "बंद करें",
 };

@@ -326,6 +326,10 @@ export const en = {
   "pages.complaint.details": "Add your details",
   "pages.complaint.review": "Review, copy and report",
   "pages.notfound.label": "A wrong turn",
+  // Added by fix/web2: complaint., update. and trends. keys.
+  "update.available": "New version available.",
+  "update.refresh": "Refresh",
+  "update.dismiss": "Dismiss",
 } as const;
 
 export type MessageKey = keyof typeof en;
