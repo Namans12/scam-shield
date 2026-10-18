@@ -5,8 +5,11 @@ import { ease, easeOut } from "../components/common";
 import { LEAD, narration } from "../plan";
 
 type Pt = [number, number];
-const NW = 310;
-const NH = 124;
+type Side = "left" | "right" | "top" | "bottom";
+const NW = 296;
+const NH = 130;
+const ARROW = 16; // arrowhead length (px); its tip sits exactly on the target card's edge
+const RADIUS = 26; // corner rounding of the elbow routes
 
 interface NodeDef {
   id: string;
@@ -20,20 +23,72 @@ interface NodeDef {
 
 interface EdgeDef {
   id: string;
-  from: Pt;
-  to: Pt;
-  c1?: Pt;
-  c2?: Pt;
+  from: [string, Side];
+  to: [string, Side];
   label: string;
+  /** which straight run of the route carries the label (default: the longest) */
+  labelRun?: number;
   at: number;
   until: number;
-  lx?: number;
-  ly?: number;
 }
 
-const bez = (p0: Pt, c1: Pt, c2: Pt, p1: Pt, t: number): Pt => {
-  const u = 1 - t;
-  return [u * u * u * p0[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * p1[0], u * u * u * p0[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * p1[1]];
+interface Route {
+  d: string; // the drawn line (stops where the arrowhead starts)
+  pts: Pt[]; // the same route, flattened, for the travelling dots
+  len: number;
+  tip: Pt;
+  dir: Pt;
+  runs: { mid: Pt; len: number }[];
+}
+
+const dist = (a: Pt, b: Pt) => Math.hypot(b[0] - a[0], b[1] - a[1]);
+const unit = (a: Pt, b: Pt): Pt => {
+  const d = dist(a, b) || 1;
+  return [(b[0] - a[0]) / d, (b[1] - a[1]) / d];
+};
+
+/** Axis-aligned route with rounded corners; the last run is always straight into the middle of the target edge. */
+const route = (w: Pt[]): Route => {
+  const tip = w[w.length - 1];
+  const dir = unit(w[w.length - 2], tip);
+  const end: Pt = [tip[0] - dir[0] * (ARROW - 2), tip[1] - dir[1] * (ARROW - 2)];
+  const q = [...w.slice(0, -1), end];
+  let d = `M${q[0][0]} ${q[0][1]}`;
+  const pts: Pt[] = [q[0]];
+  for (let i = 1; i < q.length - 1; i++) {
+    const p = q[i];
+    const r = Math.min(RADIUS, dist(q[i - 1], p) / 2, dist(p, q[i + 1]) / 2);
+    const din = unit(q[i - 1], p);
+    const dout = unit(p, q[i + 1]);
+    const a: Pt = [p[0] - din[0] * r, p[1] - din[1] * r];
+    const b: Pt = [p[0] + dout[0] * r, p[1] + dout[1] * r];
+    d += ` L${a[0]} ${a[1]} Q${p[0]} ${p[1]} ${b[0]} ${b[1]}`;
+    for (let k = 0; k <= 8; k++) {
+      const t = k / 8;
+      const u = 1 - t;
+      pts.push([u * u * a[0] + 2 * u * t * p[0] + t * t * b[0], u * u * a[1] + 2 * u * t * p[1] + t * t * b[1]]);
+    }
+  }
+  d += ` L${end[0]} ${end[1]}`;
+  pts.push(end);
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) len += dist(pts[i - 1], pts[i]);
+  const runs = w.slice(1).map((p, i) => ({ mid: [(w[i][0] + p[0]) / 2, (w[i][1] + p[1]) / 2] as Pt, len: dist(w[i], p) }));
+  return { d, pts, len, tip, dir, runs };
+};
+
+/** The point at a given fraction of the route's length. */
+const along = (r: Route, f: number): Pt => {
+  let rest = f * r.len;
+  for (let i = 1; i < r.pts.length; i++) {
+    const seg = dist(r.pts[i - 1], r.pts[i]);
+    if (rest <= seg || i === r.pts.length - 1) {
+      const k = seg ? Math.min(1, rest / seg) : 0;
+      return [r.pts[i - 1][0] + (r.pts[i][0] - r.pts[i - 1][0]) * k, r.pts[i - 1][1] + (r.pts[i][1] - r.pts[i - 1][1]) * k];
+    }
+    rest -= seg;
+  }
+  return r.pts[r.pts.length - 1];
 };
 
 const BrowserGlyph: React.FC = () => (
@@ -58,31 +113,47 @@ export const Architecture: React.FC<{ frames: number }> = ({ frames }) => {
   const s2d = S[1].end - S[1].start;
   const s3 = L + S[2].start;
 
+  // Grid: four columns with equal gaps between the cards, three rows with equal spacing.
+  const GAP = (1920 - 2 * 90 - 4 * NW) / 3;
+  const col = (i: number) => 90 + NW / 2 + i * (NW + GAP);
+  const row = (i: number) => 220 + i * 230;
   const nodes: NodeDef[] = [
-    { id: "browser", x: 230, y: 520, title: "Your browser", sub: "Web app or installed app", logos: ["browser"], at: 0.5 },
-    { id: "hosting", x: 650, y: 270, title: "Firebase Hosting", sub: "Serves the app, forwards /api/**", logos: ["firebase.svg"], at: s1 },
-    { id: "api", x: 1100, y: 430, title: "Cloud Run: API", sub: "Checks, limits, orchestration", logos: ["cloud-run.svg"], at: s1 + 1.2 },
-    { id: "firestore", x: 1590, y: 430, title: "Firestore", sub: "Shared scam list, checks, stats", logos: ["firestore.svg"], at: s2 },
-    { id: "scanner", x: 1590, y: 660, title: "Cloud Run: link scanner", sub: "Isolated browser, private", logos: ["cloud-run.svg"], at: s2 + s2d * 0.3 },
-    { id: "gemini", x: 1590, y: 200, title: "Gemini on Vertex AI", sub: "Structured JSON verdict", logos: ["gemini.svg", "vertex-ai.svg"], at: s2 + s2d * 0.62 },
-    { id: "auth", x: 650, y: 570, title: "Firebase Auth", sub: "Anonymous + Google sign-in", logos: ["firebase.svg"], at: s3 },
-    { id: "storage", x: 650, y: 800, title: "Firebase Storage", sub: "Uploads, deleted after 7 days", logos: ["firebase.svg"], at: s3 + 0.5 },
+    { id: "browser", x: col(0), y: row(1), title: "Your browser", sub: "Web app or installed app", logos: ["browser"], at: 0.5 },
+    { id: "hosting", x: col(1), y: row(0), title: "Firebase Hosting", sub: "Serves the app, forwards /api/**", logos: ["firebase.svg"], at: s1 },
+    { id: "api", x: col(2), y: row(1), title: "Cloud Run: API", sub: "Checks, limits, orchestration", logos: ["cloud-run.svg"], at: s1 + 1.2 },
+    { id: "firestore", x: col(3), y: row(1), title: "Firestore", sub: "Shared scam list, checks, stats", logos: ["firestore.svg"], at: s2 },
+    { id: "scanner", x: col(3), y: row(2), title: "Cloud Run: link scanner", sub: "Isolated browser, private", logos: ["cloud-run.svg"], at: s2 + s2d * 0.3 },
+    { id: "gemini", x: col(3), y: row(0), title: "Gemini on Vertex AI", sub: "Structured JSON verdict", logos: ["gemini.svg", "vertex-ai.svg"], at: s2 + s2d * 0.62 },
+    { id: "auth", x: col(1), y: row(2), title: "Firebase Auth", sub: "Anonymous + Google sign-in", logos: ["firebase.svg"], at: s3 },
+    { id: "storage", x: col(0), y: row(2), title: "Firebase Storage", sub: "Uploads, deleted after 7 days", logos: ["firebase.svg"], at: s3 + 0.5 },
   ];
   const N = Object.fromEntries(nodes.map((n) => [n.id, n]));
-  const right = (id: string): Pt => [N[id].x + NW / 2, N[id].y];
-  const left = (id: string): Pt => [N[id].x - NW / 2, N[id].y];
-  const bottom = (id: string): Pt => [N[id].x, N[id].y + NH / 2];
-  const top = (id: string): Pt => [N[id].x, N[id].y - NH / 2];
+  const anchor = ([id, side]: [string, Side]): Pt => {
+    const n = N[id];
+    return side === "left" ? [n.x - NW / 2, n.y] : side === "right" ? [n.x + NW / 2, n.y] : side === "top" ? [n.x, n.y - NH / 2] : [n.x, n.y + NH / 2];
+  };
+  const horizontal = (side: Side) => side === "left" || side === "right";
+  /** Waypoints from the cards' own edges: straight if aligned, otherwise one elbow (or two, through the middle of the gap). */
+  const waypoints = (e: EdgeDef): Pt[] => {
+    const a = anchor(e.from);
+    const b = anchor(e.to);
+    if (a[0] === b[0] || a[1] === b[1]) return [a, b];
+    if (horizontal(e.from[1]) && horizontal(e.to[1])) {
+      const mx = (a[0] + b[0]) / 2;
+      return [a, [mx, a[1]], [mx, b[1]], b];
+    }
+    return horizontal(e.from[1]) ? [a, [b[0], a[1]], b] : [a, [a[0], b[1]], b];
+  };
 
   const edges: EdgeDef[] = [
-    { id: "b-h", from: right("browser"), to: left("hosting"), c1: [420, 520], c2: [440, 270], label: "static app", at: s1 + 0.3, until: s1 + 2.2, lx: 395, ly: 360 },
-    { id: "h-a", from: right("hosting"), to: left("api"), c1: [900, 270], c2: [900, 430], label: "/api/** rewrite", at: s1 + 1.4, until: s1 + 3.4, lx: 835, ly: 296 },
-    { id: "a-f", from: right("api"), to: left("firestore"), label: "scam list", at: s2, until: s2 + s2d * 0.32, lx: 1280, ly: 400 },
-    { id: "a-s", from: bottom("api"), to: left("scanner"), c1: [1100, 660], c2: [1300, 660], label: "private call", at: s2 + s2d * 0.3, until: s2 + s2d * 0.64, lx: 1180, ly: 632 },
-    { id: "a-g", from: top("api"), to: left("gemini"), c1: [1100, 200], c2: [1300, 200], label: "structured verdict", at: s2 + s2d * 0.62, until: s2 + s2d + 0.5, lx: 1190, ly: 168 },
-    { id: "b-au", from: [N.browser.x, N.browser.y + NH / 2], to: left("auth"), c1: [230, 700], c2: [380, 560], label: "sign-in", at: s3, until: s3 + 2.4, lx: 398, ly: 636 },
-    { id: "b-st", from: [N.browser.x + 40, N.browser.y + NH / 2], to: left("storage"), c1: [320, 800], c2: [420, 790], label: "uploads", at: s3 + 0.5, until: s3 + 2.8, lx: 394, ly: 846 },
-    { id: "a-au", from: [N.api.x - 80, N.api.y + NH / 2], to: right("auth"), c1: [1000, 560], c2: [900, 560], label: "verifies ID token", at: s3 + 0.2, until: s3 + 2.6, lx: 880, ly: 525 },
+    { id: "b-h", from: ["browser", "right"], to: ["hosting", "left"], label: "static app", at: s1 + 0.3, until: s1 + 2.2 },
+    { id: "h-a", from: ["hosting", "right"], to: ["api", "left"], label: "/api/** rewrite", at: s1 + 1.4, until: s1 + 3.4 },
+    { id: "a-f", from: ["api", "right"], to: ["firestore", "left"], label: "scam list", at: s2, until: s2 + s2d * 0.32 },
+    { id: "a-s", from: ["api", "bottom"], to: ["scanner", "left"], label: "private call", at: s2 + s2d * 0.3, until: s2 + s2d * 0.64 },
+    { id: "a-g", from: ["api", "top"], to: ["gemini", "left"], label: "structured verdict", at: s2 + s2d * 0.62, until: s2 + s2d + 0.5 },
+    { id: "b-au", from: ["browser", "right"], to: ["auth", "left"], label: "sign-in", at: s3, until: s3 + 2.4 },
+    { id: "b-st", from: ["browser", "bottom"], to: ["storage", "top"], label: "uploads", at: s3 + 0.5, until: s3 + 2.8 },
+    { id: "a-au", from: ["api", "bottom"], to: ["auth", "right"], label: "verifies ID token", at: s3 + 0.2, until: s3 + 2.6 },
   ];
 
   const Node = (n: NodeDef) => {
@@ -90,13 +161,13 @@ export const Architecture: React.FC<{ frames: number }> = ({ frames }) => {
     if (a <= 0) return null;
     const active = interpolate(t, [n.at + 0.2, n.at + 0.8, n.at + 3.2, n.at + 4.2], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
     return (
-      <div key={n.id} style={{ position: "absolute", left: n.x - NW / 2, top: n.y - NH / 2, width: NW, height: NH, opacity: a, transform: `translateY(${(1 - a) * 22}px) scale(${0.97 + 0.03 * a})`, borderRadius: 22, background: "#FFFFFF", boxShadow: `0 24px 50px rgba(0,0,0,.35), 0 0 0 ${2 + active * 2}px rgba(52,201,232,${0.15 + active * 0.7})`, display: "flex", alignItems: "center", gap: 16, padding: "0 20px" }}>
+      <div key={n.id} style={{ position: "absolute", left: n.x - NW / 2, top: n.y - NH / 2, width: NW, height: NH, opacity: a, transform: `translateY(${(1 - a) * 22}px) scale(${0.97 + 0.03 * a})`, borderRadius: 22, background: "#FFFFFF", boxShadow: `0 24px 50px rgba(0,0,0,.35), 0 0 0 ${2 + active * 2}px rgba(52,201,232,${0.15 + active * 0.7})`, display: "flex", alignItems: "center", gap: 14, padding: "0 18px" }}>
         <div style={{ display: "flex", gap: 4, alignItems: "center", minWidth: n.logos.length > 1 ? 96 : 54 }}>
           {n.logos[0] === "browser" ? <BrowserGlyph /> : n.logos.map((l) => <Img key={l} src={staticFile(`brand/${l}`)} style={{ width: n.logos.length > 1 ? 46 : 54, height: n.logos.length > 1 ? 46 : 54 }} />)}
         </div>
         <div>
-          <div style={{ color: C.ink, fontWeight: 800, fontSize: 24, lineHeight: 1.15 }}>{n.title}</div>
-          <div style={{ color: "#566A85", fontWeight: 500, fontSize: 17, marginTop: 5, lineHeight: 1.25 }}>{n.sub}</div>
+          <div style={{ color: C.ink, fontWeight: 800, fontSize: 23, lineHeight: 1.15 }}>{n.title}</div>
+          <div style={{ color: "#566A85", fontWeight: 500, fontSize: 16.5, marginTop: 5, lineHeight: 1.25 }}>{n.sub}</div>
         </div>
       </div>
     );
@@ -119,38 +190,38 @@ export const Architecture: React.FC<{ frames: number }> = ({ frames }) => {
         Product names and icons are trademarks of Google LLC, shown only to identify the technologies used. No endorsement or affiliation implied.
       </div>
       <svg width="1920" height="1080" style={{ position: "absolute", left: 0, top: 0 }}>
-        <defs>
-          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0 0L10 5L0 10z" fill={C.cyan} />
-          </marker>
-        </defs>
         {edges.map((e) => {
-          const c1 = e.c1 ?? [e.from[0] + (e.to[0] - e.from[0]) / 3, e.from[1] + (e.to[1] - e.from[1]) / 3];
-          const c2 = e.c2 ?? [e.from[0] + (2 * (e.to[0] - e.from[0])) / 3, e.from[1] + (2 * (e.to[1] - e.from[1])) / 3];
+          const r = route(waypoints(e));
           const draw = interpolate(t, [e.at, e.at + 0.7], [0, 1], { easing: ease, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
           if (draw <= 0) return null;
-          const d = `M${e.from[0]} ${e.from[1]} C${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${e.to[0]} ${e.to[1]}`;
           const live = t >= e.at && t <= e.until + 1.6;
-          // travelling dots
+          // travelling dots follow exactly the drawn route
           const dots = [0, 1, 2].map((k) => {
             const p = (((t - e.at) * 0.55 + k / 3) % 1 + 1) % 1;
-            const [x, y] = bez(e.from, c1 as Pt, c2 as Pt, e.to, p);
+            const [x, y] = along(r, p);
             return <circle key={k} cx={x} cy={y} r={7} fill={C.cyan} opacity={live && draw >= 1 ? 0.95 * Math.sin(Math.PI * p) ** 0.6 : 0} style={{ filter: "drop-shadow(0 0 8px rgba(52,201,232,.9))" }} />;
           });
           const lab = interpolate(t, [e.at + 0.5, e.at + 1.0], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+          const head = interpolate(draw, [0.9, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+          // label: centred on the middle of the longest straight run of the route, on a solid pill the line passes behind
+          const run = e.labelRun !== undefined ? r.runs[e.labelRun] : r.runs.reduce((m, x) => (x.len > m.len ? x : m));
+          const pw = Math.round(e.label.length * 9.8 + 30);
+          const [tx, ty] = r.tip;
+          const [dx, dy] = r.dir;
+          const arrow = `${tx},${ty} ${tx - dx * ARROW - dy * 8},${ty - dy * ARROW + dx * 8} ${tx - dx * ARROW + dy * 8},${ty - dy * ARROW - dx * 8}`;
+          const lineCol = live ? "rgba(52,201,232,.92)" : "rgba(52,201,232,.5)";
           return (
             <g key={e.id}>
-              <path d={d} fill="none" stroke="rgba(255,255,255,.22)" strokeWidth={3} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - draw} />
-              <path d={d} fill="none" stroke={C.cyan} strokeWidth={live ? 3.4 : 2.2} strokeOpacity={live ? 0.9 : 0.4} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - draw} markerEnd={draw >= 0.98 ? "url(#arr)" : undefined} />
+              <path d={r.d} fill="none" stroke="rgba(255,255,255,.22)" strokeWidth={3} strokeLinecap="butt" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - draw} />
+              <path d={r.d} fill="none" stroke={lineCol} strokeWidth={live ? 3.4 : 2.4} strokeLinecap="butt" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - draw} />
+              <polygon points={arrow} fill={lineCol} opacity={head} />
               {dots}
-              {e.lx !== undefined ? (
-                <g opacity={lab}>
-                  <rect x={e.lx - 8} y={(e.ly ?? 0) - 24} width={e.label.length * 11.6 + 22} height={34} rx={12} fill="rgba(8,27,50,.94)" stroke="rgba(52,201,232,.5)" />
-                  <text x={e.lx + 3} y={(e.ly ?? 0) - 1} fill={C.soft} fontFamily={fontFamily} fontWeight={600} fontSize={19}>
-                    {e.label}
-                  </text>
-                </g>
-              ) : null}
+              <g opacity={lab}>
+                <rect x={run.mid[0] - pw / 2} y={run.mid[1] - 18} width={pw} height={36} rx={18} fill="#0A2038" stroke="rgba(52,201,232,.55)" strokeWidth={1.5} />
+                <text x={run.mid[0]} y={run.mid[1]} textAnchor="middle" dominantBaseline="central" fill={C.soft} fontFamily={fontFamily} fontWeight={600} fontSize={18}>
+                  {e.label}
+                </text>
+              </g>
             </g>
           );
         })}
@@ -160,7 +231,7 @@ export const Architecture: React.FC<{ frames: number }> = ({ frames }) => {
       {(() => {
         const a = interpolate(t, [s2 + s2d * 0.45, s2 + s2d * 0.45 + 0.6], [0, 1], { easing: easeOut, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
         return (
-          <div style={{ position: "absolute", left: 1590 - 165, top: 800, width: 330, opacity: a, transform: `translateY(${(1 - a) * 12}px)` }}>
+          <div style={{ position: "absolute", left: N.scanner.x - 165, top: N.scanner.y + NH / 2 + 48, width: 330, opacity: a, transform: `translateY(${(1 - a) * 12}px)` }}>
             <div style={{ position: "absolute", left: 165 - 1.5, top: -50, width: 3, height: 46, background: "rgba(229,72,77,.7)", borderRadius: 2 }} />
             <div style={{ padding: "12px 18px", borderRadius: 16, background: "rgba(229,72,77,.14)", border: "1.5px dashed rgba(229,72,77,.75)", color: C.white, fontWeight: 600, fontSize: 19, textAlign: "center", lineHeight: 1.3 }}>
               The suspicious website
