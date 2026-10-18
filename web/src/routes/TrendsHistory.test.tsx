@@ -36,6 +36,21 @@ describe("TrendsPage", () => {
     expect(screen.getByText(/Includes demo data/)).toBeInTheDocument();
   });
 
+  it("shows state names in Hindi in Hindi mode while the data keeps English keys", async () => {
+    setLang("hi");
+    fetchTrends.mockResolvedValue({
+      days: [{ day: "2026-10-16", total: 12, byType: { kyc_update: 12 }, byState: { Maharashtra: 6, Delhi: 4, Atlantis: 2 } }],
+      recent: [],
+    });
+    wrap(<TrendsPage />);
+    expect(await screen.findByText("महाराष्ट्र")).toBeInTheDocument();
+    expect(screen.getByText("दिल्ली")).toBeInTheDocument();
+    expect(screen.getByText("Atlantis")).toBeInTheDocument();
+    expect(screen.queryByText("Maharashtra")).toBeNull();
+    const order = screen.getAllByText(/महाराष्ट्र|दिल्ली|Atlantis/).map((n) => n.textContent);
+    expect(order).toEqual(["महाराष्ट्र", "दिल्ली", "Atlantis"]);
+  });
+
   it("says so when there are no reports", async () => {
     fetchTrends.mockResolvedValue({ days: [], recent: [] });
     wrap(<TrendsPage />);

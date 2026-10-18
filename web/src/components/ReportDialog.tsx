@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ApiError, errorMessageKey, reportCheck } from "@/api";
 import { ensureAnonymousUser, isGoogleUser, signInWithGoogle } from "@/firebase";
-import { useT, type MessageKey } from "@/i18n";
+import { useLang, useT, type MessageKey } from "@/i18n";
+import { stateLabel } from "@/i18n/states";
 
 /** Maps a failed report to the message the person sees. */
 export function reportErrorKey(err: unknown): MessageKey {
@@ -36,6 +37,7 @@ interface Props {
 /** Adds the identifiers of a checked scam to the shared list. Needs a Google sign-in (limits fake reports). */
 export function ReportDialog({ result, open, onOpenChange }: Props) {
   const t = useT();
+  const { lang } = useLang();
   const ids = useId();
   const mounted = useRef(true);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -146,7 +148,7 @@ export function ReportDialog({ result, open, onOpenChange }: Props) {
                     <option value="">{t("report.stateNone")}</option>
                     {INDIAN_STATES.map((s) => (
                       <option key={s} value={s}>
-                        {s}
+                        {stateLabel(lang, s)}
                       </option>
                     ))}
                   </select>
