@@ -290,7 +290,7 @@ export const en = {
   "history.note": "History is kept for this browser. Files you upload are deleted after 7 days.",
   "result.loading": "Loading your result…",
   "about.privacy.title": "Your privacy",
-  "about.privacy.body": "Files you upload are deleted after 7 days. Numbers such as OTPs, card and Aadhaar numbers are blanked out before we store a message. Reports on the scam list carry no name, email or account.",
+  "about.privacy.body": "Files you upload for a check are deleted after 7 days. If you report a scam, a copy of the evidence is kept with the report. Numbers such as OTPs, card and Aadhaar numbers are blanked out before we store a message. Reports on the scam list carry no name, email or account.",
   "about.help.cybercrime": "Report online: cybercrime.gov.in",
   "about.help.chakshu": "Report suspicious calls and SMS: Chakshu on sancharsaathi.gov.in",
   "about.tech.title": "Built on Google Cloud",

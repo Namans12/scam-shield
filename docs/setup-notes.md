@@ -49,4 +49,4 @@ Decision on 16 Oct (superseded on 17 Oct: the default is now `gemini-3.7-flash` 
 - **Gemini:** thinking level LOW, Google Search grounding off by default (`GEMINI_SEARCH=true` to enable), first attempt capped at 15 s with one retry (see `DETAILS.md`, section 1, "Gemini reliability").
 - **Budget alert (owner):** needs the billing account ID from the console. Command: `gcloud billing budgets create --billing-account=<BILLING_ACCOUNT_ID> --display-name="Scam Shield" --budget-amount=1000INR --filter-projects=projects/project-91260b43-6705-4176-b71 --threshold-rule=percent=0.5 --threshold-rule=percent=0.9 --threshold-rule=percent=1.0`. Console route: Billing > Budgets & alerts > Create budget.
 
-- **Budget alert: created by the owner on 18 Oct 2026** (Billing > Budgets): name "Scam Shield", monthly, Rs 1,000, alerts at 50%, 90% and 100%, applies to project "My First Project" (`project-91260b43-6705-4176-b71`).
+- **Budget alert: created by the owner on 18 Oct 2026** (Billing > Budgets): name "Scam Shield", monthly, raised to Rs 2,000 later that day, alerts at 50%, 90% and 100%, applies to project "My First Project" (`project-91260b43-6705-4176-b71`).
