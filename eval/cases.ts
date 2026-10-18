@@ -10,8 +10,8 @@ export interface Case {
   text?: string;
   asset?: string;
   mime?: string;
-  /** v2 only */
-  category?: "adversarial" | "lookalike" | "ambiguous";
+  /** v2: adversarial | lookalike | ambiguous; v3: "realistic_scam" or the topic of a genuine message */
+  category?: string;
   expect?: "flagged" | "not_flagged" | "any_not_scam";
   tactic?: string;
 }

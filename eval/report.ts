@@ -52,6 +52,8 @@ export interface ReportInput {
   runAt: string;
   liveCalls: number;
   casesFile: string;
+  /** Name of the run (results/<outName>.md and .raw.json); default "run-v2". */
+  outName?: string;
 }
 
 export function renderReport(i: ReportInput): string {
@@ -64,9 +66,14 @@ export function renderReport(i: ReportInput): string {
   const gAll = tally(rows);
   const bOf = (id: string) => bAll.find((r) => r.id === id)?.verdict;
 
+  // v2 files carry the adversarial / lookalike / ambiguous categories; any other file (v3) is a plain mix of scams and genuine messages.
+  const v2Style = rows.some((r) => r.category === "adversarial" || r.category === "lookalike");
+  const nOf = (label: string) => rows.filter((r) => r.label === label).length;
   const out: string[] = [];
-  out.push("# Scam Shield evaluation v2: adversarial and look-alike cases", "");
-  out.push(`Run: ${i.runAt} against ${i.base} (language: ${i.lang}). ${rows.length} new cases from \`eval/${i.casesFile}\`: ${rows.filter((r) => r.label === "scam").length} adversarial scams, ${rows.filter((r) => r.label === "legit").length} benign look-alikes, ${rows.filter((r) => r.label === "ambiguous").length} ambiguous or garbage inputs.`);
+  out.push(v2Style ? "# Scam Shield evaluation v2: adversarial and look-alike cases" : `# Scam Shield evaluation ${i.casesFile.replace(/^cases-|\.jsonl$/g, "")}: realistic scams and genuine messages`, "");
+  out.push(v2Style
+    ? `Run: ${i.runAt} against ${i.base} (language: ${i.lang}). ${rows.length} new cases from \`eval/${i.casesFile}\`: ${nOf("scam")} adversarial scams, ${nOf("legit")} benign look-alikes, ${nOf("ambiguous")} ambiguous or garbage inputs.`
+    : `Run: ${i.runAt} against ${i.base} (language: ${i.lang}). ${rows.length} new cases from \`eval/${i.casesFile}\`: ${nOf("scam")} scams, ${nOf("legit")} genuine messages${nOf("ambiguous") ? `, ${nOf("ambiguous")} ambiguous inputs` : ""}.`);
   out.push(`One case at a time, ${(i.gapMs / 1000).toFixed(1)} s apart, ${i.liveCalls} live API calls in this run (including retries). Nothing was tuned after seeing these results.`);
   out.push("Flagged means the verdict is Scam or Suspicious. For ambiguous inputs, \"No scam signs found\" and \"Suspicious\" both pass; only a Scam verdict fails. No case is labelled \"safe\", because no tool can certify that.", "");
 
@@ -84,8 +91,22 @@ export function renderReport(i: ReportInput): string {
         : `${frac(t.ambiguous - t.ambiguousScam, t.ambiguous)} not given a Scam verdict (${t.ambiguousSuspicious} Suspicious)`;
     return `| ${cat} (${gr.length} cases${br.length !== gr.length ? `; ${br.length} text` : ""}) | ${f(g)} | ${f(b)} |`;
   };
-  for (const cat of ["adversarial", "lookalike", "ambiguous"]) {
-    out.push(catLine(cat, rows.filter((r) => r.category === cat), bAll.filter((r) => r.category === cat)));
+  if (v2Style) {
+    for (const cat of ["adversarial", "lookalike", "ambiguous"]) {
+      out.push(catLine(cat, rows.filter((r) => r.category === cat), bAll.filter((r) => r.category === cat)));
+    }
+  } else {
+    const cats = [...new Set(rows.map((r) => r.category ?? "none"))];
+    for (const cat of cats) {
+      const gr = rows.filter((r) => (r.category ?? "none") === cat), br = bAll.filter((r) => (r.category ?? "none") === cat);
+      const f = (rs: EvalRow[]) => { const t = tally(rs); return t.scams ? `${frac(t.scamsFlagged, t.scams)} flagged (${frac(t.scamsStrict, t.scams)} as Scam)` : `${frac(t.legit - t.legitFlagged, t.legit)} correctly not flagged`; };
+      out.push(`| ${cat} (${gr.length} cases${br.length !== gr.length ? `; ${br.length} text` : ""}) | ${f(gr)} | ${f(br)} |`);
+    }
+    out.push("", "### Scam recall by scam type", "", "| Scam type | Gemini flagged | Keyword baseline flagged |", "|---|---|---|");
+    for (const t of [...new Set(rows.filter((r) => r.label === "scam").map((r) => r.scamType ?? "none"))]) {
+      const gs = tally(rows.filter((r) => r.label === "scam" && (r.scamType ?? "none") === t)), bs = tally(bAll.filter((r) => r.label === "scam" && (r.scamType ?? "none") === t));
+      out.push(`| ${t} | ${frac(gs.scamsFlagged, gs.scams)} | ${frac(bs.scamsFlagged, bs.scams)} |`);
+    }
   }
   out.push("");
 
@@ -134,6 +155,6 @@ export function renderReport(i: ReportInput): string {
     const b = bOf(r.id);
     out.push(`| ${r.id} | ${r.category} | ${cell(byId.get(r.id)!.expect ?? r.label)} | ${r.error ? `error ${cell(r.error)}` : VERDICT[r.verdict!]} | ${r.riskScore ?? ""} | ${r.predictedType ?? ""} | ${b ? `${VERDICT[b]}${passed({ label: r.label, verdict: b }) ? "" : " (wrong)"}` : "n/a"} | ${passed(r) ? "pass" : "FAIL"} |`);
   }
-  out.push("", `Cases: \`eval/${i.casesFile}\`. Raw results with per-row verdicts, summaries, hard signals and retry log: \`eval/results/run-v2.raw.json\`.`, "");
+  out.push("", `Cases: \`eval/${i.casesFile}\`. Raw results with per-row verdicts, summaries, hard signals and retry log: \`eval/results/${i.outName ?? "run-v2"}.raw.json\`.`, "");
   return out.join("\n");
 }

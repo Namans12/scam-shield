@@ -127,7 +127,7 @@ const rawName = OUT ? `${OUT}.raw.json` : `${stamp}.raw.json`;
 writeFileSync(resolve(here, `results/${rawName}`), JSON.stringify({ base: BASE, lang: LANG, concurrency: CONCURRENCY, casesFile: CASES_FILE, gapMs: GAP_MS, liveCalls, runAt, metrics: m, rows }, null, 2));
 
 if (OUT) {
-  const md = renderReport({ rows, cases, v1Cases: loadCases(resolve(here, "cases.jsonl")), base: BASE, lang: LANG, gapMs: GAP_MS, runAt, liveCalls, casesFile: CASES_FILE });
+  const md = renderReport({ rows, cases, v1Cases: loadCases(resolve(here, "cases.jsonl")), base: BASE, lang: LANG, gapMs: GAP_MS, runAt, liveCalls, casesFile: CASES_FILE, outName: OUT });
   writeFileSync(resolve(here, `results/${OUT}.md`), md);
   console.log("\n" + md);
   process.exit(0);
