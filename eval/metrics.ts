@@ -1,8 +1,12 @@
 import type { ScamType, Verdict } from "@scam-shield/shared";
 
+export type Label = "scam" | "legit" | "ambiguous";
+
 export interface EvalRow {
   id: string;
-  label: "scam" | "legit";
+  label: Label;
+  /** adversarial | lookalike | ambiguous in cases-v2.jsonl; absent in v1. */
+  category?: string;
   scamType?: ScamType;
   kind: string;
   verdict?: Verdict;
@@ -39,7 +43,8 @@ export function percentile(values: number[], p: number): number {
  * miss for recall (conservative), and is left out of the false-positive rate (it flagged nothing).
  * typeAccuracy = share of flagged scams whose predicted type equals the labelled type.
  */
-export function computeMetrics(rows: EvalRow[]): Metrics {
+export function computeMetrics(allRows: EvalRow[]): Metrics {
+  const rows = allRows.filter((r) => r.label !== "ambiguous"); // ambiguous cases are scored by tally(), not by these two-class metrics
   const flagged = (r: EvalRow) => r.verdict === "scam" || r.verdict === "suspicious";
   const scams = rows.filter((r) => r.label === "scam");
   const legit = rows.filter((r) => r.label === "legit");
@@ -60,5 +65,66 @@ export function computeMetrics(rows: EvalRow[]): Metrics {
     typeAccuracy: ratio(typeHits, flaggedScams.length),
     latency,
     errors: rows.filter((r) => r.error).length,
+  };
+}
+
+// ---- three-class scoring used by eval v2 (scam / legit / ambiguous) ----
+
+export const isFlagged = (v?: string) => v === "scam" || v === "suspicious";
+
+/**
+ * pass: scam flagged (Scam or Suspicious); legit not flagged; ambiguous anything except a Scam verdict
+ * ("No scam signs found" and "Suspicious" are both acceptable there). A row with an error never passes.
+ */
+export function passed(r: Pick<EvalRow, "label" | "verdict" | "error">): boolean {
+  if (r.error || !r.verdict) return false;
+  if (r.label === "scam") return isFlagged(r.verdict);
+  if (r.label === "legit") return !isFlagged(r.verdict);
+  return r.verdict !== "scam";
+}
+
+export interface Tally {
+  n: number;
+  errors: number;
+  passed: number;
+  accuracy: number;
+  scams: number;
+  scamsFlagged: number;
+  /** Scam verdict only (Suspicious not counted). */
+  scamsStrict: number;
+  scamRecall: number;
+  legit: number;
+  legitFlagged: number;
+  falsePositiveRate: number;
+  ambiguous: number;
+  ambiguousScam: number;
+  ambiguousSuspicious: number;
+  ambiguousNoSigns: number;
+}
+
+export function tally(rows: Array<Pick<EvalRow, "label" | "verdict" | "error">>): Tally {
+  const scams = rows.filter((r) => r.label === "scam");
+  const legit = rows.filter((r) => r.label === "legit");
+  const amb = rows.filter((r) => r.label === "ambiguous");
+  const ok = (r: { error?: string; verdict?: string }) => !r.error && !!r.verdict;
+  const scamsFlagged = scams.filter((r) => ok(r) && isFlagged(r.verdict)).length;
+  const legitFlagged = legit.filter((r) => ok(r) && isFlagged(r.verdict)).length;
+  const nPassed = rows.filter(passed).length;
+  return {
+    n: rows.length,
+    errors: rows.filter((r) => r.error).length,
+    passed: nPassed,
+    accuracy: ratio(nPassed, rows.length),
+    scams: scams.length,
+    scamsFlagged,
+    scamsStrict: scams.filter((r) => ok(r) && r.verdict === "scam").length,
+    scamRecall: ratio(scamsFlagged, scams.length),
+    legit: legit.length,
+    legitFlagged,
+    falsePositiveRate: ratio(legitFlagged, legit.filter(ok).length),
+    ambiguous: amb.length,
+    ambiguousScam: amb.filter((r) => ok(r) && r.verdict === "scam").length,
+    ambiguousSuspicious: amb.filter((r) => ok(r) && r.verdict === "suspicious").length,
+    ambiguousNoSigns: amb.filter((r) => ok(r) && r.verdict === "no_signs").length,
   };
 }
