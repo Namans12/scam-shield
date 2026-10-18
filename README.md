@@ -3,7 +3,7 @@
 **Check a suspicious message, screenshot, QR code, link or voice note before you act on it.** Built for people in India, in English and Hindi (Hinglish understood).
 
 - **Live app:** https://scam-shield-live.web.app
-- **Demo video:** _add link before submitting_
+- **Demo video:** https://youtu.be/a678nAYddq0
 - **Fictional demo bank page (used by the examples):** https://bnb-kyc-update.web.app
 
 Built for the AI Builder Cup, track *BFSI: Intelligent Risk, Fraud & Financial Experiences*, on **Gemini on Vertex AI, Firestore, Firebase (Auth, Hosting, Storage) and Cloud Run**.

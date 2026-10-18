@@ -11,7 +11,7 @@
 > - **Logos decision (18 Oct, done):** website text-only + trademark note (deployed); deck slides 8-9 and the video Architecture scene keep product icons with a footnote; the video closing card is text-only; the Google Cloud mark was removed from the video title. Deck and video were rebuilt after this change.
 > - **Video:** built by code in `video/` (Remotion + real Playwright footage of the live site + Google Cloud TTS voice, 2:48, under the 3-minute limit). Final mp4 is NOT in git (size): `video/out/scam-shield-demo.mp4` (re-rendered 18 Oct after the logo change, 168.5 s) and also in the local `track/video` worktree. See `video/README.md` to re-record, re-voice, or use the owner's own voice, and to drop in an owner clip for the Report scene.
 > - **Branches/worktrees (local only):** `track/landing`, `track/pages`, `track/carousel`, `track/video`, `track/deck` were merged into `build`; the extra local worktrees can be removed with `git worktree remove`.
-> - **Still the owner's:** upload the video (Public) and add its link (README, slide 14 via `DECK_VIDEO_URL`); real Google sign-in + report test; Android share/install test; confirm the README "Provenance" paragraph; submit the form (`docs/submission/description.md`).
+> - **Still the owner's:** real Google sign-in + report test; Android share/install test; confirm the README "Provenance" paragraph; submit the form (`docs/submission/description.md`).
 > - **Known risks:** Gemini latency varies (4 to 21 s, rare slower); the share-target run where a result page did not open once is unexplained; 18 Firestore-emulator tests need Java (not installed on this Mac).
 > - **Docs cleaned (18 Oct):** private data (personal addresses, billing and account identifiers, local paths, unrelated projects) removed from current files; `HANDOFF.md` rewritten as a short current-state note; `docs/ARCHITECTURE.md` added for judges; README privacy, evaluation and storage statements corrected; video script rewritten to match the shipped video.
 
@@ -48,7 +48,7 @@ Done in this session
 
 Needs the owner before submitting
 - Slide 1 ("Team name: Scam Shield", "Team leader name: Naman Shrimal"): **confirmed correct by the owner on 17 Oct.**
-- Slide 14 still says `[add the demo video link before submitting]`; same placeholder in `README.md`.
+- The demo video is uploaded (Public): https://youtu.be/a678nAYddq0 . It is in `README.md` and on deck slide 14 (built with `DECK_VIDEO_URL`).
 - Everything else under "Owner only" in section 3 (real Google sign-in and report test, Android share and install on a phone, the video, the form).
 
 Small issues noticed, not fixed

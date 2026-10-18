@@ -21,6 +21,6 @@ Every statistic is listed in `sources.md`. Cost figures are labelled estimates, 
 11. **Prototype snapshots.** Five phone screenshots: scam, QR, no scam signs found, Hindi voice note, report dialog.
 12. **Performance report.** Combined English runs (accuracy, scam recall, false-positive rate, type accuracy), latency table with the Hindi run, the combined result over 185 synthetic cases (98.3% accuracy, 100% of 90 scams flagged, 3.3% of 90 genuine messages wrongly flagged), plainly "synthetic, author-written, a sanity check, not a guarantee", the model used, and the bug the first run found.
 13. **Future development.** More Indian languages, bank and telecom partnerships, URL reputation feeds, Android app, Google Search grounding, call-recording upload; and how it scales.
-14. **Links.** GitHub, demo video (clearly marked placeholder for the owner), live product (https://scam-shield-live.web.app), and a QR code to the live app.
+14. **Links.** GitHub, demo video (https://youtu.be/a678nAYddq0), live product (https://scam-shield-live.web.app), and a QR code to the live app.
 15. Closing slide with the logo and the tagline.
 16. Template "Thank you" slide (untouched).
