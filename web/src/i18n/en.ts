@@ -72,7 +72,7 @@ export const en = {
   "landing.tryExample": "Try example",
   "landing.proofEyebrow": "TESTED. WITH LIMITS.",
   "landing.proofTitle": "Clear about our results. Honest about our limits.",
-  "landing.proofBody": "In our 50-case test using synthetic examples, the English run achieved these results. The Hindi run achieved 100% accuracy.",
+  "landing.proofBody": "Across three live test runs on synthetic examples we wrote ourselves, Scam Shield flagged every scam and wrongly flagged a few genuine messages. A Hindi run on the first 50 cases also scored 100% accuracy.",
   "landing.accuracy": "Accuracy",
   "landing.recall": "Scam recall",
   "landing.falsePositive": "False-positive rate",
