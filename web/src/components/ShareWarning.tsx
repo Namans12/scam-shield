@@ -52,7 +52,7 @@ export function ShareWarning({ result, compact = false }: { result: CheckResult;
         onClick={onShare}
         aria-label={label}
         aria-disabled={busy || undefined}
-        className={cn("border-border", compact && "min-h-14 min-w-0 flex-1 flex-col gap-1 border-0 px-2 text-base md:flex-none md:flex-row md:border md:px-4")}
+        className={cn("border-border", compact && "min-h-14 min-w-0 flex-1 flex-col gap-1 border border-border bg-background px-2 text-base md:flex-none md:flex-row md:px-4")}
       >
         {busy ? <Loader2 className="motion-safe:animate-spin" aria-hidden /> : <Share2 aria-hidden />}
         {compact ? (

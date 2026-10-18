@@ -799,3 +799,6 @@ html:lang(hi) .landing-eyebrow { font-size: 14px; letter-spacing: .2px; }
 @media (max-width: 720px) {
   .flow-cards .flow-node, .flow-vertical.flow-cards .flow-node { left: -41px; top: 29px; }
 }
+
+/* Result page: the fixed action bar (phones) must not cover the footer. */
+@media (max-width: 767px) { body.has-action-bar { padding-bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px)); } }

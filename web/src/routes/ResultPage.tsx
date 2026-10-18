@@ -79,6 +79,13 @@ export default function ResultPage() {
   const result = stateResult ?? (fetched && fetched.id === id ? fetched.result : null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  const hasActionBar = !!result && result.verdict !== "no_signs";
+  useEffect(() => {
+    // The action bar is fixed to the bottom on phones: leave room so the page footer is never hidden behind it.
+    if (!hasActionBar) return;
+    document.body.classList.add("has-action-bar");
+    return () => document.body.classList.remove("has-action-bar");
+  }, [hasActionBar]);
   const shownId = result?.id;
   useEffect(() => {
     // After navigating here, announce the verdict to screen readers.
@@ -170,14 +177,14 @@ export default function ResultPage() {
       {!unclear && <HowDecided result={result} />}
 
       {result.verdict !== "no_signs" && (
-        <div role="group" aria-label={t("pages.result.actions")} className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-center gap-1.5 border-t border-border bg-card/95 px-3 pt-3 pb-5 shadow-lg backdrop-blur-md md:static md:mt-8 md:flex-wrap md:justify-start md:gap-3 md:rounded-2xl md:border md:p-4 md:shadow-sm">
+        <div role="group" aria-label={t("pages.result.actions")} className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-center gap-2 border-t border-border bg-card/95 px-3 pt-3 pb-5 shadow-lg backdrop-blur-md md:static md:mt-8 md:flex-wrap md:justify-start md:gap-3 md:rounded-2xl md:border md:p-4 md:shadow-sm">
           {result.entityKeys.length > 0 && (
-            <Button variant="outline" aria-label={t("action.report")} className="min-h-14 min-w-0 flex-1 flex-col gap-1 border-0 px-2 text-base md:flex-none text-primary md:flex-row md:border md:bg-primary md:px-4 md:text-primary-foreground" onClick={() => setReportOpen(true)}>
+            <Button variant="outline" aria-label={t("action.report")} className="min-h-14 min-w-0 flex-1 flex-col gap-1 border-primary bg-primary px-2 text-base text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground md:flex-none md:flex-row md:px-4" onClick={() => setReportOpen(true)}>
               <Flag aria-hidden />
               <span className="md:hidden">{t("pages.action.report")}</span><span className="hidden md:inline">{t("action.report")}</span>
             </Button>
           )}
-          <Button asChild variant="outline" className="min-h-14 min-w-0 flex-1 flex-col gap-1 border-0 px-2 text-base md:flex-none md:flex-row md:border md:px-4">
+          <Button asChild variant="outline" className="min-h-14 min-w-0 flex-1 flex-col gap-1 border border-border bg-background px-2 text-base md:flex-none md:flex-row md:px-4">
             <Link to={`/complaint/${result.id}`} state={{ result }} aria-label={t("action.complaint")}>
               <FileText aria-hidden />
               <span className="md:hidden">{t("pages.action.complaint")}</span><span className="hidden md:inline">{t("action.complaint")}</span>
