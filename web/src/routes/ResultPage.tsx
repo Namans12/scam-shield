@@ -10,6 +10,8 @@ import { EntityHits } from "@/components/EntityHits";
 import { LinkScanCard } from "@/components/LinkScanCard";
 import { Disclaimer } from "@/components/Disclaimer";
 import { QrCard } from "@/components/QrCard";
+import { HowDecided } from "@/components/HowDecided";
+import { NotEnoughBanner } from "@/components/NotEnoughBanner";
 import { ReportDialog } from "@/components/ReportDialog";
 import { CheckIndicator } from "@/components/check/CheckIndicator";
 import { ShareWarning } from "@/components/ShareWarning";
@@ -31,6 +33,11 @@ function resultFromState(state: unknown, id: string | undefined): CheckResult | 
   const result = (state as { result?: CheckResult }).result;
   if (!result || typeof result !== "object" || result.id !== id) return null;
   return result;
+}
+
+/** CheckPage flags a result whose input was too thin to judge (see lib/judgeable); a reloaded result does not carry the flag. */
+function unclearFromState(state: unknown): boolean {
+  return !!state && typeof state === "object" && (state as { unclear?: unknown }).unclear === true;
 }
 
 function ResultGone() {
@@ -66,6 +73,8 @@ export default function ResultPage() {
       live = false;
     };
   }, [id, stateResult]);
+  // "No signs" for input with too little in it must not read as reassurance. Scam and Suspicious are never softened.
+  const unclear = !!stateResult && stateResult.verdict === "no_signs" && unclearFromState(location.state);
   const loading = !stateResult && !!id && !(fetched && fetched.id === id);
   const result = stateResult ?? (fetched && fetched.id === id ? fetched.result : null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -86,23 +95,29 @@ export default function ResultPage() {
   return (
     <article className={result.verdict !== "no_signs" ? "pb-32 md:pb-0" : undefined}>
       <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-        <VerdictBanner verdict={result.verdict} lang={lang} headingRef={headingRef} className="rounded-none border-x-0 border-t-0" />
+        {unclear ? (
+          <NotEnoughBanner headingRef={headingRef} />
+        ) : (
+          <>
+            <VerdictBanner verdict={result.verdict} lang={lang} headingRef={headingRef} className="rounded-none border-x-0 border-t-0" />
 
-        <div className="p-5 sm:p-7">
-          <RiskMeter score={result.risk_score} verdict={result.verdict} />
-        </div>
+            <div className="p-5 sm:p-7">
+              <RiskMeter score={result.risk_score} verdict={result.verdict} />
+            </div>
 
-        {result.scam_type !== "none" && (
-          <p className="mx-5 mb-5 flex flex-wrap items-center gap-2 text-base sm:mx-7">
-            <span className="text-muted-foreground">{t("result.scamType")}</span>
-            <strong className="rounded-lg bg-secondary px-3 py-1.5 font-semibold">{t(scamTypeKey(result.scam_type))}</strong>
-          </p>
+            {result.scam_type !== "none" && (
+              <p className="mx-5 mb-5 flex flex-wrap items-center gap-2 text-base sm:mx-7">
+                <span className="text-muted-foreground">{t("result.scamType")}</span>
+                <strong className="rounded-lg bg-secondary px-3 py-1.5 font-semibold">{t(scamTypeKey(result.scam_type))}</strong>
+              </p>
+            )}
+
+            <section className="border-t border-border p-5 sm:p-7">
+              <h2 className="mb-2 text-base font-semibold text-muted-foreground">{t("result.summary")}</h2>
+              <p lang={result.language} className="text-lg leading-relaxed break-anywhere">{result.summary}</p>
+            </section>
+          </>
         )}
-
-        <section className="border-t border-border p-5 sm:p-7">
-          <h2 className="mb-2 text-base font-semibold text-muted-foreground">{t("result.summary")}</h2>
-          <p lang={result.language} className="text-lg leading-relaxed break-anywhere">{result.summary}</p>
-        </section>
       </div>
       <div className="mt-5"><Disclaimer /></div>
 
@@ -115,9 +130,11 @@ export default function ResultPage() {
         </details>
       )}
 
-      <Section title={t("result.redFlags")}>
-        <RedFlagList flags={result.red_flags} lang={result.language} />
-      </Section>
+      {!unclear && (
+        <Section title={t("result.redFlags")}>
+          <RedFlagList flags={result.red_flags} lang={result.language} />
+        </Section>
+      )}
 
       {result.next_steps.length > 0 && (
         <Section title={t("result.nextSteps")}>
@@ -149,6 +166,8 @@ export default function ResultPage() {
           <QrCard qr={result.qr} />
         </Section>
       )}
+
+      {!unclear && <HowDecided result={result} />}
 
       {result.verdict !== "no_signs" && (
         <div role="group" aria-label={t("pages.result.actions")} className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-center gap-1.5 border-t border-border bg-card/95 px-3 pt-3 pb-5 shadow-lg backdrop-blur-md md:static md:mt-8 md:flex-wrap md:justify-start md:gap-3 md:rounded-2xl md:border md:p-4 md:shadow-sm">

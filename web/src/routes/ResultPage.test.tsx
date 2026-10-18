@@ -9,9 +9,9 @@ vi.mock("@/data", () => ({ fetchCheck }));
 import { setLang } from "@/i18n";
 import { JPEG_DATA_URL, makeResult } from "@/test/fixtures";
 
-function renderResult(result: CheckResult | undefined, id = "chk_123") {
+function renderResult(result: CheckResult | undefined, id = "chk_123", extraState: Record<string, unknown> = {}) {
   return render(
-    <MemoryRouter initialEntries={[{ pathname: `/result/${id}`, state: result ? { result } : undefined }]}>
+    <MemoryRouter initialEntries={[{ pathname: `/result/${id}`, state: result ? { result, ...extraState } : undefined }]}>
       <Routes>
         <Route path="/result/:id" element={<ResultPage />} />
         <Route path="/" element={<p>check page</p>} />
@@ -280,5 +280,55 @@ describe("ResultPage", () => {
       renderResult(makeResult({ inputKind: "audio" }));
       expect(screen.queryByText("What was said")).toBeNull();
     });
+  });
+
+  describe("input too thin to judge", () => {
+    const noSigns = () => makeResult({ verdict: "no_signs", risk_score: 0, scam_type: "none", summary: "Nothing in this text.", red_flags: [], hits: [], entityKeys: [], hardSignals: [] });
+
+    it("replaces the no-signs banner with 'Not enough to judge', and shows no score, buttons or reassurance", () => {
+      renderResult(noSigns(), "chk_123", { unclear: true });
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Not enough to judge");
+      expect(screen.getByText(/Paste the full message, link or screenshot and check again/)).toBeInTheDocument();
+      expect(screen.queryByText("No scam signs found")).toBeNull();
+      expect(screen.queryByRole("meter")).toBeNull();
+      expect(screen.queryByText("Warning signs")).toBeNull();
+      expect(screen.queryByText("No specific warning signs were listed.")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Report this scam" })).toBeNull();
+      expect(screen.queryByRole("link", { name: "Draft a complaint" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Share a warning" })).toBeNull();
+      expect(screen.queryByText("How this verdict was reached")).toBeNull();
+      expect(screen.getByRole("link", { name: /Check another message/ })).toBeInTheDocument();
+    });
+
+    it("moves focus to the new heading", () => {
+      renderResult(noSigns(), "chk_123", { unclear: true });
+      expect(screen.getByRole("heading", { level: 1 })).toHaveFocus();
+    });
+
+    it("is available in Hindi", () => {
+      setLang("hi");
+      renderResult(noSigns(), "chk_123", { unclear: true });
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("परखने के लिए काफ़ी नहीं");
+      expect(screen.queryByText("धोखाधड़ी के संकेत नहीं मिले")).toBeNull();
+    });
+
+    it("keeps the normal no-signs result when the input was enough", () => {
+      renderResult(noSigns(), "chk_123", { unclear: false });
+      expect(screen.getByText("No scam signs found")).toBeInTheDocument();
+      expect(screen.queryByText("Not enough to judge")).toBeNull();
+    });
+
+    it("never softens a Scam or Suspicious result, whatever the flag says", () => {
+      renderResult(makeResult(), "chk_123", { unclear: true });
+      expect(screen.getByText("Scam")).toBeInTheDocument();
+      expect(screen.queryByText("Not enough to judge")).toBeNull();
+      expect(screen.getByRole("button", { name: "Report this scam" })).toBeEnabled();
+    });
+  });
+
+  it("shows the collapsed 'How this verdict was reached' panel on a result", () => {
+    renderResult(makeResult());
+    const summary = screen.getByText("How this verdict was reached");
+    expect(summary.closest("details")).not.toHaveAttribute("open");
   });
 });

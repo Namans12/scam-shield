@@ -11,6 +11,9 @@ import { uploadForCheck, validateFile } from "@/upload";
 import { ExampleRow } from "@/components/ExampleRow";
 import { EXAMPLES, type Example } from "@/examples";
 import { CheckIndicator } from "@/components/check/CheckIndicator";
+import { CheckSteps } from "@/components/check/CheckSteps";
+import { LangText } from "@/components/landing/LangStack";
+import { hasEnoughToJudge, textHasLink } from "@/lib/judgeable";
 import { takeSharedPayload } from "@/share-target/sw-share";
 
 const MAX_TEXT = 5000;
@@ -30,6 +33,8 @@ export default function CheckPage() {
   const [progress, setProgress] = useState(0);
   const loading = phase !== "idle";
   const [slow, setSlow] = useState(false);
+  // Whether the check in flight includes a link to open, so the steps only mention the isolated browser when it applies.
+  const [scanLink, setScanLink] = useState(false);
   const [errorKey, setErrorKey] = useState<MessageKey | null>(null);
   const mounted = useRef(true);
   const submitRef = useRef<HTMLButtonElement>(null);
@@ -110,6 +115,8 @@ export default function CheckPage() {
   }, [params]);
 
   const hasInput = text.trim().length > 0 || url.trim().length > 0 || file !== null;
+  // Typed text that is too thin to judge gets a calm hint. It never blocks the check (see lib/judgeable).
+  const thin = text.trim().length > 0 && !hasEnoughToJudge({ text, url, hasFile: file !== null });
 
   function onFileChange(next: File | null) {
     uploaded.current = null;
@@ -181,6 +188,7 @@ export default function CheckPage() {
         }
         if (mounted.current) setProgress(1);
       }
+      setScanLink(!!input.url.trim() || textHasLink(input.text));
       setPhase("checking");
       const result = await checkContent({
         ...(attachment && { storagePath: attachment.storagePath, mimeType: attachment.mimeType }),
@@ -191,7 +199,9 @@ export default function CheckPage() {
       if (mounted.current) {
         setFile(null);
         uploaded.current = null;
-        navigate(`/result/${result.id}`, { state: { result } });
+        // `unclear` lets the result page avoid a reassuring "no signs" for input that had too little in it to judge.
+        const unclear = !hasEnoughToJudge({ text: input.text, url: input.url, hasFile: file !== null });
+        navigate(`/result/${result.id}`, { state: { result, unclear } });
       }
     } catch (err) {
       // Cancelling is the person's own choice, not an error: the file stays attached to try again.
@@ -225,13 +235,16 @@ export default function CheckPage() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             maxLength={MAX_TEXT}
-            aria-describedby={`${ids}-count${text.length >= MAX_TEXT ? ` ${ids}-limit` : ""}`}
+            aria-describedby={`${ids}-count${thin ? ` ${ids}-thin` : ""}${text.length >= MAX_TEXT ? ` ${ids}-limit` : ""}`}
             placeholder={t("check.textPlaceholder")}
             readOnly={loading}
           />
           <p id={`${ids}-count`} className="mt-2 text-right text-sm tabular-nums text-muted-foreground">
             {t("check.charCount", { n: text.length, max: MAX_TEXT })}
           </p>
+          {thin && (
+            <p id={`${ids}-thin`} className="mt-1 text-base leading-relaxed text-muted-foreground"><LangText k="check.thinHint" /></p>
+          )}
           {text.length >= MAX_TEXT && (
             <p id={`${ids}-limit`} className="mt-1 text-sm font-medium text-suspicious-fg">{t("check.limitNote")}</p>
           )}
@@ -269,12 +282,13 @@ export default function CheckPage() {
           </div>
         )}
 
-        {/* Always mounted so screen readers announce text changes inside it. */}
+        {/* Always mounted so screen readers announce text changes inside it. Only this line is announced: the steps below are not live. */}
         <div role="status" aria-live="polite">
           {loading && <CheckIndicator text={phase === "uploading"
             ? t("check.uploading", { pct: Math.floor((progress * 100) / 25) * 25 })
             : t("check.checking")} note={slow ? t("check.slow") : undefined} />}
         </div>
+        {phase === "checking" && <CheckSteps hasLink={scanLink} />}
 
         {/* Enabled on purpose (not aria-disabled): a stalled upload must always be cancellable. */}
         {phase === "uploading" && (
@@ -289,12 +303,16 @@ export default function CheckPage() {
           type="submit"
           size="lg"
           disabled={!hasInput && !loading}
+          aria-describedby={!hasInput && !loading ? `${ids}-empty` : undefined}
           aria-disabled={loading || undefined}
           className="min-h-14 w-full rounded-xl shadow-sm"
         >
           <ScanSearch aria-hidden />
           {t("check.submit")}
         </Button>
+        {!hasInput && !loading && (
+          <p id={`${ids}-empty`} className="-mt-3 text-base leading-relaxed text-muted-foreground"><LangText k="check.emptyHint" /></p>
+        )}
       </form>
 
       <ExampleRow onPick={onExample} disabled={loading} />

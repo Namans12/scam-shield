@@ -1,5 +1,5 @@
 import { StrictMode, useState } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -28,8 +28,8 @@ import { ApiError } from "@/api";
 
 function ResultProbe() {
   const loc = useLocation();
-  const state = loc.state as { result?: { id: string } } | null;
-  return <p>result page {loc.pathname} {state?.result?.id}</p>;
+  const state = loc.state as { result?: { id: string }; unclear?: boolean } | null;
+  return <><p>result page {loc.pathname} {state?.result?.id}</p><p data-testid="unclear">{String(state?.unclear)}</p></>;
 }
 
 function renderCheck(path = "/") {
@@ -109,7 +109,7 @@ describe("CheckPage", () => {
     renderCheck();
     const box = screen.getByLabelText("The message");
     expect(box.getAttribute("aria-describedby")).toMatch(/-count$/);
-    fireEvent.change(box, { target: { value: "x".repeat(5000) } });
+    fireEvent.change(box, { target: { value: "word ".repeat(1000) } });
     const ids = box.getAttribute("aria-describedby")!.split(" ");
     expect(ids).toHaveLength(2);
     expect(document.getElementById(ids[1]!)).toHaveTextContent("first 5,000 characters");
@@ -190,6 +190,75 @@ describe("CheckPage", () => {
     expect(button).toBeEnabled();
   });
 
+  it("explains under the disabled Check button what to add, and drops the hint once there is input", async () => {
+    const user = userEvent.setup();
+    renderCheck();
+    const button = screen.getByRole("button", { name: "Check" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAccessibleDescription("Add a message, a link or a screenshot to check.");
+
+    await user.type(screen.getByLabelText("The message"), "x");
+    expect(screen.queryByText("Add a message, a link or a screenshot to check.")).toBeNull();
+    expect(button).not.toHaveAttribute("aria-describedby");
+  });
+
+  it("shows the empty-input hint in Hindi", () => {
+    setLang("hi");
+    renderCheck();
+    expect(screen.getByText("जाँचने के लिए कोई मैसेज, लिंक या स्क्रीनशॉट जोड़ें।")).toBeInTheDocument();
+  });
+
+  it("hints 'not enough to judge' for too-thin text but still lets the person check", async () => {
+    const user = userEvent.setup();
+    renderCheck();
+    const box = screen.getByLabelText("The message");
+    expect(screen.queryByText(/Not enough to judge yet/)).toBeNull();
+
+    await user.type(box, "asdkjh qwe 123 !!! ???");
+    const hint = screen.getByText("Not enough to judge yet. Paste the full message, link or screenshot.");
+    expect(box.getAttribute("aria-describedby")!.split(" ")).toContain(hint.closest("p")!.id);
+    expect(screen.getByRole("button", { name: "Check" })).toBeEnabled();
+
+    // A link makes it judgeable, so does a longer message.
+    await user.type(box, " http://bit.ly/x");
+    expect(screen.queryByText(/Not enough to judge yet/)).toBeNull();
+  });
+
+  it("does not hint on a real message, nor when a file or link is given", async () => {
+    const user = userEvent.setup();
+    renderCheck();
+    await user.type(screen.getByLabelText("The message"), "asd qwe");
+    expect(screen.getByText(/Not enough to judge yet/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/A link you were sent/), "https://example.test/x");
+    expect(screen.queryByText(/Not enough to judge yet/)).toBeNull();
+  });
+
+  it("shows the thin-input hint in Hindi", async () => {
+    setLang("hi");
+    const user = userEvent.setup();
+    renderCheck();
+    await user.type(screen.getByLabelText("मैसेज"), "asdkjh qwe");
+    expect(screen.getByText("अभी परखने के लिए काफ़ी नहीं है। पूरा मैसेज, लिंक या स्क्रीनशॉट डालें।")).toBeInTheDocument();
+  });
+
+  it("flags the result as unclear when the input was too thin, and not otherwise", async () => {
+    const user = userEvent.setup();
+    checkContent.mockResolvedValue(makeResult({ id: "abc", verdict: "no_signs", risk_score: 0 }));
+    renderCheck();
+    await user.type(screen.getByLabelText("The message"), "asdkjh qwe 123 !!! ???");
+    await user.click(screen.getByRole("button", { name: "Check" }));
+    await waitFor(() => expect(screen.getByTestId("unclear")).toHaveTextContent("true"));
+  });
+
+  it("does not flag a real message as unclear", async () => {
+    const user = userEvent.setup();
+    checkContent.mockResolvedValue(makeResult({ id: "abc" }));
+    renderCheck();
+    await user.type(screen.getByLabelText("The message"), "Your KYC is expiring today, update it at https://bit.ly/kyc-now");
+    await user.click(screen.getByRole("button", { name: "Check" }));
+    await waitFor(() => expect(screen.getByTestId("unclear")).toHaveTextContent("false"));
+  });
+
   it("enables Check when only a link is given", async () => {
     const user = userEvent.setup();
     renderCheck();
@@ -221,13 +290,81 @@ describe("CheckPage", () => {
     const button = screen.getByRole("button", { name: "Check" });
     await user.click(button);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Checking… usually 5–15 seconds");
+    expect(screen.getByRole("status")).toHaveTextContent("Checking… usually about 20 seconds");
     // Busy, not disabled: a disabled button would drop keyboard focus.
     expect(button).toHaveAttribute("aria-disabled", "true");
     expect(button).not.toBeDisabled();
     expect(button).toHaveFocus();
     await user.click(button);
     expect(checkContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the steps of a text check in order, without the link step", async () => {
+    vi.useFakeTimers();
+    try {
+      checkContent.mockReturnValue(new Promise(() => {}));
+      renderCheck();
+      fireEvent.change(screen.getByLabelText("The message"), { target: { value: "hello" } });
+      fireEvent.click(screen.getByRole("button", { name: "Check" }));
+
+      const list = screen.getByRole("list", { name: "What happens while you wait" });
+      const steps = () => within(list).getAllByRole("listitem").map((li) => [li.querySelector("[data-active='true']")!.textContent, li.getAttribute("aria-current")]);
+      expect(screen.queryByText("Opening the link in an isolated browser")).toBeNull();
+      expect(steps().map(([t]) => t)).toEqual(["Reading the message", "Looking up the shared scam list", "Writing the explanation"]);
+      expect(steps().map(([, c]) => c)).toEqual(["step", null, null]);
+
+      act(() => { vi.advanceTimersByTime(3_000); });
+      expect(steps().map(([, c]) => c)).toEqual([null, "step", null]);
+      act(() => { vi.advanceTimersByTime(4_000); });
+      expect(steps().map(([, c]) => c)).toEqual([null, null, "step"]);
+      // The last step stays current: it never claims to be finished while the answer is still coming.
+      act(() => { vi.advanceTimersByTime(60_000); });
+      expect(steps().map(([, c]) => c)).toEqual([null, null, "step"]);
+
+      // The page announces one line; the steps are outside the live region, and there is no percent.
+      const status = screen.getByRole("status");
+      expect(status).toHaveTextContent("Checking… usually about 20 seconds");
+      expect(status).not.toHaveTextContent("Reading the message");
+      expect(screen.getByText("Writing the explanation").closest("[aria-live]")).toBeNull();
+      expect(document.body.textContent).not.toMatch(/\d+\s*%/);
+      // Motion only under motion-safe, so prefers-reduced-motion shows a still list.
+      const classes = Array.from(list.querySelectorAll("[class]")).map((el) => el.getAttribute("class")!).join(" ");
+      expect(classes).toContain("motion-safe:animate-pulse");
+      expect(classes.replace(/motion-safe:animate-[\w-]+/g, "")).not.toMatch(/animate-|transition|duration-/);
+      expect(screen.getByText("These steps are a guide. The real time varies.")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("includes the isolated-browser step when the input has a link", async () => {
+    const user = userEvent.setup();
+    checkContent.mockReturnValue(new Promise(() => {}));
+    renderCheck();
+    await user.type(screen.getByLabelText(/A link you were sent/), "https://example.test/x");
+    await user.click(screen.getByRole("button", { name: "Check" }));
+    expect(screen.getByText("Opening the link in an isolated browser")).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "What happens while you wait" })).getAllByRole("listitem")).toHaveLength(4);
+  });
+
+  it("includes the isolated-browser step when the message itself contains a link", async () => {
+    const user = userEvent.setup();
+    checkContent.mockReturnValue(new Promise(() => {}));
+    renderCheck();
+    await user.type(screen.getByLabelText("The message"), "update at http://bnb-kyc.example/login");
+    await user.click(screen.getByRole("button", { name: "Check" }));
+    expect(screen.getByText("Opening the link in an isolated browser")).toBeInTheDocument();
+  });
+
+  it("shows the steps in Hindi", async () => {
+    setLang("hi");
+    const user = userEvent.setup();
+    checkContent.mockReturnValue(new Promise(() => {}));
+    renderCheck();
+    await user.type(screen.getByLabelText("मैसेज"), "hello");
+    await user.click(screen.getByRole("button", { name: "जाँचें" }));
+    expect(screen.getByText("मैसेज पढ़ा जा रहा है")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("आमतौर पर लगभग 20 सेकंड");
   });
 
   it("says it is taking longer after 20 seconds", async () => {
