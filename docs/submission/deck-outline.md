@@ -19,7 +19,7 @@ Every statistic is listed in `sources.md`. Cost figures are labelled estimates, 
 9. **Technologies.** Gen AI panel (Gemini 3.7 Flash with 2.5 Flash fallback, multimodal call, schema-validated output with evidence, hard checks that only raise, WebMCP), Google Cloud and Firebase for scale, application stack, 590+ tests.
 10. **Estimated cost.** Fixed (one warm Cloud Run instance, about US$13 per month), per check (Gemini, about US$0.004 to 0.008, with stated token assumptions and Google's published prices), free tiers, and the limits and budget alert that bound the bill.
 11. **Prototype snapshots.** Five phone screenshots: scam, QR, no scam signs found, Hindi voice note, report dialog.
-12. **Performance report.** English run (accuracy, scam recall, false-positive rate, type accuracy), latency table with the Hindi run, plainly "50 synthetic test cases, a small test, not a guarantee", the model used, and the bug the first run found.
+12. **Performance report.** Combined English runs (accuracy, scam recall, false-positive rate, type accuracy), latency table with the Hindi run, the combined result over 185 synthetic cases (98.3% accuracy, 100% of 90 scams flagged, 3.3% of 90 genuine messages wrongly flagged), plainly "synthetic, author-written, a sanity check, not a guarantee", the model used, and the bug the first run found.
 13. **Future development.** More Indian languages, bank and telecom partnerships, URL reputation feeds, Android app, Google Search grounding, call-recording upload; and how it scales.
 14. **Links.** GitHub, demo video (clearly marked placeholder for the owner), live product (https://scam-shield-check.web.app; the older default URL also works), and a QR code to the live app.
 15. Closing slide with the logo and the tagline.

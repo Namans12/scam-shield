@@ -14,7 +14,7 @@ Scam Shield lets anyone in India check a suspicious text, screenshot, QR code, l
 | `api/` | Hono API on Cloud Run: limits, extraction, redaction, QR decode, Gemini call, scam-list store |
 | `linkscan/` | Private Playwright link scanner on Cloud Run (`linkscan/SECURITY.md`) |
 | `shared/` | Types, Zod schema, identifier masking, complaint template |
-| `eval/` | 50-case benchmark; latest result in `eval/results/latest.md` |
+| `eval/` | 185-case benchmark in three sets; combined result in `eval/results/combined.md` |
 | `scripts/` | Deploy, smoke test, example generators, seed data, screenshots, deck build |
 | `video/` | The demo video, built by code (`video/README.md`) |
 | `docs/submission/` | Description for the form, deck (pptx and pdf), video script, sources for every statistic |
@@ -63,4 +63,4 @@ npx tsx eval/run.ts       # the benchmark: sequential and paced, about 8 minutes
 
 ## Known risks
 
-Gemini latency varies (typically 4 to 21 s, rarely slower); the benchmark is 50 synthetic cases written by the authors, a sanity check and not a guarantee; link scanning depends on the Cloud Run Chromium sandbox working (it does today). More in `docs/ARCHITECTURE.md` ("Known limits").
+Gemini latency varies (typically 4 to 21 s, rarely slower); the benchmark is 185 synthetic cases written by the authors (combined: 98.3% accuracy, 100% scam recall, 3.3% false positives), a sanity check and not a guarantee; link scanning depends on the Cloud Run Chromium sandbox working (it does today). More in `docs/ARCHITECTURE.md` ("Known limits").
