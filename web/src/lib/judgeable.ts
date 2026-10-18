@@ -9,7 +9,7 @@
  */
 
 /** Words of two or more letters/digits (any script, so Hindi counts). One-character scraps and punctuation do not. */
-export const MIN_WORDS = 12;
+export const MIN_WORDS = 7;
 
 const WORD = /[\p{L}\p{M}\p{N}]{2,}/gu;
 // A scheme or www., or a bare domain on a TLD that scams commonly use (not any "word.word", which would match "Hello.Please").

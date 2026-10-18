@@ -11,9 +11,9 @@ describe("hasEnoughToJudge", () => {
   });
 
   it("is true once there are enough real words", () => {
-    const eleven = Array.from({ length: MIN_WORDS - 1 }, () => "word").join(" ");
-    expect(hasEnoughToJudge({ text: eleven })).toBe(false);
-    expect(hasEnoughToJudge({ text: `${eleven} word` })).toBe(true);
+    const justUnder = Array.from({ length: MIN_WORDS - 1 }, () => "word").join(" ");
+    expect(hasEnoughToJudge({ text: justUnder })).toBe(false);
+    expect(hasEnoughToJudge({ text: `${justUnder} word` })).toBe(true);
     expect(hasEnoughToJudge({ text: "Dear customer your bank account will be blocked today unless you update your KYC details now" })).toBe(true);
   });
 
