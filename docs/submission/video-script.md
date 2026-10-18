@@ -6,7 +6,7 @@ Upload as **Public** on YouTube or Vimeo (or a Google Drive link set to "Anyone 
 
 ## What the video is
 
-- Real footage of the live site (https://project-91260b43-6705-4176-b71.web.app) recorded with Playwright doing real checks. Nothing in the app UI is mocked. Each window carries a "Real recording of the live app" tag.
+- Real footage of the live site (https://scam-shield-check.web.app; the older default URL also works) recorded with Playwright doing real checks. Nothing in the app UI is mocked. Each window carries a "Real recording of the live app" tag.
 - English voice-over from Google Cloud Text-to-Speech, with captions burned in. When the Hindi interface is shown, the captions are in English.
 - Waiting for Gemini is sped up exactly 4x, with a "Sped up 4x" badge on screen the whole time. A failed check aborts the recording, so it is recorded again rather than hidden.
 - "Reported 3 times" and the Trends page come from demo data pre-loaded in the shared scam list; the video says so on screen and in the narration.

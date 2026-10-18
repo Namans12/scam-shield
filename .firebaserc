@@ -10,6 +10,9 @@
         ],
         "demo-bank": [
           "bnb-kyc-update"
+        ],
+        "app-named": [
+          "scam-shield-check"
         ]
       }
     }
