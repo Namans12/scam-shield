@@ -390,7 +390,7 @@ def slide1(prs):
     s = slide_at(prs, 1)
     box = next(sh for sh in s.shapes if sh.has_text_frame and "Team name" in sh.text_frame.text)
     box.left, box.top, box.width, box.height = Inches(0.16), Inches(3.08), Inches(9.68), Inches(2.42)
-    answers = {"Team name:": "Scam Shield", "Team leader name:": "Naman Shrimal"}
+    answers = {"Team name:": "Nexustrip", "Team leader name:": "Naman Shrimal"}
     paras = box.text_frame.paragraphs
     for p in paras:
         t = p.text.strip()
@@ -434,7 +434,7 @@ def slide1(prs):
     if not last.text.strip():
         last._p.getparent().remove(last._p)
     pic(s, IMG / "logo-lockup-horizontal.png", 7.1, 3.12, w=2.5)
-    notes(s, "Team: Scam Shield. Team leader: Naman Shrimal. Track: BFSI: Intelligent Risk, Fraud & Financial Experiences. "
+    notes(s, "Team: Nexustrip (the product is Scam Shield). Team leader: Naman Shrimal. Track: BFSI: Intelligent Risk, Fraud & Financial Experiences. "
              "Community benefit: a free, plain-language check for anyone in India, in English or Hindi, and a shared scam list so each report warns the next person. "
              "The statement 'lose crores' is backed by slide 4 (about Rs 19,813 crore reported lost to cyber fraud in 2025, I4C data; see docs/submission/sources.md).")
 

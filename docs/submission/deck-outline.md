@@ -8,7 +8,7 @@ Rebuild: `scripts/build-deck.sh` (reads `docs/submission/template-base.pptx`, re
 
 Every statistic is listed in `sources.md`. Cost figures are labelled estimates, with the prices and the arithmetic in the slide 10 speaker notes. Speaker notes on every slide carry the sources and assumptions.
 
-1. **Team details.** Team name Scam Shield, leader Naman Shrimal, track "BFSI: Intelligent Risk, Fraud & Financial Experiences", the problem and the community benefit; logo.
+1. **Team details.** Team name Nexustrip (the product is Scam Shield), leader Naman Shrimal, track "BFSI: Intelligent Risk, Fraud & Financial Experiences", the problem and the community benefit; logo.
 2. Template note (untouched).
 3. **Brief about the idea.** One multimodal Gemini call, a verdict you can check (evidence quoted, English or Hindi), from verdict to action; landing and result screenshots in phone frames.
 4. **Opportunities.** Rs 19,813 crore reported lost in 2025, about 21.78 lakh complaints (I4C data); how it differs (Truecaller Scam Checker, Google scam detection, Chakshu, exactly as in `sources.md`); how it solves the problem; USP. No recovery percentage.

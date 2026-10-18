@@ -48,7 +48,7 @@ Done in this session
 - **Deck built on the organisers' template**: `docs/submission/Scam-Shield-deck.pptx` and `docs/submission/Scam-Shield-deck.pdf` (16 pages, 1.15 MB, under the 5 MB limit). All 16 template slides kept; slides 1 and 3 to 14 filled; rendered with PowerPoint and checked slide by slide for overflow. Regenerate with `python scripts/build-deck.py <template.pptx> <out.pptx>` (the template is the organisers' Google Slides export, not stored in the repo; numbers are read from `eval/results/latest.md`). Export the PDF from PowerPoint (File > Export) after any change.
 
 Needs the owner before submitting
-- Slide 1 ("Team name: Scam Shield", "Team leader name: Naman Shrimal"): **confirmed correct by the owner on 17 Oct.**
+- Slide 1 ("Team name: Nexustrip", product name Scam Shield; "Team leader name: Naman Shrimal"): **confirmed correct by the owner on 17 Oct.**
 - The demo video is uploaded (Public): https://youtu.be/a678nAYddq0 . It is in `README.md` and on deck slide 14 (built with `DECK_VIDEO_URL`).
 - Everything else under "Owner only" in section 3 (real Google sign-in and report test, Android share and install on a phone, the video, the form).
 
