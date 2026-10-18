@@ -6,8 +6,9 @@ Usage (from the repo root):
 The template is docs/submission/template-base.pptx: the organisers' own file with every shape that an earlier
 version of this script added removed again (only the shapes named "Google Shape;..." remain, plus the original
 slide titles). The script never changes that file, so running it twice always gives the same deck.
-Benchmark numbers are read from eval/results/latest.md (and run-hindi.md when it exists) so the deck cannot drift
-from the evidence. All 16 template slides are kept in order, with their branded header and footer.
+Headline benchmark numbers are read from eval/results/combined.md (written by eval/aggregate.ts: all official live runs
+combined); the per-run baseline comparison comes from run-v2.md and run-v3.md, and the first 50-case run and the Hindi run
+(latest.md, run-hindi.md) are shown as history, so the deck cannot drift from the evidence. All 16 template slides are kept in order, with their branded header and footer.
 Needs python-pptx, Pillow and qrcode (pip install qrcode in the same environment).
 """
 import datetime
@@ -59,7 +60,7 @@ SLATE = rgb("#475467")
 SLATE_TINT = rgb("#EEF2F6")
 
 REPO_URL = "https://github.com/Namans12/scam-shield"
-LIVE_URL = "https://project-91260b43-6705-4176-b71.web.app"
+LIVE_URL = "https://scam-shield-check.web.app"
 VIDEO_PLACEHOLDER = "[add the public video link here]"
 VIDEO = os.environ.get("DECK_VIDEO_URL", VIDEO_PLACEHOLDER)  # DECK_VIDEO_URL=https://... scripts/build-deck.sh
 TRACK = "BFSI: Intelligent Risk, Fraud & Financial Experiences"
@@ -72,14 +73,15 @@ Y1 = 5.38  # content bottom (above the template's footer bar)
 
 # ---------- benchmark numbers ----------
 def read_results(path: Path) -> dict:
+    """Parses a single-run report (latest.md, run-hindi.md, run-gemini-*.md)."""
     text = path.read_text(encoding="utf-8")
     pick = lambda label: re.search(rf"\|\s*{re.escape(label)}[^|]*\|\s*([^|]+?)\s*\|", text).group(1)
     lat = {m.group(1): (m.group(2), m.group(3), m.group(4)) for m in re.finditer(r"\|\s*(text|image|audio)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", text)}
     return {
-        "accuracy": pick("Accuracy"),
-        "recall": pick("Scam recall"),
-        "fpr": pick("False-positive rate"),
-        "type": pick("Scam type correct"),
+        "accuracy": norm_pct(pick("Accuracy")),
+        "recall": norm_pct(pick("Scam recall")),
+        "fpr": norm_pct(pick("False-positive rate")),
+        "type": norm_pct(pick("Scam type correct")),
         "errors": pick("Errors"),
         "latency": lat,
         "cases": re.search(r"(\d+) synthetic cases: (\d+) scams, (\d+) genuine", text).groups(),
@@ -87,6 +89,90 @@ def read_results(path: Path) -> dict:
         "date": re.search(r"Run: (\d{4}-\d{2}-\d{2})", text).group(1),
         "lang": re.search(r"language: (\w+)", text).group(1),
     }
+
+
+def norm_pct(v: str) -> str:
+    """'100.0%' -> '100%', '0.0%' -> '0%' (combined.md prints them that way); everything else unchanged."""
+    return re.sub(r"^(100|0)\.0%$", r"\1%", v.strip())
+
+
+def md_tables(text: str):
+    """Every markdown table in the text as (header cells, [row cells])."""
+    out, cur = [], []
+    for ln in text.splitlines() + [""]:
+        if ln.lstrip().startswith("|"):
+            cur.append([c.strip() for c in ln.strip().strip("|").split("|")])
+        elif cur:
+            if len(cur) >= 2 and all(re.fullmatch(r":?-+:?", c) for c in cur[1]):
+                out.append((cur[0], cur[2:]))
+            cur = []
+    return out
+
+
+def table_with(text: str, first_header: str):
+    for head, rows in md_tables(text):
+        if head and head[0] == first_header:
+            return head, rows
+    raise ValueError(f"no table starting with '{first_header}'")
+
+
+def read_combined(path: Path) -> dict:
+    """Parses eval/results/combined.md (written by eval/aggregate.ts); raises if anything expected is missing."""
+    text = path.read_text(encoding="utf-8")
+    metrics = {r[0]: r[1] for r in table_with(text, "Metric")[1]}
+    counts = {r[0]: r[1] for r in table_with(text, "Count")[1]}
+    find = lambda d, label: next(v for k, v in d.items() if k.startswith(label))
+    m = re.search(r"(\d+) synthetic cases: (\d+) scams, (\d+) genuine, (\d+) ambiguous", text)
+    cases, scams, genuine, ambiguous = (int(x) for x in m.groups())
+    gen_flagged, gen_total = (int(x) for x in find(counts, "Genuine flagged").split("/"))
+    sc_flagged, sc_total = (int(x) for x in find(counts, "Scams flagged").split("/"))
+    lat = {r[0]: (r[1], r[2], r[3]) for r in table_with(text, "Input")[1]}
+    runs = []
+    for r in table_with(text, "Run")[1]:
+        runs.append({"key": r[0].split()[0], "date": re.search(r"\((.+)\)", r[0]).group(1), "cases": r[1], "scams": r[2], "genuine": r[3],
+                     "ambiguous": r[4], "accuracy": norm_pct(r[5]), "recall": norm_pct(r[6]), "fpr": norm_pct(r[7]), "errors": r[8]})
+    fp_line = re.search(r"False positives: (.+)", text).group(1).strip()
+    miss_line = re.search(r"Missed scams: (.+)", text).group(1).strip()
+    types = table_with(text, "Scam type")[1]
+    return {
+        "accuracy": norm_pct(metrics["Accuracy"]),
+        "recall": norm_pct(find(metrics, "Scam recall")),
+        "fpr": norm_pct(find(metrics, "False-positive rate")),
+        "type": norm_pct(find(metrics, "Scam type correct")),
+        "errors": metrics["Errors"],
+        "cases": cases, "scams": scams, "genuine": genuine, "ambiguous": ambiguous,
+        "scored": int(find(counts, "Scored cases")), "correct": int(find(counts, "Correct")),
+        "gen_flagged": gen_flagged, "gen_total": gen_total, "sc_flagged": sc_flagged, "sc_total": sc_total,
+        "latency": lat, "runs": runs, "n_types": len(types),
+        "fp_ids": re.findall(r"([A-Za-z0-9_]+) \(", fp_line) if fp_line.lower() != "none" else [],
+        "missed": [] if miss_line.lower() == "none" else re.findall(r"([A-Za-z0-9_]+) \(", miss_line),
+    }
+
+
+def case_tactics() -> dict:
+    """id -> one-line description ('tactic') of every case in eval/cases*.jsonl, used to name the false positives."""
+    import json
+
+    out = {}
+    for f in sorted((ROOT / "eval").glob("cases*.jsonl")):
+        for ln in f.read_text(encoding="utf-8").splitlines():
+            if ln.strip():
+                c = json.loads(ln)
+                out[c["id"]] = c.get("tactic", "")
+    return out
+
+
+def read_baseline(path: Path) -> dict:
+    """Gemini and keyword-baseline accuracy / recall on a run's text cases (run-v2.md, run-v3.md)."""
+    text = path.read_text(encoding="utf-8")
+    for head, rows in md_tables(text):
+        if len(head) == 3 and "baseline" in head[2].lower():
+            d = {r[0]: r for r in rows}
+            lead = lambda cell: norm_pct(re.match(r"[\d.]+%", cell).group(0))
+            acc = next(v for k, v in d.items() if k == "Accuracy")
+            rec = next(v for k, v in d.items() if k.startswith("Scam recall") and "strict" not in k)
+            return {"gem_acc": lead(acc[1]), "base_acc": lead(acc[2]), "gem_rec": lead(rec[1]), "base_rec": lead(rec[2])}
+    raise ValueError(f"no baseline table in {path}")
 
 
 # ---------- low-level helpers ----------
@@ -467,7 +553,7 @@ def slide5(prs):  # Features
     yb = Y0 + 2 * ch + gy + 0.1
     card(s, MX, yb, CW, Y1 - yb, fill=TINT2, line=None, radius=0.07)
     tx(s, MX + 0.2, yb, CW - 0.4, Y1 - yb, [P([("Also: ", {"size": 12, "font": "b", "color": BLUE}), ("trends, history, one-tap examples, an installable app and the Android share menu.", {"size": 12, "color": INK})])], anchor=MSO_ANCHOR.MIDDLE)
-    notes(s, "All features are live in the production app (https://project-91260b43-6705-4176-b71.web.app). The WebMCP tools check_message and report_scam are registered in web/src/webmcp/registerTools.ts; "
+    notes(s, "All features are live in the production app (https://scam-shield-check.web.app). The WebMCP tools check_message and report_scam are registered in web/src/webmcp/registerTools.ts; "
              "report_scam needs a person signed in with Google. Verdict names are Scam, Suspicious and No scam signs found.")
 
 
@@ -620,7 +706,7 @@ def chips(slide, x, y, w, labels, size=11, h=0.28, gap=0.08, fill=TINT2, color=I
     return cy + h
 
 
-def slide9(prs):  # Technologies
+def slide9(prs, comb):  # Technologies
     s = slide_at(prs, 9)
     title_style(s)
     lw = 4.3
@@ -656,13 +742,14 @@ def slide9(prs):  # Technologies
     card(s, rx, y2, rw, YF - y2)
     tx(s, rx + 0.2, y2 + 0.14, rw - 0.4, 0.26, [P([("Application", {"size": 13, "font": "b", "color": BLUE})])])
     cy = chips(s, rx + 0.2, y2 + 0.5, rw - 0.4, ["React 18", "Vite", "Tailwind", "Workbox PWA", "Node 22", "TypeScript", "Hono", "zod", "Playwright", "sharp + jsQR"], size=10.5, h=0.26, gap=0.07)
-    tx(s, rx + 0.2, cy + 0.1, rw - 0.4, 0.3, [P([("590+ automated tests", {"size": 12, "font": "b", "color": NAVY}), (", plus a 50-case live benchmark", {"size": 12})])])
+    tx(s, rx + 0.2, cy + 0.1, rw - 0.4, 0.3, [P([("590+ automated tests", {"size": 12, "font": "b", "color": NAVY}), (f", plus a {comb['cases']}-case live benchmark", {"size": 12})])])
     tm_footnote(s)
     notes(s, "Meaningful Gen AI: a single multimodal Gemini call on Vertex AI (api/src/gemini.ts; default model gemini-3.7-flash, automatic fallback gemini-2.5-flash, location global) reads text, image or audio. "
              "Output is schema-validated (zod schemas in shared/), every red flag quotes evidence, answers come in English or Hindi. Deterministic checks can only raise the verdict. "
              "WebMCP tools: check_message and report_scam (web/src/webmcp/registerTools.ts). "
              "Scalability: the API is a stateless Cloud Run service (concurrency 20, min 1, max 5 instances); the link scanner scales to zero (max 3) under its own service account with no roles; Firestore holds the shared scam list; Firebase Hosting, Auth and Storage in front. "
-             "Test count: on 18 Oct 2026 the suites passed 595 tests (shared 14, web 226, linkscan 94, eval 5, api 256); a further 18 api tests need the Firestore emulator (Java) and were not run. Also used: Cloud Build and Artifact Registry for deploys, Cloud Text-to-Speech to generate the voice example.")
+             "Test count: on 18 Oct 2026 the suites passed 595 tests (shared 14, web 226, linkscan 94, eval 5, api 256); a further 18 api tests need the Firestore emulator (Java) and were not run. Also used: Cloud Build and Artifact Registry for deploys, Cloud Text-to-Speech to generate the voice example. "
+             f"The live benchmark behind the slide-12 numbers: {comb['cases']} synthetic cases over {len(comb['runs'])} live runs (eval/results/combined.md).")
 
 
 def big_number_card(s, x, y, w, h, tag, number, unit, body, tag_fill=TINT, tag_color=BLUE):
@@ -706,11 +793,11 @@ def slide10(prs):  # Estimated cost
              "A budget alert only notifies; it does not cap or stop spending. The real cost control is the per-user (30 per day), per-IP (60 per minute) and global (3,000 per day) limits in the API. Currency: USD as listed by Google; no INR conversion is claimed.")
 
 
-def slide11(prs):  # Snapshots
+def slide11(prs, comb):  # Snapshots
     s = slide_at(prs, 11)
     title_style(s)
     bgc = (0xF1, 0xF5, 0xFB)
-    card(s, MX, Y0, CW, 3.38, fill=TINT2, line=None, radius=0.12)
+    card(s, MX, Y0, CW, 3.0, fill=TINT2, line=None, radius=0.12)
     shots = [
         ("scam", "03-result-scam-mobile.png", "Scam", "Fake KYC SMS, evidence quoted", RED),
         ("qr", "04-result-qr-mobile.png", "Scam", "QR asks you to pay, text says receive", RED),
@@ -718,7 +805,7 @@ def slide11(prs):  # Snapshots
         ("hivoice", "10-result-hindi-voice-mobile.png", "Scam, in Hindi", "Hinglish voice note, fake police call", RED),
         ("report", "07-report-dialog-mobile.png", "Report", "Adds it to the shared scam list", BLUE),
     ]
-    ph = 3.22
+    ph = 2.86
     pw_ = [Image.open(phone_image(n, f, bgc)).size for n, f, *_ in shots]
     widths = [ph * w / h for w, h in pw_]
     gap = (CW - sum(widths)) / 6
@@ -731,50 +818,60 @@ def slide11(prs):  # Snapshots
     for (n, f, t, b, col), w_ in zip(shots, widths):
         cap_w = w_ + gap - 0.08
         cx = x + w_ / 2 - cap_w / 2
-        tx(s, cx, Y0 + 3.5, cap_w, 0.55, [P([(t, {"size": 12, "font": "b", "color": col if col != BLUE else NAVY})], after=1, align=PP_ALIGN.CENTER), P([(b, {"size": 11, "color": MUTED})], align=PP_ALIGN.CENTER)])
+        tx(s, cx, Y0 + 3.06, cap_w, 0.55, [P([(t, {"size": 12, "font": "b", "color": col if col != BLUE else NAVY})], after=1, align=PP_ALIGN.CENTER), P([(b, {"size": 11, "color": MUTED})], align=PP_ALIGN.CENTER)])
         x += w_ + gap
+    yb = 5.06
+    card(s, MX, yb, CW, Y1 - yb, fill=NAVY, line=None, radius=0.07)
+    tx(s, MX + 0.2, yb, CW - 0.4, Y1 - yb, [P([("Live benchmark, ", {"size": 10.5, "font": "b", "color": CYAN}),
+                                           (strip_headline(comb), {"size": 10.5, "color": WHITE})], align=PP_ALIGN.CENTER)], anchor=MSO_ANCHOR.MIDDLE)
     notes(s, "Real screenshots of the production app, captured by scripts/screenshots.ts from live checks (the example buttons run the same API as a typed message). "
+             f"Strip under the screens: live benchmark, {strip_headline(comb)} (eval/results/combined.md; details on the next slide). "
              "Left to right: a fake KYC SMS with a look-alike bank link; a QR that encodes a payment request while the text says 'receive'; a genuine bank debit alert with 'No scam signs found' (not a guarantee); "
              "a Hinglish 'digital arrest' voice note judged in Hindi; the report dialog, which asks for Google sign-in before a report is added to the shared list (to stop fake reports).")
 
 
-def slide12(prs, res, hi):  # Performance
+def bench_headline(comb: dict) -> str:
+    return (f"{comb['cases']} synthetic cases over {len(comb['runs'])} live runs: {comb['accuracy']} accuracy, {comb['recall']} scam recall, "
+            f"{comb['fpr']} false positives ({comb['gen_flagged']} of {comb['gen_total']} genuine).")
+
+
+def strip_headline(comb: dict) -> str:
+    return (f"{comb['cases']} cases over {len(comb['runs'])} runs: {comb['accuracy']} accuracy, {comb['recall']} scam recall, "
+            f"{comb['fpr']} false positives ({comb['gen_flagged']} of {comb['gen_total']} genuine)")
+
+
+RUN_LABEL = {"v1": "v1  original", "v2": "v2  harder cases", "v3": "v3  realistic"}  # display names only; every number is parsed
+
+
+def slide12(prs, comb, first, hi, base):  # Performance
     s = slide_at(prs, 12)
     title_style(s)
-    n, ns, ng = res["cases"]
-    tiles = [("Accuracy", res["accuracy"]), ("Scam recall", res["recall"]), ("False-positive rate", res["fpr"]), ("Scam type correct", res["type"])]
-    tw, gap, th = 2.15, 0.2, 0.84
+    tiles = [("Accuracy", comb["accuracy"]), ("Scam recall", comb["recall"]), ("False-positive rate", comb["fpr"]), ("Scam type correct", comb["type"])]
+    tw, gap, th = 2.15, 0.2, 0.8
     for i, (lab, val) in enumerate(tiles):
         x = MX + i * (tw + gap)
         card(s, x, Y0, tw, th)
-        tx(s, x, Y0 + 0.07, tw, 0.42, [P([(val, {"size": 24, "font": "b", "color": BLUE})], align=PP_ALIGN.CENTER)])
-        tx(s, x, Y0 + 0.5, tw, 0.26, [P([(lab, {"size": 11.5, "color": MUTED})], align=PP_ALIGN.CENTER)])
-    tx(s, MX, Y0 + th + 0.07, CW, 0.22, [P([(f"English run, {res['date']}, {n} synthetic test cases, live app", {"size": 11.5, "color": MUTED})])])
-    # latency table
-    head = ["Input", "Cases", "English p50", "English p95"] + (["Hindi p50", "Hindi p95"] if hi else [])
-    rows = [head]
-    for k in ("text", "image", "audio"):
-        if k in res["latency"]:
-            p50, p95, cnt = res["latency"][k]
-            row = [k.capitalize(), cnt, p50, p95]
-            if hi:
-                h50, h95, _ = hi["latency"].get(k, ("-", "-", ""))
-                row += [h50, h95]
-            rows.append(row)
-    rh = 0.3
-    tx_, ty_ = MX, 2.52
+        tx(s, x, Y0 + 0.06, tw, 0.42, [P([(val, {"size": 24, "font": "b", "color": BLUE})], align=PP_ALIGN.CENTER)])
+        tx(s, x, Y0 + 0.48, tw, 0.26, [P([(lab, {"size": 11.5, "color": MUTED})], align=PP_ALIGN.CENTER)])
+    tx(s, MX, Y0 + th + 0.06, CW, 0.22, [P([(f"{comb['cases']} synthetic cases over {len(comb['runs'])} live runs: {comb['scams']} scams, {comb['genuine']} genuine, {comb['ambiguous']} ambiguous (not scored). "
+                                              f"Accuracy is {comb['correct']} of {comb['scored']} scored.", {"size": 11, "color": MUTED})])])
+    # per-run table
+    head = ["Run", "Cases", "Accuracy", "Scam recall", "False positives"]
+    rows = [head] + [[RUN_LABEL.get(r["key"], r["key"]), r["cases"], r["accuracy"], r["recall"], r["fpr"]] for r in comb["runs"]]
+    rows.append(["Combined", comb["cases"], comb["accuracy"], comb["recall"], comb["fpr"]])
+    rh = 0.28
+    ty_ = 2.45
     lw_ = 5.55
     nr, nc = len(rows), len(head)
-    tbl_shape = s.shapes.add_table(nr, nc, Inches(tx_), Inches(ty_), Inches(lw_), Inches(rh * nr))
-    tbl = tbl_shape.table
+    tbl = s.shapes.add_table(nr, nc, Inches(MX), Inches(ty_), Inches(lw_), Inches(rh * nr)).table
     tblPr = tbl._tbl.tblPr
     for a in ("firstRow", "bandRow"):
         tblPr.set(a, "0")
-    widths = [0.8, 0.6] + [(lw_ - 1.4) / (nc - 2)] * (nc - 2)
-    for i, wd in enumerate(widths):
+    for i, wd in enumerate([1.55, 0.6, 0.9, 1.05, 1.45]):
         tbl.columns[i].width = Inches(wd)
     for r in range(nr):
         tbl.rows[r].height = Inches(rh)
+        last = r == nr - 1
         for c in range(nc):
             cell = tbl.cell(r, c)
             cell.text = ""
@@ -782,47 +879,80 @@ def slide12(prs, res, hi):  # Performance
             p.alignment = PP_ALIGN.LEFT if c == 0 else PP_ALIGN.CENTER
             run = p.add_run()
             run.text = str(rows[r][c])
-            style_run(run, 11.5, "b" if (r == 0 or c == 0) else None, WHITE if r == 0 else INK)
+            style_run(run, 11, "b" if (r == 0 or c == 0 or last) else None, WHITE if r == 0 else (NAVY if last else INK))
             cell.fill.solid()
-            cell.fill.fore_color.rgb = NAVY if r == 0 else (TINT2 if r % 2 else WHITE)
+            cell.fill.fore_color.rgb = NAVY if r == 0 else (TINT if last else (TINT2 if r % 2 else WHITE))
             cell.margin_left = cell.margin_right = Inches(0.06)
             cell.margin_top = cell.margin_bottom = Inches(0.02)
             cell.vertical_anchor = MSO_ANCHOR.MIDDLE
-    yb = ty_ + rh * nr + 0.1
+    # latency and errors, as one compact line
+    lat = comb["latency"]
+    t50, t95, tn = lat["text"]
+    i50, i95, _ = lat["image"]
+    a50, _, _ = lat["audio"]
+    yb = ty_ + rh * nr + 0.08
+    tx(s, MX, yb, lw_, 0.42, [P([("Latency: ", {"size": 11, "font": "b", "color": NAVY}),
+                                (f"text p50 {t50}, p95 {t95}; image p50 {i50}; voice {a50}. ", {"size": 11}),
+                                ("Errors: ", {"size": 11, "font": "b", "color": NAVY}), (f"{comb['errors']}. ", {"size": 11}),
+                                ("p50 is the median, p95 the slowest 5%.", {"size": 11, "color": MUTED})])])
+    # keyword baseline
+    yb += 0.46
+    hb = 0.58
+    card(s, MX, yb, lw_, hb, fill=TINT, line=None, radius=0.07)
+    v2, v3 = base["v2"], base["v3"]
+    same = v2["gem_acc"] == v2["base_acc"]
+    v2txt = (f"on v2's 34 text cases it scored {v2['base_acc']}, the same as Gemini, with different mistakes" if same else f"v2 {v2['base_acc']} (Gemini {v2['gem_acc']})")
+    tx(s, MX + 0.16, yb, lw_ - 0.3, hb, [P([("Keyword baseline: ", {"size": 11, "font": "b", "color": BLUE}),
+                                           (f"{v2txt}; v3 {v3['base_acc']} accuracy and {v3['base_rec']} recall (Gemini {v3['gem_acc']} and {v3['gem_rec']}).", {"size": 11})])], anchor=MSO_ANCHOR.MIDDLE)
+    # history: the first run and the Hindi run
+    yb += hb + 0.06
+    card(s, MX, yb, lw_, Y1 - yb, fill=TINT2, line=None, radius=0.07)
+    hist = [("First run, ", {"size": 11, "font": "b", "color": NAVY}),
+            (f"{first['cases'][0]} cases: {first['accuracy']} accuracy, {first['recall']} recall, {first['fpr']} false positives. ", {"size": 11})]
     if hi:
-        card(s, MX, yb, lw_, 0.5, fill=TINT, line=None, radius=0.07)
-        tx(s, MX + 0.16, yb, lw_ - 0.3, 0.5, [P([("Hindi run: ", {"size": 11.5, "font": "b", "color": BLUE}),
-                                                (f"accuracy {hi['accuracy']}, scam recall {hi['recall']}, false positives {hi['fpr']}, scam type correct {hi['type']}.", {"size": 11.5})])], anchor=MSO_ANCHOR.MIDDLE)
-        yb += 0.6
-    tx(s, MX, yb, lw_, Y1 - yb, [
-        P([("Errors: ", {"size": 11.5, "font": "b", "color": NAVY}), (f"{res['errors']}. ", {"size": 11.5}), ("False positives: ", {"size": 11.5, "font": "b", "color": NAVY}), (f"{res['false_positives']}.", {"size": 11.5})], after=3),
-        P([("p50 is the median time, p95 the slowest 5%, in seconds on the live app. The image and voice rows have only 4 and 1 cases.", {"size": 12, "color": MUTED})]),
-    ])
+        hist += [("Hindi run, ", {"size": 11, "font": "b", "color": NAVY}),
+                 (f"same {hi['cases'][0]} cases: {hi['accuracy']}, {hi['recall']}, {hi['fpr']}.", {"size": 11})]
+    tx(s, MX + 0.16, yb, lw_ - 0.3, Y1 - yb, [P(hist)], anchor=MSO_ANCHOR.MIDDLE)
+    # right: read this honestly
     rx = MX + lw_ + 0.2
     rw = CW - lw_ - 0.2
-    top = 2.52
+    top = ty_
     card(s, rx, top, rw, Y1 - top)
     tx(s, rx + 0.18, top + 0.12, rw - 0.36, 0.26, [P([("Read this honestly", {"size": 13, "font": "b", "color": BLUE})])])
-    cmp = EVAL / "run-gemini-3.8-flash.md"
-    c38 = read_results(cmp) if cmp.exists() else None
-    bullets = [P([(f"{n} cases, written by the authors: ", {"size": 11.5, "font": "b", "color": NAVY}), (f"a small test, not a guarantee; real traffic will differ. {ns} scams over 13 types, {ng} genuine.", {"size": 11.5})], bullet="•", after=4)]
+    tactics = case_tactics()
+    fps = [tactics.get(i, "") or i for i in comb["fp_ids"]]
+    fp_txt = ", ".join(fps)
+    cmp_ = EVAL / "run-gemini-3.8-flash.md"
+    c38 = read_results(cmp_) if cmp_.exists() else None
+    bullets = [P([(f"{comb['cases']} cases, written by the authors: ", {"size": 11, "font": "b", "color": NAVY}),
+                  (f"a test, not a guarantee. {comb['scams']} scams over {comb['n_types']} types, {comb['genuine']} genuine.", {"size": 11})], bullet="•", after=4),
+               P([(f"{comb['gen_flagged']} false positives: ", {"size": 11, "font": "b", "color": NAVY}),
+                  (f"{fp_txt}. All misses and false positives: eval/results/combined.md.", {"size": 11})], bullet="•", after=4)]
     if c38:
-        i95 = round(float(c38["latency"]["image"][1].split()[0]))
-        bullets.append(P([("Why gemini-3.7-flash: ", {"size": 11.5, "font": "b", "color": NAVY}),
-                          (f"an earlier run on gemini-3.8-flash scored {c38['accuracy']} accuracy with {c38['fpr']} false positives and image checks up to {i95} s. Fallback: 2.5-flash.", {"size": 11.5})], bullet="•", after=4))
+        i95_ = round(float(c38["latency"]["image"][1].split()[0]))
+        bullets.append(P([("Why gemini-3.7-flash: ", {"size": 11, "font": "b", "color": NAVY}),
+                          (f"an earlier {c38['cases'][0]}-case run on gemini-3.8-flash scored {c38['accuracy']} accuracy with {c38['fpr']} false positives, image checks up to {i95_} s.", {"size": 11})], bullet="•"))
     else:
-        bullets.append(P([("Model: ", {"size": 11.5, "font": "b", "color": NAVY}), ("gemini-3.7-flash, with gemini-2.5-flash as fallback.", {"size": 11.5})], bullet="•", after=4))
-    bullets.append(P([("The first run found a real bug ", {"size": 11.5, "font": "b", "color": NAVY}), ("(the model did not know today's date); fixed and re-measured.", {"size": 11.5})], bullet="•"))
+        bullets.append(P([("Model: ", {"size": 11, "font": "b", "color": NAVY}), ("gemini-3.7-flash, with gemini-2.5-flash as fallback.", {"size": 11})], bullet="•"))
     tx(s, rx + 0.18, top + 0.45, rw - 0.36, Y1 - top - 0.5, bullets)
-    es = []
-    es.append(f"English run ({res['date']}): accuracy {res['accuracy']}, scam recall {res['recall']}, false-positive rate {res['fpr']}, scam type correct {res['type']}, errors {res['errors']} (eval/results/latest.md).")
-    if hi:
-        es.append(f"Hindi run ({hi['date']}): accuracy {hi['accuracy']}, recall {hi['recall']}, false positives {hi['fpr']}, type correct {hi['type']} (eval/results/run-hindi.md).")
-    es.append("Both runs were made against the live app with 50 synthetic cases in eval/cases.jsonl (45 text, 4 image, 1 audio; 26 scams over 13 scam types, 24 genuine), concurrency 1. Latency is wall-clock from request to response. The cases are few and were written by the authors, so real traffic will differ.")
-    es.append("The model for these runs was gemini-3.7-flash: eval/results/latest.md is identical to eval/results/run-gemini-3.7-flash-17oct.md, and gemini-3.7-flash is the API default (api/src/index.ts).")
+    # speaker notes
+    es = [f"Benchmark, combined over {len(comb['runs'])} live runs of the production app (single source: eval/results/combined.md, written by eval/aggregate.ts): {bench_headline(comb)} "
+          f"Scam type correct {comb['type']}; errors {comb['errors']}. Accuracy is {comb['correct']} of {comb['scored']} scored cases; the {comb['ambiguous']} ambiguous inputs are not scored as scam or genuine, and none was given a Scam verdict."]
+    es.append("Per run: " + "; ".join(f"{r['key']} {r['cases']} cases ({r['date']}): accuracy {r['accuracy']}, recall {r['recall']}, false positives {r['fpr']}" for r in comb["runs"]) +
+              ". v1 is the original 50 cases, v2 is 35 adversarial and look-alike cases (14 adversarial scams, 16 benign look-alikes, 5 ambiguous), v3 is 100 realistic cases (50 scams, 50 genuine). Nothing was tuned after v2 and v3 results were seen.")
+    es.append(f"The {comb['gen_flagged']} false positives: " + "; ".join(f"{i} ({t})" for i, t in zip(comb["fp_ids"], fps)) +
+              ". Missed scams: " + (", ".join(comb["missed"]) if comb["missed"] else "none") + ". All misses and false positives are listed in eval/results/combined.md.")
+    es.append(f"Latency (successful calls): text p50 {t50}, p95 {t95} over {tn} cases; image p50 {i50}, p95 {lat['image'][1]}; audio {a50} (one case). Wall-clock from request to response, concurrency 1.")
+    es.append(f"Keyword baseline (eval/baseline.ts, about 30 rules, text only): on v2 {v2['base_acc']} accuracy against Gemini's {v2['gem_acc']} " +
+              ("(the same score, with different mistakes; see eval/results/run-v2.md)" if same else "(see eval/results/run-v2.md)") +
+              f"; on v3 {v3['base_acc']} accuracy and {v3['base_rec']} recall against Gemini's {v3['gem_acc']} and {v3['gem_rec']} (eval/results/run-v3.md). "
+              "A keyword filter does well on textbook scams; the harder sets are where the model adds value.")
+    es.append(f"History: the first run ({first['date']}, {first['cases'][0]} cases, eval/results/latest.md) scored {first['accuracy']} accuracy, {first['recall']} recall, {first['fpr']} false positives; it is a valid earlier run but not the headline, because 50 cases written by the authors could not show the weak spots that v2 and v3 probe. "
+              "It also exposed a real bug (the model did not know today's date and flagged 2026 dates as future); that was fixed and re-measured." +
+              (f" The Hindi run ({hi['date']}, eval/results/run-hindi.md) used the same {hi['cases'][0]} cases with the interface in Hindi: accuracy {hi['accuracy']}, recall {hi['recall']}, false positives {hi['fpr']}, scam type correct {hi['type']}." if hi else ""))
     if c38:
-        es.append(f"Earlier comparison on gemini-3.8-flash ({c38['date']}): accuracy {c38['accuracy']}, false-positive rate {c38['fpr']}, image p95 {c38['latency'].get('image', ('', '?', ''))[1]}; that is why the default is gemini-3.7-flash, with gemini-2.5-flash as fallback.")
-    es.append("The first benchmark run exposed a real bug (the model did not know today's date and flagged 2026 dates as future); it was fixed and re-measured. This is a small synthetic sanity check, not a guarantee of real-world accuracy.")
+        es.append(f"Model choice: an earlier comparison on the first {c38['cases'][0]} cases with gemini-3.8-flash ({c38['date']}) scored accuracy {c38['accuracy']}, false-positive rate {c38['fpr']}, image p95 {c38['latency'].get('image', ('', '?', ''))[1]}; that is why the default is gemini-3.7-flash, with gemini-2.5-flash as fallback (api/src/index.ts).")
+    es.append("This is a synthetic sanity check written by the authors, not a guarantee of real-world accuracy.")
     notes(s, " ".join(es))
 
 
@@ -923,7 +1053,7 @@ def slide14(prs):  # Links
                  "(DECK_VIDEO_URL=https://... bash scripts/build-deck.sh) or replace the text '[add the public video link here]' in the PPTX.")
     else:
         vnote = f"Demo video (3 minutes): {VIDEO}"
-    notes(s, "GitHub (public): https://github.com/Namans12/scam-shield . Live product: https://project-91260b43-6705-4176-b71.web.app (the QR code points here). " + vnote)
+    notes(s, "GitHub (public): https://github.com/Namans12/scam-shield . Live product: https://scam-shield-check.web.app (the QR code points here). " + vnote)
 
 
 def slide15(prs):  # closing content
@@ -944,9 +1074,11 @@ def slide15(prs):  # closing content
 
 
 def main(template: str, out: str) -> None:
-    res = read_results(EVAL / "latest.md")
+    comb = read_combined(EVAL / "combined.md")
+    first = read_results(EVAL / "latest.md")  # the first 50-case run, kept as history
     hi_path = EVAL / "run-hindi.md"
     hi = read_results(hi_path) if hi_path.exists() else None
+    base = {k: read_baseline(EVAL / f"run-{k}.md") for k in ("v2", "v3")}
     prs = Presentation(template)
     slide1(prs)
     slide3(prs)
@@ -955,15 +1087,15 @@ def main(template: str, out: str) -> None:
     slide6(prs)
     slide7(prs)
     slide8(prs)
-    slide9(prs)
+    slide9(prs, comb)
     slide10(prs)
-    slide11(prs)
-    slide12(prs, res, hi)
+    slide11(prs, comb)
+    slide12(prs, comb, first, hi, base)
     slide13(prs)
     slide14(prs)
     slide15(prs)
     prs.slides[1].notes_slide.notes_text_frame.text = "Organisers' instruction slide, kept exactly as in the template. Nothing to present here; the next slide starts the pitch."
-    prs.slides[15].notes_slide.notes_text_frame.text = "Thank you. Team Scam Shield: Naman Shrimal. Live app: https://project-91260b43-6705-4176-b71.web.app ; code: https://github.com/Namans12/scam-shield ."
+    prs.slides[15].notes_slide.notes_text_frame.text = "Thank you. Team Scam Shield: Naman Shrimal. Live app: https://scam-shield-check.web.app ; code: https://github.com/Namans12/scam-shield ."
     cp = prs.core_properties
     cp.title = "Scam Shield - AI Builder Cup pitch deck"
     cp.author = "Scam Shield"
