@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const RAW = resolve(ROOT, "footage/raw");
-export const BASE = process.env.SCAM_SHIELD_URL ?? "https://project-91260b43-6705-4176-b71.web.app";
+export const BASE = process.env.SCAM_SHIELD_URL ?? "https://scam-shield-check.web.app";
 mkdirSync(RAW, { recursive: true });
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

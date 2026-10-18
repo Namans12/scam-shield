@@ -4,7 +4,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { createRequire } from "node:module";
 import { ROOT, getBundle, getComposition } from "./remotion-lib.mjs";
-import { readBench } from "./bench.mjs";
+import { readBench, words } from "./bench.mjs";
 
 const require = createRequire(import.meta.url);
 const FF = dirname(require.resolve("@remotion/compositor-darwin-arm64/package.json"));
@@ -43,7 +43,8 @@ check((last.start + last.frames) === comp.durationInFrames, "last scene ends exa
 
 const b = readBench();
 const nar = readFileSync(join(ROOT, "narration/narration.resolved.json"), "utf8");
-check(nar.includes(b.cases === 50 ? "fifty" : String(b.cases)), "narration quotes the benchmark case count from eval/results/latest.md");
+check(nar.includes(words(b.cases)) && nar.includes(`${b.cases} synthetic`), "narration and caption quote the benchmark case count from eval/results/combined.md");
+check(b.falsePositive === 0 || !/none of/.test(nar), "narration never implies zero false positives when the benchmark has some");
 check(!/\bsafe\b/i.test(nar.replace(/Scam Shield/g, "")), 'narration never uses "safe" as a verdict');
 check(!/recover/i.test(nar), "narration never mentions recovery");
 const caps = JSON.stringify(Object.values(tl.scenes).flatMap((s) => s.sentences.map((x) => x.caption)));

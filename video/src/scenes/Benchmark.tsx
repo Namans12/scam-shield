@@ -32,9 +32,6 @@ export const Benchmark: React.FC<{ frames: number }> = ({ frames }) => {
   const head = interpolate(f, [4, 24], [0, 1], { easing: easeOut, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const cave = interpolate(f, [s2 - 6, s2 + 14], [0, 1], { easing: easeOut, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const b = bench;
-  const correct = Math.round((b.accuracy / 100) * b.cases);
-  const flagged = Math.round((b.recall / 100) * b.scams);
-  const fp = Math.round((b.falsePositive / 100) * b.genuine);
   const at = s1 + 4;
   return (
     <AbsoluteFill style={{ fontFamily }}>
@@ -43,14 +40,14 @@ export const Benchmark: React.FC<{ frames: number }> = ({ frames }) => {
       </Sequence>
       <div style={{ position: "absolute", left: 0, right: 0, top: 70, textAlign: "center", opacity: head, transform: `translateY(${(1 - head) * 16}px)` }}>
         <div style={{ color: C.cyan, fontWeight: 700, fontSize: 24, letterSpacing: 3.2, textTransform: "uppercase" }}>Evaluation on the live app</div>
-        <div style={{ marginTop: 12, color: C.white, fontWeight: 800, fontSize: 68, letterSpacing: -1.5 }}>
-          {b.cases} synthetic cases: {b.scams} scams, {b.genuine} genuine messages
+        <div style={{ marginTop: 12, color: C.white, fontWeight: 800, fontSize: 60, letterSpacing: -1.2 }}>
+          {b.cases} synthetic cases: {b.scams} scams, {b.genuine} genuine{b.ambiguous ? `, ${b.ambiguous} ambiguous` : ""}
         </div>
       </div>
       <div style={{ position: "absolute", left: 0, right: 0, top: 285, display: "flex", justifyContent: "center", gap: 36 }}>
-        <Metric label="Accuracy" value={b.accuracy} sub={`${correct} of ${b.cases} verdicts correct`} good accent={C.cyan} at={at} />
-        <Metric label="Scam recall" value={b.recall} sub={`${flagged} of ${b.scams} scams flagged`} good accent={C.cyan} at={at + 8} />
-        <Metric label="False positives" value={b.falsePositive} sub={`${fp} of ${b.genuine} genuine flagged`} good={false} accent={C.green} at={at + 16} />
+        <Metric label="Accuracy" value={b.accuracy} sub={`${b.correct} of ${b.scored} scored correct`} good accent={C.cyan} at={at} />
+        <Metric label="Scam recall" value={b.recall} sub={`${b.scamsFlagged} of ${b.scams} scams flagged`} good accent={C.cyan} at={at + 8} />
+        <Metric label="False positives" value={b.falsePositive} sub={`${b.genuineFlagged} of ${b.genuine} genuine flagged`} good={false} accent={C.green} at={at + 16} />
       </div>
       <div style={{ position: "absolute", left: 0, right: 0, top: 668, display: "flex", justifyContent: "center", gap: 18, opacity: interpolate(f, [at + 40, at + 60], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) }}>
         {[`Scam type correct: ${b.scamType}%`, `Text checks, median: ${b.textP50} s`, `Errors: ${b.errors}`, "Flagged = Scam or Suspicious"].map((t) => (

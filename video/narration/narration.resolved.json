@@ -180,8 +180,8 @@
       "id": "benchmark",
       "sentences": [
         {
-          "say": "On fifty synthetic test cases, Scam Shield flagged all twenty-six scams, and wrongly flagged none of the twenty-four genuine messages.",
-          "caption": "On 50 synthetic test cases: flagged all 26 scams, wrongly flagged none of 24 genuine messages."
+          "say": "On one hundred eighty-five synthetic test cases, Scam Shield flagged all ninety scams, and wrongly flagged three point three percent of the ninety genuine messages.",
+          "caption": "On 185 synthetic test cases: flagged all 90 scams, wrongly flagged 3.3% of 90 genuine messages."
         },
         {
           "say": "It is a small test, not a guarantee.",

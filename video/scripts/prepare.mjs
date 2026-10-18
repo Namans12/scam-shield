@@ -1,5 +1,5 @@
 // Gathers everything the Remotion project reads at render time into public/ and src/generated/:
-//  - benchmark numbers from eval/results/latest.md (never hard-coded)       -> src/generated/bench.json
+//  - benchmark numbers from eval/results/combined.md (never hard-coded)       -> src/generated/bench.json
 //  - brand and third-party logos from the repository                         -> public/brand/
 //  - narration audio (TTS, or your own recordings with --owner)              -> public/audio/
 //  - footage clips and their manifest                                        -> public/footage/, src/generated/footage.json
