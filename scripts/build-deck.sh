@@ -16,11 +16,18 @@ STAGE="${DECK_STAGE:-$SUB}"
 
 "$PYTHON" "$ROOT/scripts/build-deck.py" "$SUB/template-base.pptx" "$PPTX"
 [ "${1:-}" = "--no-pdf" ] && exit 0
+# The submission PDF leaves out slide 2 (the organisers' "download this template" note). The PPTX keeps all 16 slides.
+DROP="${DECK_DROP_SLIDE:-2}"
 
+[ "$DROP" = "0" ] || [ "$STAGE" != "$SUB" ] || { echo "Dropping a slide needs DECK_STAGE set to another folder (it would overwrite the 16-slide PPTX)" >&2; exit 1; }
 mkdir -p "$STAGE"
 S_PPTX="$STAGE/Scam-Shield-deck.pptx"
 S_PDF="$STAGE/Scam-Shield-deck.pdf"
-[ "$S_PPTX" = "$PPTX" ] || cp "$PPTX" "$S_PPTX"
+if [ "$DROP" != "0" ]; then
+  "$PYTHON" "$ROOT/scripts/drop-slide.py" "$PPTX" "$S_PPTX" "$DROP"
+else
+  [ "$S_PPTX" = "$PPTX" ] || cp "$PPTX" "$S_PPTX"
+fi
 rm -f "$S_PDF"
 osascript \
   -e 'tell application "Microsoft PowerPoint"' \
@@ -36,5 +43,6 @@ osascript \
 PAGES="$(pdfinfo "$PDF" | awk '/^Pages:/ {print $2}')"
 SIZE="$(stat -f %z "$PDF")"
 echo "PDF: $PDF  pages=$PAGES  bytes=$SIZE"
-[ "$PAGES" = "16" ] || { echo "expected 16 pages" >&2; exit 1; }
+EXPECT=16; [ "$DROP" = "0" ] || EXPECT=15
+[ "$PAGES" = "$EXPECT" ] || { echo "expected $EXPECT pages, got $PAGES" >&2; exit 1; }
 [ "$SIZE" -lt 5000000 ] || { echo "PDF is 5 MB or larger" >&2; exit 1; }
