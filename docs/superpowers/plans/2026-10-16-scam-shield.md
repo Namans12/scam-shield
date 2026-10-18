@@ -351,7 +351,7 @@ it("report: 200 and counts entities for a google user")
 
 ### Task 8: Link scanner service
 
-**Files:** Create `linkscan/src/guard.ts`, `linkscan/src/scan.ts`, `linkscan/src/server.ts`, `linkscan/Dockerfile`; Tests `linkscan/src/guard.test.ts`, `linkscan/src/scan.test.ts`. Dependencies: `playwright@1.55.0` (exact), `ipaddr.js`, `hono`, `@hono/node-server`. Start from Scraper-sdk `apps/server/src/scraper.ts` (page text extraction).
+**Files:** Create `linkscan/src/guard.ts`, `linkscan/src/scan.ts`, `linkscan/src/server.ts`, `linkscan/Dockerfile`; Tests `linkscan/src/guard.test.ts`, `linkscan/src/scan.test.ts`. Dependencies: `playwright@1.55.0` (exact), `ipaddr.js`, `hono`, `@hono/node-server`. Planned starting point: the owner's earlier page text extraction code.
 
 **Interfaces — Produces:**
 
