@@ -25,7 +25,7 @@ export const Closing: React.FC<{ frames: number }> = ({ frames }) => {
         </div>
         <div style={{ marginTop: 34, color: C.white, fontWeight: 700, fontSize: 56, opacity: a(14), transform: `translateY(${(1 - a(14)) * 14}px)` }}>Check before you click, pay or scan.</div>
         <div style={{ marginTop: 44, display: "inline-flex", flexDirection: "column", gap: 14, alignItems: "flex-start", opacity: a(30) }}>
-          <Row label="Live app" value="project-91260b43-6705-4176-b71.web.app" />
+          <Row label="Live app" value="scam-shield-check.web.app" />
           <Row label="Code" value="github.com/Namans12/scam-shield" />
         </div>
         <div style={{ marginTop: 50, display: "flex", justifyContent: "center", alignItems: "center", gap: 26, opacity: a(46) }}>

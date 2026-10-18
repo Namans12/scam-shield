@@ -19,7 +19,7 @@ install if you see `EACCES`.
 
 ## Honesty rules the pipeline enforces
 
-* Product footage is a real recording of https://project-91260b43-6705-4176-b71.web.app doing real work (real API calls).
+* Product footage is a real recording of https://scam-shield-check.web.app doing real work (real API calls).
   Nothing in the UI is mocked or edited. Each window carries a "Real recording of the live app" tag.
 * Waiting for Gemini is sped up exactly 4x and a "Sped up 4x" badge is on screen the whole time (it is derived from the playback
   rate, so it cannot be forgotten). A failed check aborts the recording (`record.mjs` throws), so it is recorded again.
@@ -27,7 +27,7 @@ install if you see `EACCES`.
   `record.mjs` still contains a guard that jumps past a "recovered" statistics strip if one ever comes back; on the current site it
   simply scrolls. The video never mentions recovery (`npm run verify` checks the narration and captions).
 * Verdict words are Scam, Suspicious, No scam signs found; the word "safe" is not used as a verdict (`verify` checks the script).
-* Benchmark numbers are read from `eval/results/latest.md` when you run `npm run prep` (`scripts/bench.mjs`); the narration
+* Benchmark numbers are read from `eval/results/combined.md (combined over all official live runs)` when you run `npm run prep` (`scripts/bench.mjs`); the narration
   sentence that quotes them is generated from the same numbers, and the caveat ("a small test, not a guarantee") is on screen.
 * "Reported 3 times" and the Trends page come from demo data pre-loaded in the shared list; the video says so on screen and in the
   narration.

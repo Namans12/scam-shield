@@ -202,16 +202,16 @@
       ]
     },
     "benchmark": {
-      "duration": 9.848163,
+      "duration": 11.467755,
       "sentences": [
         {
           "start": 0,
-          "end": 7.20975,
-          "caption": "On 50 synthetic test cases: flagged all 26 scams, wrongly flagged none of 24 genuine messages."
+          "end": 8.8295,
+          "caption": "On 185 synthetic test cases: flagged all 90 scams, wrongly flagged 3.3% of 90 genuine messages."
         },
         {
-          "start": 7.52975,
-          "end": 9.8025,
+          "start": 9.1495,
+          "end": 11.42225,
           "caption": "It is a small test, not a guarantee."
         }
       ]

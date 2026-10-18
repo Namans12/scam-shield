@@ -1,5 +1,5 @@
 {
-  "_note": "say = what the voice reads (spelled for pronunciation); caption = what is burned in. {{tokens}} are filled from eval/results/latest.md by narration/synthesize.mjs.",
+  "_note": "say = what the voice reads (spelled for pronunciation); caption = what is burned in. {{tokens}} are filled from eval/results/combined.md by narration/synthesize.mjs.",
   "voice": {
     "languageCode": "en-IN",
     "name": "en-IN-Chirp3-HD-Achird",
