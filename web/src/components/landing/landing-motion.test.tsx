@@ -184,7 +184,6 @@ describe("ScrollFlow", () => {
 });
 
 import { LangStack, LangText } from "./LangStack";
-import { ScrambleNumber } from "./ScrambleNumber";
 
 describe("LangStack", () => {
   it("renders both languages in one cell, shows the active one and hides the other from assistive tech", () => {
@@ -206,33 +205,5 @@ describe("LangStack", () => {
     const slots = [...container.querySelectorAll(".lang-slot")] as HTMLElement[];
     expect(slots).toHaveLength(2);
     expect(slots[1]!.dataset.active).toBe("true");
-  });
-});
-
-describe("ScrambleNumber", () => {
-  it("gives assistive tech the real value and shows it straight away when nothing can animate", () => {
-    const { container } = render(<ScrambleNumber value="4.2" />);
-    expect(container.querySelector(".sr-only")).toHaveTextContent("4.2");
-    expect(container.querySelector(".scramble-number")).toHaveTextContent("4.2");
-    expect(container.querySelector(".scramble-number")).toHaveAttribute("aria-hidden", "true");
-  });
-
-  it("jumbles digits first and lands on the real value when it scrolls into view", async () => {
-    vi.useFakeTimers();
-    let callback: IntersectionObserverCallback = () => {};
-    class FakeObserver { constructor(cb: IntersectionObserverCallback) { callback = cb; } observe() {} disconnect() {} unobserve() {} takeRecords() { return []; } }
-    (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = FakeObserver;
-    try {
-      const { container } = render(<ScrambleNumber value="98" duration={600} />);
-      const shown = () => container.querySelector(".scramble-number")!.textContent!;
-      callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
-      await vi.advanceTimersByTimeAsync(200);
-      expect(shown()).toMatch(/^\d\d$/);
-      await vi.advanceTimersByTimeAsync(1000);
-      expect(shown()).toBe("98");
-    } finally {
-      Reflect.deleteProperty(globalThis, "IntersectionObserver");
-      vi.useRealTimers();
-    }
   });
 });

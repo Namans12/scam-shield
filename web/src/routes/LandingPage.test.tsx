@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import LandingPage from "./LandingPage";
 import { setLang, translate } from "@/i18n";
 import type { Lang } from "@scam-shield/shared";
+import { BENCHMARK } from "@/benchmark";
 
 function CheckDestination() {
   const { pathname, search, hash } = useLocation();
@@ -43,6 +44,28 @@ describe("LandingPage", () => {
       expect(container.textContent).not.toMatch(/built on google cloud|powered by google/i);
     });
   }
+  it("shows the three benchmark numbers as their final values when nothing can animate, with a labelled percent each", () => {
+    const { container } = renderLanding();
+    const stats = container.querySelector(".proof-stats")!;
+    const values = [BENCHMARK.accuracy, BENCHMARK.recall, BENCHMARK.falsePositive];
+    expect([...stats.querySelectorAll(".count-number-text")].map((n) => n.textContent)).toEqual(values);
+    expect([...stats.querySelectorAll(".count-number")].map((n) => n.getAttribute("aria-label"))).toEqual(values.map((v) => `${v}%`));
+    expect(stats.querySelectorAll(".count-number-suffix")).toHaveLength(3);
+    expect(container.querySelector(".proof-note")).toBeInTheDocument();
+  });
+  it("shows the cases caption only when the benchmark has a case count, in both languages", () => {
+    const cases = (BENCHMARK as { cases?: string }).cases;
+    for (const lang of ["en", "hi"] as Lang[]) {
+      setLang(lang);
+      const { container, unmount } = renderLanding();
+      const caption = container.querySelector(".proof-cases");
+      if (cases) expect(caption).toHaveTextContent(translate(lang, "landing.proofCases", { cases }));
+      else expect(caption).toBeNull();
+      unmount();
+    }
+    expect(translate("en", "landing.proofCases", { cases: "123" })).toContain("123 synthetic cases");
+    expect(translate("hi", "landing.proofCases", { cases: "123" })).toContain("123");
+  });
   it("links every primary CTA to /check and every example to its agreed query", () => {
     renderLanding();
     for (const link of screen.getAllByRole("link", { name: "Check a message" })) expect(link).toHaveAttribute("href", "/check");

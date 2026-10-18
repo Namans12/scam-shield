@@ -371,4 +371,6 @@ export const hi: Record<MessageKey, string> = {
   "update.available": "नया वर्शन उपलब्ध है।",
   "update.refresh": "रीफ़्रेश करें",
   "update.dismiss": "बंद करें",
+  // Added by fix/countup: landing.proofCases.
+  "landing.proofCases": "लेखकों द्वारा लिखे गए {cases} कृत्रिम मामलों पर परखा गया; यह छोटा परीक्षण है, गारंटी नहीं।",
 };
