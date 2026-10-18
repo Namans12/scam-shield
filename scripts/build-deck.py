@@ -60,7 +60,7 @@ SLATE = rgb("#475467")
 SLATE_TINT = rgb("#EEF2F6")
 
 REPO_URL = "https://github.com/Namans12/scam-shield"
-LIVE_URL = "https://scam-shield-check.web.app"
+LIVE_URL = "https://scam-shield-live.web.app"
 VIDEO_PLACEHOLDER = "[add the public video link here]"
 VIDEO = os.environ.get("DECK_VIDEO_URL", VIDEO_PLACEHOLDER)  # DECK_VIDEO_URL=https://... scripts/build-deck.sh
 TRACK = "BFSI: Intelligent Risk, Fraud & Financial Experiences"
@@ -553,7 +553,7 @@ def slide5(prs):  # Features
     yb = Y0 + 2 * ch + gy + 0.1
     card(s, MX, yb, CW, Y1 - yb, fill=TINT2, line=None, radius=0.07)
     tx(s, MX + 0.2, yb, CW - 0.4, Y1 - yb, [P([("Also: ", {"size": 12, "font": "b", "color": BLUE}), ("trends, history, one-tap examples, an installable app and the Android share menu.", {"size": 12, "color": INK})])], anchor=MSO_ANCHOR.MIDDLE)
-    notes(s, "All features are live in the production app (https://scam-shield-check.web.app). The WebMCP tools check_message and report_scam are registered in web/src/webmcp/registerTools.ts; "
+    notes(s, "All features are live in the production app (https://scam-shield-live.web.app). The WebMCP tools check_message and report_scam are registered in web/src/webmcp/registerTools.ts; "
              "report_scam needs a person signed in with Google. Verdict names are Scam, Suspicious and No scam signs found.")
 
 
@@ -1053,7 +1053,7 @@ def slide14(prs):  # Links
                  "(DECK_VIDEO_URL=https://... bash scripts/build-deck.sh) or replace the text '[add the public video link here]' in the PPTX.")
     else:
         vnote = f"Demo video (3 minutes): {VIDEO}"
-    notes(s, "GitHub (public): https://github.com/Namans12/scam-shield . Live product: https://scam-shield-check.web.app (the QR code points here). " + vnote)
+    notes(s, "GitHub (public): https://github.com/Namans12/scam-shield . Live product: https://scam-shield-live.web.app (the QR code points here). " + vnote)
 
 
 def slide15(prs):  # closing content
@@ -1095,7 +1095,7 @@ def main(template: str, out: str) -> None:
     slide14(prs)
     slide15(prs)
     prs.slides[1].notes_slide.notes_text_frame.text = "Organisers' instruction slide, kept exactly as in the template. Nothing to present here; the next slide starts the pitch."
-    prs.slides[15].notes_slide.notes_text_frame.text = "Thank you. Team Scam Shield: Naman Shrimal. Live app: https://scam-shield-check.web.app ; code: https://github.com/Namans12/scam-shield ."
+    prs.slides[15].notes_slide.notes_text_frame.text = "Thank you. Team Scam Shield: Naman Shrimal. Live app: https://scam-shield-live.web.app ; code: https://github.com/Namans12/scam-shield ."
     cp = prs.core_properties
     cp.title = "Scam Shield - AI Builder Cup pitch deck"
     cp.author = "Scam Shield"
