@@ -367,4 +367,8 @@ export const hi: Record<MessageKey, string> = {
   "result.how.wrong.page": "हो सकता है कि वह पेज आपको वैसा न दिखे जैसा हमारे अलग ब्राउज़र में दिखा।",
   "result.how.wrong.ai": "AI से ग़लती हो सकती है और वह किसी मैसेज को ग़लत पढ़ सकता है।",
   "result.how.wrong.list": "स्कैम सूची में न होने का मतलब बहुत कम है। ज़्यादातर नए स्कैम अभी उसमें नहीं होते।",
+  // Added by fix/web2: complaint., update. and trends. keys.
+  "update.available": "नया वर्शन उपलब्ध है।",
+  "update.refresh": "रीफ़्रेश करें",
+  "update.dismiss": "बंद करें",
 };

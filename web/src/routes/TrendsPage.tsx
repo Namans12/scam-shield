@@ -4,7 +4,8 @@ import type { ScamType } from "@scam-shield/shared";
 import { CheckIndicator } from "@/components/check/CheckIndicator";
 import { Button } from "@/components/ui/button";
 import { fetchTrends, summariseTrends, type Trends } from "@/data";
-import { scamTypeKey, useT, type MessageKey } from "@/i18n";
+import { scamTypeKey, useLang, useT, type MessageKey } from "@/i18n";
+import { stateLabel } from "@/i18n/states";
 
 function Bars({ rows, label }: { rows: Array<{ key: string; count: number }>; label: (key: string) => string }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
@@ -27,6 +28,7 @@ function Bars({ rows, label }: { rows: Array<{ key: string; count: number }>; la
 
 export default function TrendsPage() {
   const t = useT();
+  const { lang } = useLang();
   const [data, setData] = useState<Trends | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -84,7 +86,7 @@ export default function TrendsPage() {
               {summary.byState.length > 0 && (
                 <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6" aria-labelledby="trends-state">
                   <h2 id="trends-state" className="mb-5 text-xl font-bold tracking-tight">{t("trends.byState")}</h2>
-                  <Bars rows={summary.byState} label={(k) => k} />
+                  <Bars rows={summary.byState} label={(k) => stateLabel(lang, k)} />
                 </section>
               )}
 

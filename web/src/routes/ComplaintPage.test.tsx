@@ -45,6 +45,20 @@ describe("ComplaintPage", () => {
     expect(draft.value).toContain("Amount lost: Rs 50,000");
   });
 
+  it("is first-person and mentions no attachment for a text-only check, in English and Hindi", () => {
+    const { unmount } = renderPage();
+    const en = (screen.getByRole("textbox", { name: "Your complaint draft" }) as HTMLTextAreaElement).value;
+    expect(en).toContain("I received a suspicious message.");
+    expect(en).toContain("designed to steal the recipient's personal and financial details");
+    expect(en).not.toMatch(/attached|steal your/i);
+    unmount();
+    setLang("hi");
+    renderPage();
+    const hi = document.querySelector("textarea")!.value;
+    expect(hi).toContain("मुझे एक संदिग्ध संदेश मिला।");
+    expect(hi).not.toContain("संलग्न");
+  });
+
   it("links to cybercrime.gov.in and the 1930 helpline", () => {
     renderPage();
     expect(screen.getByRole("link", { name: "Open cybercrime.gov.in" })).toHaveAttribute("href", "https://cybercrime.gov.in");

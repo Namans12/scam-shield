@@ -367,6 +367,10 @@ export const en = {
   "result.how.wrong.page": "The page may behave differently for you than it did in our isolated browser.",
   "result.how.wrong.ai": "The AI can make mistakes and may read a message wrongly.",
   "result.how.wrong.list": "Not being on the scam list means very little. Most new scams are not on it yet.",
+  // Added by fix/web2: complaint., update. and trends. keys.
+  "update.available": "New version available.",
+  "update.refresh": "Refresh",
+  "update.dismiss": "Dismiss",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { AppShell } from "@/components/layout/AppShell";
 import LandingPage from "@/routes/LandingPage";
 import { useT } from "@/i18n";
@@ -26,6 +27,7 @@ export default function App() {
   return (
     <TooltipProvider>
       <Toaster />
+      <UpdatePrompt />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <Suspense fallback={<div className="route-loading" role="status" aria-label={t("landing.loading")}><span /></div>}>

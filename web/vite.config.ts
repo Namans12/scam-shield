@@ -27,8 +27,9 @@ export default defineConfig({
       // public/manifest.webmanifest is hand-written and linked from index.html;
       // the plugin only generates the service worker.
       manifest: false,
-      injectRegister: "auto",
-      registerType: "autoUpdate",
+      // Registration and the "new version available" prompt live in src/pwa/swUpdate.ts (no auto-reload mid-use).
+      injectRegister: false,
+      registerType: "prompt",
       // Own service worker (src/sw.ts) so it can also handle the Android share target.
       strategies: "injectManifest",
       srcDir: "src",
