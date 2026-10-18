@@ -12,4 +12,4 @@
 
 On 185 synthetic, author-written test cases run against the live app, it flagged all 90 scams and wrongly flagged 3.3% of 90 genuine messages (98.3% accuracy; 4.5 s median for text): a sanity check, not a guarantee.
 
-**Live app:** https://scam-shield-check.web.app (the original default URL, https://project-91260b43-6705-4176-b71.web.app, serves the same app and also works).
+**Live app:** https://scam-shield-live.web.app

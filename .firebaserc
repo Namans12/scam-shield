@@ -12,6 +12,9 @@
           "bnb-kyc-update"
         ],
         "app-named": [
+          "scam-shield-live"
+        ],
+        "app-check": [
           "scam-shield-check"
         ]
       }

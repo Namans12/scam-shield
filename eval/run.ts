@@ -21,7 +21,7 @@ const arg = (name: string, dflt: string) => {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? (process.argv[i + 1] ?? dflt) : dflt;
 };
-const BASE = arg("base", "https://project-91260b43-6705-4176-b71.web.app").replace(/\/$/, "");
+const BASE = arg("base", "https://scam-shield-live.web.app").replace(/\/$/, "");
 const CONCURRENCY = Math.max(1, Number(arg("concurrency", "1")));
 const ONLY = arg("only", "").split(",").filter(Boolean);
 const LANG = arg("lang", "en");

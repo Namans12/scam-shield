@@ -2,7 +2,7 @@
 
 **Check a suspicious message, screenshot, QR code, link or voice note before you act on it.** Built for people in India, in English and Hindi (Hinglish understood).
 
-- **Live app:** https://scam-shield-check.web.app (the original URL https://project-91260b43-6705-4176-b71.web.app serves the same app and also works)
+- **Live app:** https://scam-shield-live.web.app
 - **Demo video:** _add link before submitting_
 - **Fictional demo bank page (used by the examples):** https://bnb-kyc-update.web.app
 
@@ -132,7 +132,7 @@ Deploying needs the Google Cloud and Firebase CLIs and access to the project:
 
 ```bash
 bash scripts/deploy.sh all     # rules, linkscan, api, web
-bash scripts/smoke.sh https://scam-shield-check.web.app
+bash scripts/smoke.sh https://scam-shield-live.web.app
 npx tsx eval/run.ts            # the first 50-case benchmark (sequential, paced); see Evaluation for v2 and v3
 ```
 

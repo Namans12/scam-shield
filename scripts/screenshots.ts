@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const out = resolve(root, "docs/submission/screenshots");
-const BASE = (process.argv[2] ?? "https://project-91260b43-6705-4176-b71.web.app").replace(/\/$/, "");
+const BASE = (process.argv[2] ?? "https://scam-shield-live.web.app").replace(/\/$/, "");
 mkdirSync(out, { recursive: true });
 
 const shot = (page: Page, name: string, full = false) => page.screenshot({ path: `${out}/${name}.png`, fullPage: full });
@@ -98,7 +98,7 @@ const browser = await chromium.launch();
 {
   const bundle = await build({
     stdin: {
-      contents: `import { renderWarningCard } from "@/share/renderCard"; window.__render = async (c, l) => { const b = await renderWarningCard(c, l, "https://project-91260b43-6705-4176-b71.web.app"); return new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(b); }); };`,
+      contents: `import { renderWarningCard } from "@/share/renderCard"; window.__render = async (c, l) => { const b = await renderWarningCard(c, l, "https://scam-shield-live.web.app"); return new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(b); }); };`,
       resolveDir: resolve(root, "web/src"),
       loader: "ts",
     },

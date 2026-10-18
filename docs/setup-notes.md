@@ -26,7 +26,7 @@ Decision on 16 Oct (superseded on 17 Oct: the default is now `gemini-3.7-flash` 
 - Auth initialised via API; **Anonymous provider enabled**. Google provider: see below.
 - Default Storage bucket created via API: `project-91260b43-6705-4176-b71.firebasestorage.app` in `asia-south1`.
 - Default Hosting site: `project-91260b43-6705-4176-b71` (`.web.app` / `.firebaseapp.com`).
-- Named Hosting site (primary link): `scam-shield-check` (https://scam-shield-check.web.app), hosting target `app-named`; same build and same `/api/**` rewrite as the default site. Its `.web.app` and `.firebaseapp.com` domains are in the Firebase Auth authorized domains. Storage CORS is not configured on the bucket, so no change was needed there.
+- Named Hosting site (the only place the app is served): `scam-shield-live` (https://scam-shield-live.web.app), hosting target `app-named`, with the `/api/**` rewrite to Cloud Run. The older sites (the default `project-91260b43-6705-4176-b71.web.app`, target `app`, and `scam-shield-check`, target `app-check`) are 301 redirects to it (`scripts/redirect-site`). The new site's `.web.app` and `.firebaseapp.com` domains were added to the Firebase Auth authorized domains (older ones kept). Storage CORS is not configured on the bucket, so no change was needed there.
 - Firebase Hosting → Cloud Run rewrites support `asia-south1` (checked against the Firebase docs 16 Oct), so `REGION_RUN=asia-south1`.
 - Google sign-in provider ENABLED by owner (verified via API 16 Oct).
 
