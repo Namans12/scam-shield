@@ -38,33 +38,79 @@ export function percentile(values: number[], p: number): number {
   return v[lo]! + (v[hi]! - v[lo]!) * (idx - lo);
 }
 
-/**
- * "Flagged" means the verdict is scam or suspicious. A row with an error counts as wrong for accuracy and as a
- * miss for recall (conservative), and is left out of the false-positive rate (it flagged nothing).
- * typeAccuracy = share of flagged scams whose predicted type equals the labelled type.
- */
-export function computeMetrics(allRows: EvalRow[]): Metrics {
-  const rows = allRows.filter((r) => r.label !== "ambiguous"); // ambiguous cases are scored by tally(), not by these two-class metrics
-  const flagged = (r: EvalRow) => r.verdict === "scam" || r.verdict === "suspicious";
+/** Integer counts behind the two-class metrics. Every ratio below is derived from these, so nothing is rounded early. */
+export interface Counts {
+  /** All rows, including ambiguous ones. */
+  total: number;
+  scams: number;
+  legit: number;
+  ambiguous: number;
+  /** Scam + genuine rows (ambiguous rows are not scored by the two-class metrics). */
+  scored: number;
+  /** Scored rows with an error. */
+  errors: number;
+  /** Scored rows judged correctly (no error; scam flagged or genuine not flagged). */
+  correct: number;
+  scamsFlagged: number;
+  legitFlagged: number;
+  /** Genuine rows without an error: the false-positive-rate denominator. */
+  legitAnswered: number;
+  /** Flagged scams whose predicted type equals the labelled type. */
+  typeHits: number;
+}
+
+/** A row with an error is treated as having no verdict at all (it flagged nothing). */
+const isRowFlagged = (r: EvalRow) => !r.error && (r.verdict === "scam" || r.verdict === "suspicious");
+
+export function countRows(allRows: EvalRow[]): Counts {
+  const rows = allRows.filter((r) => r.label !== "ambiguous");
   const scams = rows.filter((r) => r.label === "scam");
   const legit = rows.filter((r) => r.label === "legit");
-  const correct = rows.filter((r) => !r.error && (r.label === "scam" ? flagged(r) : !flagged(r))).length;
-  const flaggedScams = scams.filter(flagged);
-  const typeHits = flaggedScams.filter((r) => r.predictedType === r.scamType).length;
+  const flaggedScams = scams.filter(isRowFlagged);
+  return {
+    total: allRows.length,
+    scams: scams.length,
+    legit: legit.length,
+    ambiguous: allRows.length - rows.length,
+    scored: rows.length,
+    errors: rows.filter((r) => r.error).length,
+    correct: rows.filter((r) => !r.error && (r.label === "scam" ? isRowFlagged(r) : !isRowFlagged(r))).length,
+    scamsFlagged: flaggedScams.length,
+    legitFlagged: legit.filter(isRowFlagged).length,
+    legitAnswered: legit.filter((r) => !r.error).length,
+    typeHits: flaggedScams.filter((r) => r.predictedType === r.scamType).length,
+  };
+}
 
+/** Latency percentiles per input kind over every successful call (rows with latencyMs and no error), ambiguous rows included. */
+export function latencyStats(rows: EvalRow[]): Metrics["latency"] {
   const byKind: Record<string, number[]> = {};
   for (const r of rows) if (r.latencyMs !== undefined && !r.error) (byKind[r.kind] ??= []).push(r.latencyMs);
   const latency: Metrics["latency"] = {};
   for (const [k, v] of Object.entries(byKind)) latency[k] = { p50: r3(percentile(v, 50)), p95: r3(percentile(v, 95)) };
+  return latency;
+}
 
+/**
+ * "Flagged" means the verdict is scam or suspicious. A row with an error counts as wrong for accuracy and as a
+ * miss for recall (conservative), and is left out of the false-positive rate (it flagged nothing).
+ * typeAccuracy = share of flagged scams whose predicted type equals the labelled type.
+ * Ratios here are rounded to 3 decimals (legacy report format); headline percentages come from exact counts, see aggregate.ts.
+ */
+export function computeMetrics(allRows: EvalRow[]): Metrics {
+  const c = countRows(allRows);
+  const byKind: Record<string, number[]> = {};
+  for (const r of allRows) if (r.label !== "ambiguous" && r.latencyMs !== undefined && !r.error) (byKind[r.kind] ??= []).push(r.latencyMs);
+  const latency: Metrics["latency"] = {};
+  for (const [k, v] of Object.entries(byKind)) latency[k] = { p50: r3(percentile(v, 50)), p95: r3(percentile(v, 95)) };
   return {
-    n: rows.length,
-    accuracy: ratio(correct, rows.length),
-    scamRecall: ratio(flaggedScams.length, scams.length),
-    falsePositiveRate: ratio(legit.filter(flagged).length, legit.filter((r) => !r.error).length),
-    typeAccuracy: ratio(typeHits, flaggedScams.length),
+    n: c.scored,
+    accuracy: ratio(c.correct, c.scored),
+    scamRecall: ratio(c.scamsFlagged, c.scams),
+    falsePositiveRate: ratio(c.legitFlagged, c.legitAnswered),
+    typeAccuracy: ratio(c.typeHits, c.scamsFlagged),
     latency,
-    errors: rows.filter((r) => r.error).length,
+    errors: c.errors,
   };
 }
 

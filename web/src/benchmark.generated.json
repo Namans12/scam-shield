@@ -1,0 +1,9 @@
+{
+  "accuracy": "98.3",
+  "recall": "100",
+  "falsePositive": "3.3",
+  "cases": "185",
+  "scams": "90",
+  "genuine": "90",
+  "ambiguous": "5"
+}

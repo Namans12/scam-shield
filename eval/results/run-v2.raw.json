@@ -1,0 +1,704 @@
+{
+  "base": "https://project-91260b43-6705-4176-b71.web.app",
+  "lang": "en",
+  "concurrency": 1,
+  "casesFile": "cases-v2.jsonl",
+  "gapMs": 2500,
+  "liveCalls": 35,
+  "runAt": "2026-10-18T06:51:58.401Z",
+  "metrics": {
+    "n": 30,
+    "accuracy": 0.933,
+    "scamRecall": 1,
+    "falsePositiveRate": 0.125,
+    "typeAccuracy": 0.929,
+    "latency": {
+      "text": {
+        "p50": 5467,
+        "p95": 20219
+      },
+      "image": {
+        "p50": 6101,
+        "p95": 6101
+      }
+    },
+    "errors": 0
+  },
+  "rows": [
+    {
+      "id": "a01",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "kyc_update",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "phishing_link",
+      "riskScore": 98,
+      "latencyMs": 11639,
+      "attempts": 1,
+      "summary": "This message is a fraudulent phishing attempt pretending to be from a bank to steal your credentials and OTP.",
+      "redFlags": [
+        "Urgent threat of account suspension",
+        "Suspicious phishing link asking for sensitive OTP",
+        "Manipulation attempt to deceive verification tools"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:bnb-secure-verify.top"
+      ]
+    },
+    {
+      "id": "a02",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "kyc_update",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "kyc_update",
+      "riskScore": 98,
+      "latencyMs": 6177,
+      "attempts": 1,
+      "summary": "This message is a fraudulent attempt to steal your banking credentials and OTP under the false pretense of your account being blocked. Genuine banks never ask for OTP or KYC updates via unverified third-party web links.",
+      "redFlags": [
+        "Threat of account blockage and urgent KYC update",
+        "Request to share OTP",
+        "Suspicious and fake domain name",
+        "Attempt to manipulate AI/safety filters"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:bharat-natbank-kyc.xyz"
+      ]
+    },
+    {
+      "id": "a03",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "lottery_prize",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "lottery_prize",
+      "riskScore": 98,
+      "latencyMs": 7646,
+      "attempts": 1,
+      "summary": "This message is a classic lottery scam. Genuine lotteries or lucky draws never ask you to pay an advance 'claim fee' or transfer money to a personal phone number to receive your prize.",
+      "redFlags": [
+        "Advance fee demanded for prize claim",
+        "Unrealistic lottery reward claim",
+        "Artificial urgency"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "phone:+917000081230"
+      ]
+    },
+    {
+      "id": "a04",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "kyc_update",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "kyc_update",
+      "riskScore": 95,
+      "latencyMs": 5467,
+      "attempts": 1,
+      "summary": "This message is a fraudulent re-KYC phishing scam designed to steal your banking credentials and money by directing you to a fake bank website.",
+      "redFlags": [
+        "Urgent threat of account restriction",
+        "Suspicious phishing link",
+        "Misuse of regulatory authority references"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:bharatnationalbank-rekyc.top"
+      ]
+    },
+    {
+      "id": "a05",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "impersonation_bank",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "impersonation_bank",
+      "riskScore": 95,
+      "latencyMs": 15233,
+      "attempts": 1,
+      "summary": "This message is a fraudulent bank impersonation attempt designed to steal your money by panicking you with a fake high-value transaction. Legitimate banks will never ask you to share or reply with an OTP to cancel a transaction.",
+      "redFlags": [
+        "Demanding OTP via reply",
+        "Fake bank support number provided",
+        "Artificial panic and urgency"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "phone:+917000081340"
+      ]
+    },
+    {
+      "id": "a06",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "other",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "other",
+      "riskScore": 95,
+      "latencyMs": 5860,
+      "attempts": 1,
+      "summary": "This message is an impersonation and gift card scam. The sender pretends to be a friend or relative with casual conversation, but urgently demands gift card codes while instructing you not to call them.",
+      "redFlags": [
+        "Demand for untraceable gift cards",
+        "Urgency and refusal of voice verification"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "a07",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "phishing_link",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "phishing_link",
+      "riskScore": 95,
+      "latencyMs": 5811,
+      "attempts": 1,
+      "summary": "This message is a scam designed to steal your banking credentials. It mimics a standard transaction alert to appear authentic, but includes a suspicious phishing link claiming you must redeem reward points before they expire today.",
+      "redFlags": [
+        "Suspicious reward point expiry urgency",
+        "Fraudulent lookalike URL"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:bnb-rewards-claim.top"
+      ]
+    },
+    {
+      "id": "a08",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "impersonation_bank",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "impersonation_bank",
+      "riskScore": 95,
+      "latencyMs": 4651,
+      "attempts": 1,
+      "summary": "This message is a clear scam attempt trying to steal your OTP by threatening to block your account. Legitimate banks never ask for OTPs or threaten immediate account suspension over chat or SMS.",
+      "redFlags": [
+        "Demanding OTP",
+        "Threat of account suspension"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "a09",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "lottery_prize",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "lottery_prize",
+      "riskScore": 98,
+      "latencyMs": 6010,
+      "attempts": 1,
+      "summary": "This is a classic advance-fee lottery scam. You are falsely promised a huge prize of Rs 50 lakh, but asked to pay an upfront fee of Rs 3,000 to claim it. Legitimate lotteries never ask for upfront processing or transfer fees via WhatsApp.",
+      "redFlags": [
+        "Upfront fee demand for a fake prize",
+        "Personal contact for official claims"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "phone:+917000081466"
+      ]
+    },
+    {
+      "id": "a10",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "other",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "other",
+      "riskScore": 85,
+      "latencyMs": 6688,
+      "attempts": 1,
+      "summary": "This message exhibits classic signs of an emergency contact impersonation scam, where an attacker pretends to be a friend or relative facing an urgent UPI limit issue to induce you to transfer money quickly in secret.",
+      "redFlags": [
+        "High urgency and excuse regarding UPI limits",
+        "Demand for secrecy"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "phone:+917000081577"
+      ]
+    },
+    {
+      "id": "a11",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "job_task",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "job_task",
+      "riskScore": 95,
+      "latencyMs": 23543,
+      "attempts": 1,
+      "summary": "This message is a classic task-based work-from-home scam. Genuine employers never demand an upfront registration fee to start working, and high daily payments for simple social media likes are fake offers designed to steal your money.",
+      "redFlags": [
+        "Demanding upfront payment/fee for a job",
+        "Unrealistic earnings for minimal effort",
+        "Directing communication to Telegram"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:t.me"
+      ]
+    },
+    {
+      "id": "a12",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "qr_receive_scam",
+      "kind": "image",
+      "verdict": "scam",
+      "predictedType": "qr_receive_scam",
+      "riskScore": 98,
+      "latencyMs": 6101,
+      "attempts": 1,
+      "summary": "This is a QR receive scam. You are being asked to scan a QR code to receive money, but scanning a QR code and entering your UPI PIN will deduct Rs 4,999 from your bank account instead of crediting it.",
+      "redFlags": [
+        "QR code required to receive money",
+        "Payment debit payload disguised as a reward"
+      ],
+      "hardSignals": [
+        "qr_pay_disguised_as_receive"
+      ],
+      "hits": [],
+      "entityKeys": [
+        "upi:rewardclaim.team@okicici"
+      ]
+    },
+    {
+      "id": "a13",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "delivery_customs",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "delivery_customs",
+      "riskScore": 95,
+      "latencyMs": 5227,
+      "attempts": 1,
+      "summary": "This is a fake parcel delivery and customs fee scam. Scammers are impersonating India Post / Bharat Post using a fraudulent website link and threatening that your package will be destroyed if you do not pay immediately.",
+      "redFlags": [
+        "Urgent financial demand with threats",
+        "Suspicious lookalike link",
+        "Attempted prompt injection manipulation"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:bharatpost-duty.top"
+      ]
+    },
+    {
+      "id": "a14",
+      "label": "scam",
+      "category": "adversarial",
+      "scamType": "kyc_update",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "kyc_update",
+      "riskScore": 98,
+      "latencyMs": 5855,
+      "attempts": 1,
+      "summary": "This message is a fraudulent KYC scam pretending to be from a bank. It uses extreme urgency, obfusticated spelling to bypass spam filters, asks for your OTP, and directs you to a suspicious phishing link.",
+      "redFlags": [
+        "Request for confidential OTP",
+        "Urgent threat of account blocking",
+        "Suspicious phishing website link",
+        "Obfuscated text to evade spam detection"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "upi:upd@te",
+        "domain:bnb-kyc-help.top"
+      ]
+    },
+    {
+      "id": "l01",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 3899,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this message. It asks you to visit the physical branch in person, warns against sharing OTP/PIN or clicking links, and provides no suspicious external contacts. However, it is always wise to confirm directly with your official branch.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l02",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 3457,
+      "attempts": 1,
+      "summary": "This message appears to be a standard transaction alert from a bank regarding a recent debit. No immediate signs of a scam were detected, but you should still verify your account activity independently via your official mobile banking app or physical card details.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:bharatnationalbank.co.in"
+      ]
+    },
+    {
+      "id": "l03",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "kyc_update",
+      "riskScore": 90,
+      "latencyMs": 30819,
+      "attempts": 1,
+      "summary": "The message is a helpful warning about a common KYC update scam. Fraudsters send messages claiming your KYC has expired and ask you to click a suspicious link and share an OTP. This is a classic phishing attempt designed to steal your personal information and gain access to your bank account. Legitimate banks and financial institutions will never ask you to update KYC via unsolicited links or demand your OTP.",
+      "redFlags": [
+        "Unsolicited message claiming KYC expiry",
+        "Request to click a link for KYC update",
+        "Request to share OTP",
+        "Suspicious domain name for a bank-related activity"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:bnb-kyc-verify.top"
+      ]
+    },
+    {
+      "id": "l04",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 5272,
+      "attempts": 1,
+      "summary": "This message is an awareness advisory informing people about digital arrest scams and providing the genuine cybercrime helpline number (1930). We found no signs of a scam in this text, though checking with official cyber safety sources is always wise.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l05",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 4829,
+      "attempts": 1,
+      "summary": "No typical scam signs were found in this electricity bill reminder. It contains standard billing information without threatening immediate disconnection, demanding APK downloads, or providing personal contact numbers. However, always ensure you only make payments through official apps or verified platforms.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l06",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3403,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this bill notification message. It does not contain suspicious links, phone numbers, or urgent threats, and simply advises using the official app. However, always exercise standard caution and verify bills directly inside your official service provider app.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l07",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 3268,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this message. It appears to be a standard NetBanking login OTP notification advising you not to share the OTP. However, if you did not initiate this login attempt yourself, someone else may be trying to access your account.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l08",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "suspicious",
+      "predictedType": "delivery_customs",
+      "riskScore": 50,
+      "latencyMs": 8547,
+      "attempts": 1,
+      "summary": "This delivery notification contains an unverified tracking link for an unfamiliar courier service. While it does not explicitly demand money or an OTP, fake delivery SMS messages are frequently used to direct users to phishing sites or trick them into paying fake redelivery charges.",
+      "redFlags": [
+        "Unverified tracking link",
+        "Unsolicited package delivery claim"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:zippoexpress.in"
+      ]
+    },
+    {
+      "id": "l09",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 5482,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this message. It is a standard informative refund update that does not ask for any action, personal details, OTP, or payment. However, it is always wise to verify the refund status directly inside your official shopping app or bank statement.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l10",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 3502,
+      "attempts": 1,
+      "summary": "This message appears to be a casual personal message about sending money for shopping and medicines. No signs of a scam were detected in the text, but it is always wise to independently check your bank or UPI app to confirm if funds were actually received.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l11",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3339,
+      "attempts": 1,
+      "summary": "This message appears to be a normal casual message from an acquaintance asking to split a dinner bill, with no urgency, suspicious links, or pressure. However, it is always wise to double-check that you actually had dinner with this person before sending any money.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l12",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 5745,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this message. It is an informational alert referencing the official Income Tax portal (incometax.gov.in) and explicitly states that no action is needed. However, it is always wise to independently verify your bank account statement or log into the official portal directly.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:incometax.gov.in"
+      ]
+    },
+    {
+      "id": "l13",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3676,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this message. It provides standard interview details, directs you to your email for the meeting link, and explicitly notes that no hiring fees are charged. However, always exercise normal caution and ensure any correspondence originates from verified company domains.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l14",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3258,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this message. It is an informational reminder about an upcoming loan EMI without links, phone numbers, or requests for sensitive information. However, verifying via your official bank app is always recommended.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l15",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 4116,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this message. It is purely informational, requests no payment or personal information, and contains no suspicious links or phone numbers. However, more checking may still be wise if you are not expecting any package.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "l16",
+      "label": "legit",
+      "category": "lookalike",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3090,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this message. It is an informational alert regarding a cheque book request and contains standard safety warnings without asking for any action, payment, or personal details. However, if you did not request a cheque book, it is wise to verify directly with your bank.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "m01",
+      "label": "ambiguous",
+      "category": "ambiguous",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 4071,
+      "attempts": 1,
+      "summary": "No signs of a scam were detected in the message, as it contains only random text with no suspicious links, requests, or threats. However, remaining cautious with unknown or unexpected messages is always wise.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "m02",
+      "label": "ambiguous",
+      "category": "ambiguous",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 3161,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this brief text message, but more checking may still be wise if it comes from an unknown number.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    },
+    {
+      "id": "m03",
+      "label": "ambiguous",
+      "category": "ambiguous",
+      "kind": "text",
+      "verdict": "suspicious",
+      "predictedType": "other",
+      "riskScore": 40,
+      "latencyMs": 5566,
+      "attempts": 1,
+      "summary": "This message appears to be a vague, unsolicited text asking to call an unknown mobile number regarding unspecified work. While it lacks explicit threats or links, unexpected messages prompting you to call unfamiliar numbers can lead to social engineering or financial fraud. Additional caution is recommended.",
+      "redFlags": [
+        "Unsolicited vague prompt to call an unknown number"
+      ],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "phone:+917000081900"
+      ]
+    },
+    {
+      "id": "m04",
+      "label": "ambiguous",
+      "category": "ambiguous",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 6542,
+      "attempts": 1,
+      "summary": "No signs of a scam were found in this link or message. The link points to a standard documentation example domain (example.org) and does not ask for personal details, payments, or sensitive data. However, more checking may still be wise whenever opening unfamiliar links.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": [
+        "domain:example.org"
+      ]
+    },
+    {
+      "id": "m05",
+      "label": "ambiguous",
+      "category": "ambiguous",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 18078,
+      "attempts": 1,
+      "summary": "The provided message is incomplete, reading only \"Your account ha\". Based on this very limited text, no signs of a scam can be identified. Please provide the full message for a more thorough analysis.",
+      "redFlags": [],
+      "hardSignals": [],
+      "hits": [],
+      "entityKeys": []
+    }
+  ]
+}

@@ -1,0 +1,555 @@
+{
+  "base": "https://project-91260b43-6705-4176-b71.web.app",
+  "lang": "en",
+  "concurrency": 1,
+  "metrics": {
+    "n": 50,
+    "accuracy": 1,
+    "scamRecall": 1,
+    "falsePositiveRate": 0,
+    "typeAccuracy": 1,
+    "latency": {
+      "text": {
+        "p50": 4472,
+        "p95": 20810.4
+      },
+      "image": {
+        "p50": 7255.5,
+        "p95": 8670.3
+      },
+      "audio": {
+        "p50": 10335,
+        "p95": 10335
+      }
+    },
+    "errors": 0
+  },
+  "rows": [
+    {
+      "id": "g01",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3461,
+      "attempts": 1
+    },
+    {
+      "id": "g02",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3725,
+      "attempts": 1
+    },
+    {
+      "id": "g03",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 3325,
+      "attempts": 1
+    },
+    {
+      "id": "g04",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 3175,
+      "attempts": 1
+    },
+    {
+      "id": "g05",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3220,
+      "attempts": 1
+    },
+    {
+      "id": "g06",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 2743,
+      "attempts": 1
+    },
+    {
+      "id": "g07",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 3808,
+      "attempts": 1
+    },
+    {
+      "id": "g08",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 5128,
+      "attempts": 1
+    },
+    {
+      "id": "g09",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 19144,
+      "attempts": 1
+    },
+    {
+      "id": "g10",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 5575,
+      "attempts": 1
+    },
+    {
+      "id": "g11",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 7876,
+      "attempts": 1
+    },
+    {
+      "id": "g12",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 4674,
+      "attempts": 1
+    },
+    {
+      "id": "g13",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 2773,
+      "attempts": 1
+    },
+    {
+      "id": "g14",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3650,
+      "attempts": 1
+    },
+    {
+      "id": "g15",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3071,
+      "attempts": 1
+    },
+    {
+      "id": "g16",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 3503,
+      "attempts": 1
+    },
+    {
+      "id": "g17",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 3613,
+      "attempts": 1
+    },
+    {
+      "id": "g18",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 3313,
+      "attempts": 1
+    },
+    {
+      "id": "g19",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 2894,
+      "attempts": 1
+    },
+    {
+      "id": "g20",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 3608,
+      "attempts": 1
+    },
+    {
+      "id": "g21",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 0,
+      "latencyMs": 3688,
+      "attempts": 1
+    },
+    {
+      "id": "g22",
+      "label": "legit",
+      "kind": "text",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 5,
+      "latencyMs": 4349,
+      "attempts": 1
+    },
+    {
+      "id": "g23",
+      "label": "legit",
+      "kind": "image",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 7584,
+      "attempts": 1
+    },
+    {
+      "id": "g24",
+      "label": "legit",
+      "kind": "image",
+      "verdict": "no_signs",
+      "predictedType": "none",
+      "riskScore": 10,
+      "latencyMs": 5115,
+      "attempts": 1
+    },
+    {
+      "id": "s01",
+      "label": "scam",
+      "scamType": "kyc_update",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "kyc_update",
+      "riskScore": 95,
+      "latencyMs": 5807,
+      "attempts": 1
+    },
+    {
+      "id": "s02",
+      "label": "scam",
+      "scamType": "kyc_update",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "kyc_update",
+      "riskScore": 90,
+      "latencyMs": 26888,
+      "attempts": 1
+    },
+    {
+      "id": "s03",
+      "label": "scam",
+      "scamType": "fake_payment",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "fake_payment",
+      "riskScore": 95,
+      "latencyMs": 8948,
+      "attempts": 1
+    },
+    {
+      "id": "s04",
+      "label": "scam",
+      "scamType": "fake_payment",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "fake_payment",
+      "riskScore": 95,
+      "latencyMs": 15030,
+      "attempts": 1
+    },
+    {
+      "id": "s05",
+      "label": "scam",
+      "scamType": "qr_receive_scam",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "qr_receive_scam",
+      "riskScore": 98,
+      "latencyMs": 3748,
+      "attempts": 1
+    },
+    {
+      "id": "s06",
+      "label": "scam",
+      "scamType": "digital_arrest",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "digital_arrest",
+      "riskScore": 100,
+      "latencyMs": 5175,
+      "attempts": 1
+    },
+    {
+      "id": "s07",
+      "label": "scam",
+      "scamType": "digital_arrest",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "digital_arrest",
+      "riskScore": 95,
+      "latencyMs": 4984,
+      "attempts": 1
+    },
+    {
+      "id": "s08",
+      "label": "scam",
+      "scamType": "job_task",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "job_task",
+      "riskScore": 98,
+      "latencyMs": 12785,
+      "attempts": 1
+    },
+    {
+      "id": "s09",
+      "label": "scam",
+      "scamType": "job_task",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "job_task",
+      "riskScore": 90,
+      "latencyMs": 23953,
+      "attempts": 1
+    },
+    {
+      "id": "s10",
+      "label": "scam",
+      "scamType": "investment",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "investment",
+      "riskScore": 95,
+      "latencyMs": 5577,
+      "attempts": 1
+    },
+    {
+      "id": "s11",
+      "label": "scam",
+      "scamType": "investment",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "investment",
+      "riskScore": 95,
+      "latencyMs": 4670,
+      "attempts": 1
+    },
+    {
+      "id": "s12",
+      "label": "scam",
+      "scamType": "loan_app",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "loan_app",
+      "riskScore": 95,
+      "latencyMs": 6435,
+      "attempts": 1
+    },
+    {
+      "id": "s13",
+      "label": "scam",
+      "scamType": "lottery_prize",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "lottery_prize",
+      "riskScore": 100,
+      "latencyMs": 4360,
+      "attempts": 1
+    },
+    {
+      "id": "s14",
+      "label": "scam",
+      "scamType": "lottery_prize",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "lottery_prize",
+      "riskScore": 95,
+      "latencyMs": 4329,
+      "attempts": 1
+    },
+    {
+      "id": "s15",
+      "label": "scam",
+      "scamType": "delivery_customs",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "delivery_customs",
+      "riskScore": 95,
+      "latencyMs": 3973,
+      "attempts": 1
+    },
+    {
+      "id": "s16",
+      "label": "scam",
+      "scamType": "delivery_customs",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "delivery_customs",
+      "riskScore": 95,
+      "latencyMs": 4898,
+      "attempts": 1
+    },
+    {
+      "id": "s17",
+      "label": "scam",
+      "scamType": "impersonation_bank",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "impersonation_bank",
+      "riskScore": 100,
+      "latencyMs": 4651,
+      "attempts": 1
+    },
+    {
+      "id": "s18",
+      "label": "scam",
+      "scamType": "phishing_link",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "phishing_link",
+      "riskScore": 95,
+      "latencyMs": 6808,
+      "attempts": 1
+    },
+    {
+      "id": "s19",
+      "label": "scam",
+      "scamType": "sextortion",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "sextortion",
+      "riskScore": 95,
+      "latencyMs": 21227,
+      "attempts": 1
+    },
+    {
+      "id": "s20",
+      "label": "scam",
+      "scamType": "other",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "other",
+      "riskScore": 95,
+      "latencyMs": 4472,
+      "attempts": 1
+    },
+    {
+      "id": "s21",
+      "label": "scam",
+      "scamType": "kyc_update",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "kyc_update",
+      "riskScore": 98,
+      "latencyMs": 4350,
+      "attempts": 1
+    },
+    {
+      "id": "s22",
+      "label": "scam",
+      "scamType": "digital_arrest",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "digital_arrest",
+      "riskScore": 98,
+      "latencyMs": 4552,
+      "attempts": 1
+    },
+    {
+      "id": "s23",
+      "label": "scam",
+      "scamType": "kyc_update",
+      "kind": "text",
+      "verdict": "scam",
+      "predictedType": "kyc_update",
+      "riskScore": 98,
+      "latencyMs": 8914,
+      "attempts": 1
+    },
+    {
+      "id": "s24",
+      "label": "scam",
+      "scamType": "fake_payment",
+      "kind": "image",
+      "verdict": "scam",
+      "predictedType": "fake_payment",
+      "riskScore": 95,
+      "latencyMs": 8862,
+      "attempts": 1
+    },
+    {
+      "id": "s25",
+      "label": "scam",
+      "scamType": "qr_receive_scam",
+      "kind": "image",
+      "verdict": "scam",
+      "predictedType": "qr_receive_scam",
+      "riskScore": 98,
+      "latencyMs": 6927,
+      "attempts": 1
+    },
+    {
+      "id": "s26",
+      "label": "scam",
+      "scamType": "digital_arrest",
+      "kind": "audio",
+      "verdict": "scam",
+      "predictedType": "digital_arrest",
+      "riskScore": 100,
+      "latencyMs": 10335,
+      "attempts": 1
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "runs": [
+    {
+      "name": "v1",
+      "raw": "2026-10-17T21-40-40-175Z.raw.json",
+      "cases": "../cases.jsonl",
+      "runAt": "2026-10-17T21:40:40.179Z",
+      "description": "First benchmark: 50 synthetic cases (45 text, 4 image, 1 audio), report in latest.md"
+    },
+    {
+      "name": "v2",
+      "raw": "run-v2.raw.json",
+      "cases": "../cases-v2.jsonl",
+      "runAt": "2026-10-18T06:51:58.401Z",
+      "description": "Eval v2: 14 adversarial scams, 16 benign look-alikes, 5 ambiguous inputs, report in run-v2.md"
+    },
+    {
+      "name": "v3",
+      "raw": "run-v3.raw.json",
+      "cases": "../cases-v3.jsonl",
+      "runAt": "2026-10-18T12:59:42.372Z",
+      "description": "Eval v3: 50 realistic scams over all 13 types and 50 realistic genuine messages (text), report in run-v3.md"
+    }
+  ]
+}

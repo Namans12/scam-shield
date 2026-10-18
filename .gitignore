@@ -6,6 +6,10 @@ dist/
 !.env.example
 !web/.env.production
 eval/results/*.raw.json
+# the raw files listed in eval/results/official.json are evidence for the published benchmark numbers: keep them in git
+!eval/results/2026-10-17T21-40-40-175Z.raw.json
+!eval/results/run-v2.raw.json
+!eval/results/run-v3.raw.json
 .firebase/
 firestore-debug.log
 firebase-debug.log
