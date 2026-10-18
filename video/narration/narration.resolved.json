@@ -39,8 +39,9 @@
           "caption": "First, a fake KYC message with a look-alike bank link. One tap runs a real check."
         },
         {
-          "say": "Gemini reads the message. The wait is sped up four times.",
-          "caption": "Gemini reads the message. The wait is sped up 4x."
+          "say": "Gemini reads the message.",
+          "caption": "Gemini reads the message.",
+          "slot": 3.89225
         },
         {
           "say": "The verdict is Scam, with a risk score and the type of scam.",
