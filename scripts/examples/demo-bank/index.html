@@ -3,7 +3,8 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Bharat National Bank | KYC Update</title>
 <style>
-  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f4f6fb;color:#16213e}
+  body{margin:0;padding-top:44px;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f4f6fb;color:#16213e}
+  #fiction{position:fixed;top:0;left:0;right:0;z-index:1000;box-sizing:border-box;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 12px;background:#111;color:#ffd84d;font-size:14px;font-weight:700;border-bottom:2px solid #ffd84d}
   header{background:#0b3d91;color:#fff;padding:14px 20px;font-weight:700;font-size:20px}
   .warn{background:#ffe9e9;color:#9b1c1c;padding:12px 20px;font-weight:600;border-bottom:2px solid #e53e3e}
   main{max-width:460px;margin:24px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
@@ -13,19 +14,20 @@
   button{margin-top:20px;width:100%;padding:14px;background:#d9232d;color:#fff;border:0;border-radius:8px;font-size:17px;font-weight:700;cursor:pointer}
   #demo{display:none;background:#fff7d6;border:2px solid #d4a900;border-radius:10px;padding:16px;margin-top:16px;font-weight:600}
 </style></head><body>
+<div id="fiction" role="note">FICTIONAL DEMO page created for Scam Shield. Do not enter real data.</div>
 <header>Bharat National Bank</header>
 <div class="warn">URGENT: Your account will be BLOCKED today. Complete KYC now.</div>
 <main>
   <h1>Update your KYC</h1>
   <p>Enter your details to keep your account active.</p>
-  <form id="f">
+  <form id="f" method="post" action="#" autocomplete="off" novalidate>
     <label for="n">Full name</label><input id="n" autocomplete="off">
     <label for="p">PAN number</label><input id="p" autocomplete="off">
     <label for="a">Aadhaar number</label><input id="a" autocomplete="off">
     <label for="o">OTP received on mobile</label><input id="o" autocomplete="off">
     <button type="submit">Update KYC now</button>
   </form>
-  <div id="demo" role="alert">This is a Scam Shield demo page. It is not a real bank and nothing you type is sent anywhere. Never enter real details on a page like this.</div>
+  <div id="demo" role="alert">This is a demo; nothing was sent. This is a Scam Shield demo page, not a real bank. Never enter real details on a page like this.</div>
 </main>
 <script>
   document.getElementById("f").addEventListener("submit", function (e) {
