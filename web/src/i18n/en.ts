@@ -371,6 +371,8 @@ export const en = {
   "update.available": "New version available.",
   "update.refresh": "Refresh",
   "update.dismiss": "Dismiss",
+  // Added by fix/countup: landing.proofCases.
+  "landing.proofCases": "Tested on {cases} synthetic cases written by the authors; a small test, not a guarantee.",
 } as const;
 
 export type MessageKey = keyof typeof en;

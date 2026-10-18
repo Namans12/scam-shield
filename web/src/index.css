@@ -771,7 +771,10 @@ html:lang(hi) .landing-eyebrow { font-size: 14px; letter-spacing: .2px; }
 @keyframes qr-scan { 0%, 100% { transform: translateY(0); opacity: .2; } 15%, 85% { opacity: .9; } 50% { transform: translateY(74px); } }
 @media (prefers-reduced-motion: reduce) { .qr-scan-line { animation: none; opacity: 0; } }
 
-.scramble-number { font-variant-numeric: tabular-nums; display: inline-block; }
+.count-number { display: inline-grid; font-variant-numeric: tabular-nums; }
+.count-number::after { content: attr(data-sizer); grid-area: 1 / 1; visibility: hidden; height: 0; overflow: hidden; }
+.count-number-text { grid-area: 1 / 1; }
+.proof-cases { color: var(--muted-foreground); font-size: calc(14px * var(--fs)); line-height: 1.7; margin-top: 16px; }
 
 /* centre each language's text inside its shared cell so the spacing around it stays balanced in both languages */
 .hero-copy h1 .lang-slot, .hero-subtitle .lang-slot { align-self: center; }

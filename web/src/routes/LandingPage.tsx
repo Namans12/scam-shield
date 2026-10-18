@@ -7,7 +7,7 @@ import { InputCarousel } from "@/components/landing/InputCarousel";
 import { ImageVisual, LinkVisual, QrVisual, TextVisual, VoiceVisual } from "@/components/landing/InputVisuals";
 import { ScrollFlow } from "@/components/landing/ScrollFlow";
 import { LangStack, LangText } from "@/components/landing/LangStack";
-import { ScrambleNumber } from "@/components/landing/ScrambleNumber";
+import { CountNumber } from "@/components/landing/CountNumber";
 import { BENCHMARK } from "@/benchmark";
 import { translate } from "@/i18n";
 import { BrandLockup } from "@/components/brand/BrandLockup";
@@ -23,6 +23,9 @@ const steps = [{ id: 1, icon: ScanSearch }, { id: 2, icon: Eye }, { id: 3, icon:
 const actions = [{ id: "complaint", icon: FileText }, { id: "reports", icon: UsersRound }, { id: "share", icon: Send }] as const;
 const cloudServices = ["Gemini", "Vertex AI", "Cloud Run", "Firestore", "Firebase"] as const;
 const examples = [{ id: "kyc_sms", icon: MessageSquareText }, { id: "fake_payment", icon: Image }, { id: "qr_receive", icon: QrCode }, { id: "digital_arrest", icon: AudioLines }] as const;
+
+// BENCHMARK.cases comes with the new benchmark values; the caption stays hidden until it exists.
+const benchmarkCases = (BENCHMARK as { cases?: string }).cases;
 
 export default function LandingPage() {
   const t = useT();
@@ -81,7 +84,7 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-section landing-container proof-section" aria-labelledby="proof-title">
-          <div className="proof-main"><div className="section-heading"><p className="landing-eyebrow">{t("landing.proofEyebrow")}</p><h2 id="proof-title">{t("landing.proofTitle")}</h2><p>{t("landing.proofBody")}</p></div><dl className="proof-stats"><div><dt>{t("landing.accuracy")}</dt><dd><ScrambleNumber value={BENCHMARK.accuracy} /><span>%</span></dd></div><div><dt>{t("landing.recall")}</dt><dd><ScrambleNumber value={BENCHMARK.recall} delay={250} duration={1700} /><span>%</span></dd></div><div><dt>{t("landing.falsePositive")}</dt><dd><ScrambleNumber value={BENCHMARK.falsePositive} delay={500} duration={1900} /><span>%</span></dd></div></dl><p className="proof-note"><Info size={18} aria-hidden />{t("landing.proofNote")}</p></div>
+          <div className="proof-main"><div className="section-heading"><p className="landing-eyebrow">{t("landing.proofEyebrow")}</p><h2 id="proof-title">{t("landing.proofTitle")}</h2><p>{t("landing.proofBody")}</p></div><dl className="proof-stats"><div><dt>{t("landing.accuracy")}</dt><dd><CountNumber value={BENCHMARK.accuracy} /><span>%</span></dd></div><div><dt>{t("landing.recall")}</dt><dd><CountNumber value={BENCHMARK.recall} delay={250} /><span>%</span></dd></div><div><dt>{t("landing.falsePositive")}</dt><dd><CountNumber value={BENCHMARK.falsePositive} from={90} delay={500} /><span>%</span></dd></div></dl>{benchmarkCases ? <p className="proof-cases">{t("landing.proofCases", { cases: benchmarkCases })}</p> : null}<p className="proof-note"><Info size={18} aria-hidden />{t("landing.proofNote")}</p></div>
           <aside className="privacy-panel"><span className="input-icon"><LockKeyhole size={25} strokeWidth={1.6} aria-hidden /></span><h3>{t("landing.privacyTitle")}</h3><ul><li>{t("landing.privacyBrowser")}</li><li>{t("landing.privacyDelete")}</li><li>{t("landing.privacyNumbers")}</li></ul></aside>
         </section>
 
