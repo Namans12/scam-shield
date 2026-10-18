@@ -897,11 +897,11 @@ def slide12(prs, comb, first, hi, base):  # Performance
                                 ("p50 is the median, p95 the slowest 5%.", {"size": 11, "color": MUTED})])])
     # keyword baseline
     yb += 0.46
-    hb = 0.48
+    hb = 0.58
     card(s, MX, yb, lw_, hb, fill=TINT, line=None, radius=0.07)
     v2, v3 = base["v2"], base["v3"]
     same = v2["gem_acc"] == v2["base_acc"]
-    v2txt = (f"v2 {v2['base_acc']}, the same as Gemini on text, with different mistakes" if same else f"v2 {v2['base_acc']} (Gemini {v2['gem_acc']})")
+    v2txt = (f"on v2's 34 text cases it scored {v2['base_acc']}, the same as Gemini, with different mistakes" if same else f"v2 {v2['base_acc']} (Gemini {v2['gem_acc']})")
     tx(s, MX + 0.16, yb, lw_ - 0.3, hb, [P([("Keyword baseline: ", {"size": 11, "font": "b", "color": BLUE}),
                                            (f"{v2txt}; v3 {v3['base_acc']} accuracy and {v3['base_rec']} recall (Gemini {v3['gem_acc']} and {v3['gem_rec']}).", {"size": 11})])], anchor=MSO_ANCHOR.MIDDLE)
     # history: the first run and the Hindi run
