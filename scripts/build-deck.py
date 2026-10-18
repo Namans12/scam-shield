@@ -48,7 +48,7 @@ CYAN = rgb("#34C9E8")
 TINT = rgb("#E8F0FE")
 TINT2 = rgb("#F1F5FB")
 INK = rgb("#0B1F33")
-MUTED = rgb("#5B6778")
+MUTED = rgb("#3F4B5B")  # darker than a typical grey: 8.9:1 on white, 7.9:1 on the light tints
 BORDER = rgb("#D5DEEB")
 WHITE = rgb("#FFFFFF")
 RED = rgb("#B42318")
@@ -357,32 +357,37 @@ def slide3(prs):  # Brief about the idea
     s = slide_at(prs, 3)
     title_style(s)
     lw = 5.55
-    tx(s, MX, Y0, lw, 0.82, [
-        P([("Check what you were just sent before you act on it.", {"size": 16, "font": "b", "color": NAVY})], after=4),
-        P([("Free for anyone in India; every report warns the next person.", {"size": 12, "color": MUTED})]),
+    tx(s, MX, Y0, lw, 0.78, [
+        P([("Check what you were just sent before you act on it.", {"size": 16, "font": "b", "color": NAVY})], after=3),
+        P([("Free for anyone in India, and built for the scams people meet here: fake payment receipts, \"digital arrest\" calls and UPI QR tricks.", {"size": 12, "color": INK})]),
     ])
     items = [
         ("sparkles", "One multimodal Gemini call", "Text, screenshots, QR codes, links and Hinglish voice notes are read together by Gemini on Vertex AI."),
         ("quote", "A verdict you can check", "Scam, Suspicious or No scam signs found. Every red flag quotes the exact words. English or Hindi."),
         ("flag", "From verdict to action", "A complaint draft for 1930 and cybercrime.gov.in, a shared scam list and a WhatsApp warning card."),
     ]
-    y = 2.2
+    y, ch3 = 2.17, 0.8
     for ic, t, b in items:
-        card(s, MX, y, lw, 1.0)
-        icon_chip(s, ic, MX + 0.16, y + 0.17)
-        tx(s, MX + 0.78, y + 0.14, lw - 0.95, 0.8, [P([(t, {"size": 13, "font": "b", "color": NAVY})], after=2), P([(b, {"size": 12, "color": INK})])])
-        y += 1.09
+        card(s, MX, y, lw, ch3)
+        icon_chip(s, ic, MX + 0.16, y + (ch3 - 0.42) / 2)
+        tx(s, MX + 0.78, y, lw - 0.92, ch3, [P([(t, {"size": 12.5, "font": "b", "color": NAVY})], after=1), P([(b, {"size": 11.5, "color": INK})])], anchor=MSO_ANCHOR.MIDDLE)
+        y += ch3 + 0.07
+    card(s, MX, y, lw, Y1 - y, fill=NAVY, line=None, radius=0.08)
+    tx(s, MX + 0.2, y, lw - 0.4, Y1 - y, [P([("Careful by design: ", {"size": 12, "font": "b", "color": CYAN}),
+                                           ("links open in an isolated browser, never on your phone. It never says \"safe\": it gives guidance and you decide.", {"size": 12, "color": WHITE})])], anchor=MSO_ANCHOR.MIDDLE)
     px = 6.25
     card(s, px - 0.1, Y0, 3.45, 3.62, fill=TINT2, line=None, radius=0.12)
     bg = (0xF1, 0xF5, 0xFB)
     _, w1 = phone(s, "landing", "02a-landing-mobile.png", px, Y0 + 0.13, 3.38, bg)
     phone(s, "scam", "03-result-scam-mobile.png", px + w1 - 0.05, Y0 + 0.13, 3.38, bg)
-    tx(s, px - 0.1, 5.02, 3.45, 0.36, [P([("The live app. Links are opened in an isolated browser, never on your phone.", {"size": 11, "color": MUTED})], align=PP_ALIGN.CENTER)])
+    tx(s, px - 0.1, 5.02, 3.45, 0.3, [P([("The live app, as seen on a phone.", {"size": 11.5, "color": MUTED})], align=PP_ALIGN.CENTER)], anchor=MSO_ANCHOR.MIDDLE)
     notes(s, "Gen AI (the heart of the idea): one multimodal call to Gemini on Vertex AI reads the text, a screenshot or an audio clip together (Hinglish voice notes are transcribed and judged in the same call). "
              "The answer is schema-validated structured output, every red flag quotes evidence from the input, and the answer comes back in English or Hindi. "
              "Deterministic checks (scam-list hits, a QR that asks you to pay while the text says receive) can only RAISE a verdict. "
              "What Gemini does that rules cannot: judge scams nobody has reported yet, and read images and voice. "
-             "Verdicts are Scam, Suspicious or No scam signs found; the app never says 'safe'. Screenshots are from the live production app, captured by scripts/screenshots.ts.")
+             "India-specific scam types covered by the benchmark and the examples: fake payment receipts, 'digital arrest' calls, fake KYC messages, UPI QR tricks. "
+             "Careful by design: links are opened only in an isolated scanner (a private Cloud Run service), never on the person's phone; verdicts are Scam, Suspicious or No scam signs found, the app never says 'safe', and it gives guidance only. "
+             "Screenshots are from the live production app, captured by scripts/screenshots.ts.")
 
 
 def slide4(prs):  # Opportunities
@@ -392,10 +397,10 @@ def slide4(prs):  # Opportunities
     for p in t.text_frame.paragraphs:
         for br in p._p.findall(qn("a:br")):
             p._p.remove(br)
-    card(s, MX, Y0, CW, 0.62, fill=NAVY, line=None)
-    tx(s, MX + 0.22, Y0, 2.75, 0.62, [P([("Rs 19,813 crore", {"size": 21, "font": "b", "color": CYAN})])], anchor=MSO_ANCHOR.MIDDLE)
-    tx(s, MX + 3.05, Y0, CW - 3.25, 0.62, [P([("reported lost to cyber fraud in 2025, across about 21.78 lakh complaints (I4C data, National Cyber Crime Reporting Portal)", {"size": 12, "color": WHITE})])], anchor=MSO_ANCHOR.MIDDLE)
-    top = 2.12
+    card(s, MX, Y0, CW, 0.58, fill=NAVY, line=None)
+    tx(s, MX + 0.22, Y0, 2.75, 0.58, [P([("Rs 19,813 crore", {"size": 21, "font": "b", "color": CYAN})])], anchor=MSO_ANCHOR.MIDDLE)
+    tx(s, MX + 3.05, Y0, CW - 3.25, 0.58, [P([("reported lost to cyber fraud in 2025, across about 21.78 lakh complaints (I4C data, National Cyber Crime Reporting Portal)", {"size": 12, "color": WHITE})])], anchor=MSO_ANCHOR.MIDDLE)
+    top = 2.0
     lw = 5.35
     card(s, MX, top, lw, Y1 - top)
     tx(s, MX + 0.2, top + 0.14, lw - 0.4, 0.26, [P([("How different is it from existing ideas?", {"size": 13, "font": "b", "color": BLUE})])])
@@ -413,7 +418,7 @@ def slide4(prs):  # Opportunities
     card(s, MX + 0.14, y + 0.02, lw - 0.28, Y1 - 0.14 - y - 0.02, fill=TINT, line=None, radius=0.06)
     tx(s, MX + 0.28, y + 0.02, lw - 0.56, Y1 - 0.14 - y - 0.02, [P([("Scam Shield: ", {"size": 12, "font": "b", "color": BLUE}), ("reads the content itself, so it can flag scams nobody has reported yet, from text, screenshots, QR codes, links and voice notes.", {"size": 12, "color": INK})])], anchor=MSO_ANCHOR.MIDDLE)
     rx, rw = MX + lw + 0.2, CW - lw - 0.2
-    ha = 1.62
+    ha = 1.44
     card(s, rx, top, rw, ha)
     tx(s, rx + 0.2, top + 0.14, rw - 0.4, 0.26, [P([("How will it solve the problem?", {"size": 13, "font": "b", "color": BLUE})])])
     tx(s, rx + 0.2, top + 0.48, rw - 0.4, ha - 0.55, [
@@ -426,7 +431,7 @@ def slide4(prs):  # Opportunities
     tx(s, rx + 0.2, y2 + 0.14, rw - 0.4, 0.26, [P([("USP of the proposed solution", {"size": 13, "font": "b", "color": BLUE})])])
     tx(s, rx + 0.2, y2 + 0.48, rw - 0.4, Y1 - y2 - 0.55, [
         P("Catches scams nobody has reported yet", bullet="•", after=3),
-        P("UPI-aware: a QR that asks you to pay while the text says receive", bullet="•", after=3),
+        P("Made for India: fake payment receipts, \"digital arrest\" calls, UPI QR tricks", bullet="•", after=3),
         P("Understands Hinglish voice notes", bullet="•"),
     ], size=12)
     notes(s, "Sources (all checked 18 Oct 2026, see docs/submission/sources.md): "
@@ -435,6 +440,7 @@ def slide4(prs):  # Opportunities
              "Google scam detection: Messages on Pixel 6 and newer reached India in Sep 2026; on-device call scam detection in India is limited to Pixel 9 and newer (https://androidauthority.com/pixel-scam-detection-google-messages-global-3711361, https://techcrunch.com/2025/11/20/google-steps-up-ai-scam-protection-in-india-but-gaps-remain). "
              "Chakshu (Sanchar Saathi) is a reporting facility (https://sancharsaathi.gov.in; wording to be re-verified). "
              "No recovery percentage is quoted: no national recovery rate is published. "
+             "USP wording: fake payment receipts and 'digital arrest' calls are scam types in the benchmark and the examples; UPI QR pay-vs-receive is a hard check. "
              "The three card headings are the organisers' standard prompts for this slide (the original prompt text was lost from the template file).")
 
 
@@ -478,8 +484,8 @@ def slide6(prs):  # Process flow
         ("Hard checks", "Scam-list hits and QR pay-vs-receive only raise the verdict"),
         ("Result and action", "Verdict, complaint draft, shared list, warning card"),
     ]
-    bw, bh, gap = 2.15, 1.42, 0.2
-    ys = [Y0, Y0 + bh + 0.3]
+    bw, bh, gap = 2.15, 1.4, 0.2
+    ys = [Y0, Y0 + bh + 0.22]
     for i, (t, b) in enumerate(steps):
         col, row = i % 4, i // 4
         x, y = MX + col * (bw + gap), ys[row]
@@ -489,18 +495,19 @@ def slide6(prs):  # Process flow
         tx(s, x + 0.15, y + 0.14, 0.28, 0.28, [P([(str(i + 1), {"size": 11, "font": "b", "color": NAVY if gem else WHITE})], align=PP_ALIGN.CENTER)], anchor=MSO_ANCHOR.MIDDLE)
         if gem:
             pill(s, x + bw - 0.78, y + 0.15, 0.63, 0.26, "Gen AI", fill=CYAN, color=NAVY, size=10)
-        tx(s, x + 0.15, y + 0.5, bw - 0.28, bh - 0.55, [P([(t, {"size": 12.5, "font": "b", "color": WHITE if gem else NAVY})], after=2), P([(b, {"size": 11.5, "color": WHITE if gem else INK})])])
+        tx(s, x + 0.15, y + 0.47, bw - 0.28, bh - 0.52, [P([(t, {"size": 12.5, "font": "b", "color": WHITE if gem else NAVY})], after=2), P([(b, {"size": 11.5, "color": WHITE if gem else INK})])])
         if col < 3:
             line(s, x + bw + 0.03, y + bh / 2, x + bw + gap - 0.03, y + bh / 2, color=BLUE, width=1.75, head=True)
     x4, x5 = MX + 3 * (bw + gap) + bw / 2, MX + bw / 2
-    ym = Y0 + bh + 0.15
+    ym = Y0 + bh + 0.11
     line(s, x4, Y0 + bh, x4, ym, color=BLUE, width=1.75)
     line(s, x4, ym, x5, ym, color=BLUE, width=1.75)
     line(s, x5, ym, x5, ys[1], color=BLUE, width=1.75, head=True)
-    yb = ys[1] + bh + 0.14
+    yb = ys[1] + bh + 0.12
     card(s, MX, yb, CW, Y1 - yb, fill=TINT, line=None, radius=0.07)
     icon(s, "brain", MX + 0.2, yb + (Y1 - yb) / 2 - 0.17, 0.34)
-    tx(s, MX + 0.7, yb, CW - 0.9, Y1 - yb, [P([("Why Gen AI: ", {"size": 11.5, "font": "b", "color": BLUE}), ("rules cannot read a screenshot or a Hinglish voice note, or judge a scam nobody has reported. Gemini does. The hard checks can only raise its verdict, never lower it.", {"size": 11.5, "color": INK})])], anchor=MSO_ANCHOR.MIDDLE)
+    tx(s, MX + 0.7, yb, CW - 0.9, Y1 - yb, [P([("Why Gen AI: ", {"size": 11.5, "font": "b", "color": BLUE}), ("rules cannot read a screenshot or a Hinglish voice note, or judge a scam nobody has reported. Gemini does. The hard checks can only raise its verdict, never lower it.", {"size": 11.5, "color": INK})], after=3),
+                                         P([("If Gemini fails or times out, the person sees a clear retry message; no verdict is invented and nothing is stored.", {"size": 11.5, "color": INK})])], anchor=MSO_ANCHOR.MIDDLE)
     notes(s, "Flow as implemented in api/src/app.ts. Step 6 is a single multimodal Gemini call on Vertex AI (default gemini-3.7-flash, fallback gemini-2.5-flash) that returns schema-validated structured output with quoted evidence in English or Hindi. "
              "Step 7: deterministic checks (scam-list hits, a QR that asks you to pay while the text says receive) can only RAISE the verdict. "
              "If Gemini fails or times out the person sees a clear retry message; no verdict is invented and nothing is stored. "
@@ -561,9 +568,12 @@ def node(slide, x, y, w, h, title, sub, logos=(), fill=WHITE, line_=BORDER, tcol
     tx(slide, tx0, ty, x + w - tx0 - 0.1, y + h - ty - 0.04, [P([(title, {"size": tsize, "font": "b", "color": tcolor})], after=1), P([(sub, {"size": ssize, "color": scolor})])])
 
 
+YF = 5.14  # content bottom on slides 8 and 9, which carry the trademark footnote between the content and the footer bar
+
+
 def tm_footnote(slide):
-    """Trademark and non-affiliation footnote for slides that show Google product icons."""
-    tx(slide, MX, 5.4, CW, 0.14, [P([("Product names and icons are trademarks of Google LLC, shown only to identify the technologies used. No endorsement or affiliation implied.", {"size": 7.5, "color": MUTED})])], anchor=MSO_ANCHOR.MIDDLE)
+    """Trademark and non-affiliation footnote for slides that show Google product icons (9 pt, clear of the footer bar)."""
+    tx(slide, MX, 5.22, CW, 0.22, [P([("Product names and icons are trademarks of Google LLC, shown only to identify the technologies used. No endorsement or affiliation implied.", {"size": 9, "color": MUTED})])], anchor=MSO_ANCHOR.MIDDLE)
 
 
 def slide8(prs):  # Architecture
@@ -572,25 +582,25 @@ def slide8(prs):  # Architecture
     ax, aw = MX, 1.8
     bx, bw = 2.6, 2.5
     cx, cw = 5.6, 4.0
-    node(s, ax, 1.35, aw, 2.6, "Person", "Browser or installed app (PWA), English and Hindi, Android share menu. Uploads go straight to Storage.", ("i-smartphone-blue.png",), side=False)
-    node(s, ax, 4.25, aw, 1.13, "Firebase Auth", "Anonymous and Google sign-in", ("g-firebase.png",), side=False)
-    node(s, bx, 1.35, bw, 1.0, "Firebase Hosting", "Web app; /api/** goes to the API", ("g-firebase.png",))
-    node(s, bx, 2.7, bw, 1.4, "Cloud Run: API", "Stateless; 1 to 5 instances, one always warm. Limits, extraction, hard checks", ("g-cloud-run.png",), fill=NAVY, tcolor=WHITE, scolor=rgb("#C9D6EA"))
-    node(s, bx, 4.25, bw, 1.13, "Cost guard", "30 checks per user per day, 60 per IP per minute, 3,000 per day", (), fill=TINT, line_=None)
-    node(s, cx, 1.35, cw, 1.0, "Gemini on Vertex AI", "One multimodal call: text, image or audio in, structured verdict out", ("g-gemini.png", "g-vertex-ai.png"))
-    node(s, cx, 2.47, cw, 0.85, "Firestore", "Shared scam list, checks, reports, trend counters", ("g-firestore.png",))
-    node(s, cx, 3.44, cw, 0.92, "Cloud Run: link scanner (private)", "Isolated Chromium; scales to zero; zero-permission service account", ("g-cloud-run.png",))
-    node(s, cx, 4.62, 1.95, 0.76, "Cloud Storage", "Uploads, deleted after 7 days", (), tsize=11.5, ssize=10.5)
-    node(s, cx + 2.05, 4.62, 1.95, 0.76, "Suspicious site", "Opened only in the scanner", (), fill=RED_TINT, line_=None, tcolor=RED, scolor=INK, tsize=11.5, ssize=10.5)
+    node(s, ax, 1.35, aw, 2.1, "Person", "Browser or installed app (PWA), English and Hindi, Android share menu. Uploads go straight to Storage.", ("i-smartphone-blue.png",), side=False, ssize=11.5)
+    node(s, ax, 3.7, aw, YF - 3.7, "Firebase Auth", "Anonymous and Google sign-in", ("g-firebase.png",), side=False, ssize=11.5)
+    node(s, bx, 1.35, bw, 0.95, "Firebase Hosting", "Web app; /api/** goes to the API", ("g-firebase.png",))
+    node(s, bx, 2.55, bw, 1.4, "Cloud Run: API", "Stateless; 1 to 5 instances, one always warm. Limits, extraction, hard checks", ("g-cloud-run.png",), fill=NAVY, tcolor=WHITE, scolor=rgb("#C9D6EA"))
+    node(s, bx, 4.15, bw, YF - 4.15, "Cost guard", "30 checks per user per day, 60 per IP per minute, 3,000 per day", (), fill=TINT, line_=None)
+    node(s, cx, 1.35, cw, 0.9, "Gemini on Vertex AI", "One multimodal call: text, image or audio in, structured verdict out", ("g-gemini.png", "g-vertex-ai.png"))
+    node(s, cx, 2.35, cw, 0.78, "Firestore", "Shared scam list, checks, reports, trend counters", ("g-firestore.png",))
+    node(s, cx, 3.23, cw, 0.88, "Cloud Run: link scanner (private)", "Isolated Chromium; scales to zero; zero-permission service account", ("g-cloud-run.png",))
+    node(s, cx, 4.36, 1.95, YF - 4.36, "Cloud Storage", "Uploads, deleted after 7 days", (), tsize=11.5, ssize=10.5)
+    node(s, cx + 2.05, 4.36, 1.95, YF - 4.36, "Suspicious site", "Opened only in the scanner", (), fill=RED_TINT, line_=None, tcolor=RED, scolor=INK, tsize=11.5, ssize=10.5)
     # arrows
-    line(s, ax + aw, 1.85, bx, 1.85, color=BLUE, width=1.75, head=True)
-    line(s, bx + bw / 2, 2.35, bx + bw / 2, 2.7, color=BLUE, width=1.75, head=True)
-    line(s, ax + aw / 2, 3.95, ax + aw / 2, 4.25, color=BLUE, width=1.75, head=True)
-    polyline(s, [(bx + bw, 2.84), (5.35, 2.84), (5.35, 1.85), (cx, 1.85)], color=BLUE, width=1.75)
+    line(s, ax + aw, 1.82, bx, 1.82, color=BLUE, width=1.75, head=True)
+    line(s, bx + bw / 2, 2.3, bx + bw / 2, 2.55, color=BLUE, width=1.75, head=True)
+    line(s, ax + aw / 2, 3.45, ax + aw / 2, 3.7, color=BLUE, width=1.75, head=True)
+    polyline(s, [(bx + bw, 2.7), (5.35, 2.7), (5.35, 1.8), (cx, 1.8)], color=BLUE, width=1.75)
     line(s, bx + bw, 2.95, cx, 2.95, color=BLUE, width=1.75, head=True)
-    line(s, bx + bw, 3.8, cx, 3.8, color=BLUE, width=1.75, head=True)
-    polyline(s, [(bx + bw, 3.98), (5.35, 3.98), (5.35, 5.0), (cx, 5.0)], color=BLUE, width=1.75)
-    line(s, cx + 3.0, 4.36, cx + 3.0, 4.62, color=RED, width=1.75, head=True)
+    line(s, bx + bw, 3.5, cx, 3.5, color=BLUE, width=1.75, head=True)
+    polyline(s, [(bx + bw, 3.78), (5.35, 3.78), (5.35, 4.75), (cx, 4.75)], color=BLUE, width=1.75)
+    line(s, cx + 3.0, 4.11, cx + 3.0, 4.36, color=RED, width=1.75, head=True)
     tm_footnote(s)
     notes(s, "Architecture as deployed (scripts/deploy.sh, region asia-south1): Firebase Hosting serves the React PWA and forwards /api/** to the Cloud Run API. "
              "The API is stateless (1 vCPU, 1 GiB, concurrency 20, min 1 and max 5 instances) and calls Gemini on Vertex AI, Firestore and the private link scanner. "
@@ -614,7 +624,7 @@ def slide9(prs):  # Technologies
     s = slide_at(prs, 9)
     title_style(s)
     lw = 4.3
-    card(s, MX, Y0, lw, Y1 - Y0, fill=NAVY, line=None, radius=0.09)
+    card(s, MX, Y0, lw, YF - Y0, fill=NAVY, line=None, radius=0.09)
     # white tile behind the colourful marks so they stay readable on navy
     card(s, MX + 0.2, Y0 + 0.2, 1.12, 0.46, fill=WHITE, line=None, radius=0.1)
     pic(s, IMG / "g-gemini.png", MX + 0.3, Y0 + 0.28, h=0.3)
@@ -628,22 +638,22 @@ def slide9(prs):  # Technologies
         ("Does what rules cannot: ", "unreported scams, images, voice"),
         ("WebMCP agent tools: ", "check_message and report_scam"),
     ]
-    tx(s, MX + 0.22, Y0 + 0.88, lw - 0.44, Y1 - Y0 - 1.0, [P([(a, {"size": 12, "font": "b", "color": CYAN}), (b, {"size": 12, "color": WHITE})], bullet="•", bcolor=CYAN, after=6) for a, b in bl])
+    tx(s, MX + 0.22, Y0 + 0.88, lw - 0.44, YF - Y0 - 1.0, [P([(a, {"size": 12, "font": "b", "color": CYAN}), (b, {"size": 12, "color": WHITE})], bullet="•", bcolor=CYAN, after=6) for a, b in bl])
     rx, rw = MX + lw + 0.2, CW - lw - 0.2
-    ht = 2.42
+    ht = 2.18
     card(s, rx, Y0, rw, ht)
     tx(s, rx + 0.2, Y0 + 0.14, rw - 0.4, 0.26, [P([("Google Cloud and Firebase, built to scale", {"size": 13, "font": "b", "color": BLUE})])])
     lx = rx + 0.2
     for lg in ("g-google-cloud.png", "g-cloud-run.png", "g-firestore.png", "g-firebase.png"):
         p_ = pic(s, IMG / lg, lx, Y0 + 0.5, h=0.3)
         lx += p_.width / 914400 + 0.2
-    tx(s, rx + 0.2, Y0 + 0.95, rw - 0.4, ht - 1.0, [
-        P([("Cloud Run API: ", {"size": 12, "font": "b", "color": NAVY}), ("stateless, autoscaling, one warm instance", {"size": 12})], bullet="•", after=4),
+    tx(s, rx + 0.2, Y0 + 0.9, rw - 0.4, ht - 0.95, [
+        P([("Cloud Run API: ", {"size": 12, "font": "b", "color": NAVY}), ("stateless and autoscaling", {"size": 12})], bullet="•", after=4),
         P([("Link scanner: ", {"size": 12, "font": "b", "color": NAVY}), ("scales to zero, own zero-permission service account", {"size": 12})], bullet="•", after=4),
         P([("Firestore ", {"size": 12, "font": "b", "color": NAVY}), ("shared scam list; ", {"size": 12}), ("Firebase ", {"size": 12, "font": "b", "color": NAVY}), ("Hosting, Auth, Storage", {"size": 12})], bullet="•"),
     ])
     y2 = Y0 + ht + 0.12
-    card(s, rx, y2, rw, Y1 - y2)
+    card(s, rx, y2, rw, YF - y2)
     tx(s, rx + 0.2, y2 + 0.14, rw - 0.4, 0.26, [P([("Application", {"size": 13, "font": "b", "color": BLUE})])])
     cy = chips(s, rx + 0.2, y2 + 0.5, rw - 0.4, ["React 18", "Vite", "Tailwind", "Workbox PWA", "Node 22", "TypeScript", "Hono", "zod", "Playwright", "sharp + jsQR"], size=10.5, h=0.26, gap=0.07)
     tx(s, rx + 0.2, cy + 0.1, rw - 0.4, 0.3, [P([("590+ automated tests", {"size": 12, "font": "b", "color": NAVY}), (", plus a 50-case live benchmark", {"size": 12})])])
@@ -652,39 +662,39 @@ def slide9(prs):  # Technologies
              "Output is schema-validated (zod schemas in shared/), every red flag quotes evidence, answers come in English or Hindi. Deterministic checks can only raise the verdict. "
              "WebMCP tools: check_message and report_scam (web/src/webmcp/registerTools.ts). "
              "Scalability: the API is a stateless Cloud Run service (concurrency 20, min 1, max 5 instances); the link scanner scales to zero (max 3) under its own service account with no roles; Firestore holds the shared scam list; Firebase Hosting, Auth and Storage in front. "
-             "Test count: npm test on 18 Oct 2026 passed 592 tests (14 + 256 + 94 + 223 + 5; a further 18 live-API tests are skipped by default). Also used: Cloud Build and Artifact Registry for deploys, Cloud Text-to-Speech to generate the voice example.")
+             "Test count: on 18 Oct 2026 the suites passed 595 tests (shared 14, web 226, linkscan 94, eval 5, api 256); a further 18 api tests need the Firestore emulator (Java) and were not run. Also used: Cloud Build and Artifact Registry for deploys, Cloud Text-to-Speech to generate the voice example.")
 
 
 def big_number_card(s, x, y, w, h, tag, number, unit, body, tag_fill=TINT, tag_color=BLUE):
     card(s, x, y, w, h)
-    pill(s, x + 0.2, y + 0.18, 1.0 if len(tag) < 9 else 1.18, 0.26, tag, fill=tag_fill, color=tag_color, size=9.5)
-    tx(s, x + 0.2, y + 0.55, w - 0.4, 0.45, [P([(number, {"size": 22, "font": "b", "color": NAVY})])])
-    tx(s, x + 0.2, y + 1.0, w - 0.4, 0.25, [P([(unit, {"size": 11, "color": MUTED})])])
-    line(s, x + 0.2, y + 1.32, x + w - 0.2, y + 1.32, color=BORDER, width=0.75)
-    tx(s, x + 0.2, y + 1.42, w - 0.4, h - 1.5, [P([(body, {"size": 11.5, "color": INK})])])
+    pill(s, x + 0.2, y + 0.16, 1.0 if len(tag) < 9 else 1.18, 0.26, tag, fill=tag_fill, color=tag_color, size=10)
+    tx(s, x + 0.2, y + 0.5, w - 0.4, 0.45, [P([(number, {"size": 22, "font": "b", "color": NAVY})])])
+    tx(s, x + 0.2, y + 0.95, w - 0.4, 0.25, [P([(unit, {"size": 11.5, "color": MUTED})])])
+    line(s, x + 0.2, y + 1.26, x + w - 0.2, y + 1.26, color=BORDER, width=0.75)
+    tx(s, x + 0.2, y + 1.34, w - 0.4, h - 1.4, [P([(body, {"size": 12, "color": INK})])])
 
 
 def slide10(prs):  # Estimated cost
     s = slide_at(prs, 10)
     title_style(s)
-    cw, gap, ch = 2.93, 0.2, 2.8
+    cw, gap, ch = 2.93, 0.2, 2.5
     big_number_card(s, MX, Y0, cw, ch, "FIXED", "about US$13", "per month (estimate)",
-                    "One Cloud Run API instance kept warm: 1 vCPU, 1 GiB, Mumbai. Idle rate US$0.0000025 per vCPU-second and per GiB-second, before any free tier.")
+                    "One Cloud Run API instance kept warm (1 vCPU, 1 GiB, Mumbai) at US$0.0000025 per vCPU-second and per GiB-second, before any free tier.")
     big_number_card(s, MX + cw + gap, Y0, cw, ch, "PER CHECK", "US$0.004–0.008", "per text check (estimate)",
-                    "Gemini 3.7 Flash, assuming about 2,500 input and 500 to 1,500 output tokens. US$0.75 in, US$3.75 out per 1M tokens until 31 Dec 2026; double from 1 Jan 2027.")
+                    "Gemini 3.7 Flash at about 2,500 input and 500 to 1,500 output tokens. US$0.75 in, US$3.75 out per 1M tokens to 31 Dec 2026; double after.")
     big_number_card(s, MX + 2 * (cw + gap), Y0, cw, ch, "FREE TIERS", "Free tiers", "expected at this volume (estimate)",
-                    "Firebase Hosting, Auth, Firestore and Storage are expected to stay inside free tiers. The link scanner bills only while it scans and scales to zero.")
-    yb = Y0 + ch + 0.14
+                    "Firebase Hosting, Auth, Firestore and Storage are expected to stay inside free tiers. The link scanner bills only while it scans.")
+    yb = Y0 + ch + 0.12
     card(s, MX, yb, CW, Y1 - yb, fill=NAVY, line=None, radius=0.08)
     cols = [
-        ("Limits bound the bill", "30 checks per user per day, 60 per IP per minute, 3,000 per day overall."),
+        ("Limits are the real control", "30 checks per user per day, 60 per IP per minute, 3,000 per day overall. These cap spending."),
         ("Ceiling at the daily cap", "3,000 checks at the per-check estimate is about US$11 to 23 per day for Gemini."),
-        ("Budget alert", "Set: Rs 1,000 per month on this project, alerts at 50%, 90% and 100% of the budget. A hard daily cap also applies."),
+        ("Budget alert: Rs 2,000 a month", "Alerts at 50%, 90% and 100% (Rs\u00a01,000, Rs\u00a01,800, Rs\u00a02,000). An alert notifies; it does not stop spending."),
     ]
     w3 = (CW - 0.4) / 3
     for i, (t, b) in enumerate(cols):
         x = MX + 0.2 + i * w3
-        tx(s, x, yb + 0.12, w3 - 0.2, Y1 - yb - 0.2, [P([(t, {"size": 12, "font": "b", "color": CYAN})], after=2), P([(b, {"size": 11.5, "color": WHITE})])])
+        tx(s, x, yb + 0.2, w3 - 0.2, Y1 - yb - 0.25, [P([(t, {"size": 12.5, "font": "b", "color": CYAN})], after=3), P([(b, {"size": 12, "color": WHITE})])])
     notes(s, "Every figure on this slide is an ESTIMATE with stated assumptions, read from Google's published pages on 18 Oct 2026; none is a quote. "
              "Gemini: Vertex AI pricing page https://cloud.google.com/vertex-ai/generative-ai/pricing lists Gemini 3.7 Flash (global) at US$0.75 per 1M input tokens and US$3.75 per 1M output tokens through 31 Dec 2026, and US$1.50 / US$7.50 from 1 Jan 2027 (input includes text, image, video and audio; output includes reasoning). "
              "Assumption (ours, not measured): about 2,500 input and 500 output tokens per text check, up to 1,500 output tokens if reasoning tokens are counted. "
@@ -692,7 +702,8 @@ def slide10(prs):  # Estimated cost
              "Cloud Run: https://cloud.google.com/run/pricing , asia-south1 (Mumbai) is Tier 1; idle minimum-instance time is US$0.0000025 per vCPU-second and per GiB-second (request-based billing). "
              "1 vCPU + 1 GiB x 2,592,000 s (30 days) x US$0.0000025 x 2 = US$12.96 per month before any free tier; active request time is billed on top and is small. "
              "Deployed API settings (scripts/deploy.sh): 1 vCPU, 1 GiB, min 1, max 5 instances. Free tier claims for Firebase Hosting, Auth, Firestore and Storage are expectations at this volume, not measured bills. "
-             "Budget alert (Rs 1,000 per month; 50/90/100%) created by the owner in Google Cloud Billing on 18 Oct 2026 (budget name 'Scam Shield', applies to this project). Currency: USD as listed by Google; no INR conversion is claimed.")
+             "Budget alert: Rs 2,000 per month, alerts at 50%, 90% and 100% (Rs 1,000, Rs 1,800, Rs 2,000), set by the owner in Google Cloud Billing (budget name 'Scam Shield', applies to this project). "
+             "A budget alert only notifies; it does not cap or stop spending. The real cost control is the per-user (30 per day), per-IP (60 per minute) and global (3,000 per day) limits in the API. Currency: USD as listed by Google; no INR conversion is claimed.")
 
 
 def slide11(prs):  # Snapshots
@@ -732,13 +743,13 @@ def slide12(prs, res, hi):  # Performance
     title_style(s)
     n, ns, ng = res["cases"]
     tiles = [("Accuracy", res["accuracy"]), ("Scam recall", res["recall"]), ("False-positive rate", res["fpr"]), ("Scam type correct", res["type"])]
-    tw, gap = 2.15, 0.2
+    tw, gap, th = 2.15, 0.2, 0.84
     for i, (lab, val) in enumerate(tiles):
         x = MX + i * (tw + gap)
-        card(s, x, Y0, tw, 1.0)
-        tx(s, x, Y0 + 0.1, tw, 0.5, [P([(val, {"size": 26, "font": "b", "color": BLUE})], align=PP_ALIGN.CENTER)])
-        tx(s, x, Y0 + 0.64, tw, 0.28, [P([(lab, {"size": 11.5, "color": MUTED})], align=PP_ALIGN.CENTER)])
-    tx(s, MX, Y0 + 1.06, CW, 0.22, [P([(f"English run, {res['date']}, {n} synthetic test cases, live app", {"size": 11, "color": MUTED, "italic": True})])])
+        card(s, x, Y0, tw, th)
+        tx(s, x, Y0 + 0.07, tw, 0.42, [P([(val, {"size": 24, "font": "b", "color": BLUE})], align=PP_ALIGN.CENTER)])
+        tx(s, x, Y0 + 0.5, tw, 0.26, [P([(lab, {"size": 11.5, "color": MUTED})], align=PP_ALIGN.CENTER)])
+    tx(s, MX, Y0 + th + 0.07, CW, 0.22, [P([(f"English run, {res['date']}, {n} synthetic test cases, live app", {"size": 11.5, "color": MUTED})])])
     # latency table
     head = ["Input", "Cases", "English p50", "English p95"] + (["Hindi p50", "Hindi p95"] if hi else [])
     rows = [head]
@@ -750,10 +761,11 @@ def slide12(prs, res, hi):  # Performance
                 h50, h95, _ = hi["latency"].get(k, ("-", "-", ""))
                 row += [h50, h95]
             rows.append(row)
-    tx_, ty_ = MX, Y0 + 1.42
+    rh = 0.3
+    tx_, ty_ = MX, 2.52
     lw_ = 5.55
     nr, nc = len(rows), len(head)
-    tbl_shape = s.shapes.add_table(nr, nc, Inches(tx_), Inches(ty_), Inches(lw_), Inches(0.36 * nr))
+    tbl_shape = s.shapes.add_table(nr, nc, Inches(tx_), Inches(ty_), Inches(lw_), Inches(rh * nr))
     tbl = tbl_shape.table
     tblPr = tbl._tbl.tblPr
     for a in ("firstRow", "bandRow"):
@@ -762,7 +774,7 @@ def slide12(prs, res, hi):  # Performance
     for i, wd in enumerate(widths):
         tbl.columns[i].width = Inches(wd)
     for r in range(nr):
-        tbl.rows[r].height = Inches(0.36)
+        tbl.rows[r].height = Inches(rh)
         for c in range(nc):
             cell = tbl.cell(r, c)
             cell.text = ""
@@ -770,41 +782,46 @@ def slide12(prs, res, hi):  # Performance
             p.alignment = PP_ALIGN.LEFT if c == 0 else PP_ALIGN.CENTER
             run = p.add_run()
             run.text = str(rows[r][c])
-            style_run(run, 11.5 if r else 10.5, "b" if (r == 0 or c == 0) else None, WHITE if r == 0 else INK)
+            style_run(run, 11.5, "b" if (r == 0 or c == 0) else None, WHITE if r == 0 else INK)
             cell.fill.solid()
             cell.fill.fore_color.rgb = NAVY if r == 0 else (TINT2 if r % 2 else WHITE)
             cell.margin_left = cell.margin_right = Inches(0.06)
-            cell.margin_top = cell.margin_bottom = Inches(0.03)
+            cell.margin_top = cell.margin_bottom = Inches(0.02)
             cell.vertical_anchor = MSO_ANCHOR.MIDDLE
-    yb = ty_ + 0.36 * nr + 0.12
+    yb = ty_ + rh * nr + 0.1
     if hi:
-        card(s, MX, yb, lw_, 0.62, fill=TINT, line=None, radius=0.07)
-        tx(s, MX + 0.16, yb, lw_ - 0.3, 0.62, [P([("Hindi run: ", {"size": 11.5, "font": "b", "color": BLUE}),
-                                                 (f"accuracy {hi['accuracy']}, scam recall {hi['recall']}, false positives {hi['fpr']}, scam type correct {hi['type']}; answers returned in Hindi.", {"size": 11.5})])], anchor=MSO_ANCHOR.MIDDLE)
-        yb += 0.74
-    tx(s, MX, yb, lw_, Y1 - yb, [P([("p50 is the median time, p95 the slowest 5%, in seconds from request to answer on the live app. The image and voice samples are very small (4 and 1 cases).", {"size": 11, "color": MUTED, "italic": True})])])
+        card(s, MX, yb, lw_, 0.5, fill=TINT, line=None, radius=0.07)
+        tx(s, MX + 0.16, yb, lw_ - 0.3, 0.5, [P([("Hindi run: ", {"size": 11.5, "font": "b", "color": BLUE}),
+                                                (f"accuracy {hi['accuracy']}, scam recall {hi['recall']}, false positives {hi['fpr']}, scam type correct {hi['type']}.", {"size": 11.5})])], anchor=MSO_ANCHOR.MIDDLE)
+        yb += 0.6
+    tx(s, MX, yb, lw_, Y1 - yb, [
+        P([("Errors: ", {"size": 11.5, "font": "b", "color": NAVY}), (f"{res['errors']}. ", {"size": 11.5}), ("False positives: ", {"size": 11.5, "font": "b", "color": NAVY}), (f"{res['false_positives']}.", {"size": 11.5})], after=3),
+        P([("p50 is the median time, p95 the slowest 5%, in seconds on the live app. The image and voice rows have only 4 and 1 cases.", {"size": 12, "color": MUTED})]),
+    ])
     rx = MX + lw_ + 0.2
     rw = CW - lw_ - 0.2
-    top = Y0 + 1.42
+    top = 2.52
     card(s, rx, top, rw, Y1 - top)
-    tx(s, rx + 0.18, top + 0.14, rw - 0.36, 0.26, [P([("Read this honestly", {"size": 13, "font": "b", "color": BLUE})])])
-    tx(s, rx + 0.18, top + 0.5, rw - 0.36, Y1 - top - 0.55, [
-        P([(f"{n} synthetic test cases, a small test, not a guarantee. ", {"size": 11.5, "font": "b", "color": NAVY}), (f"{ns} scams across 13 types and {ng} genuine messages.", {"size": 11.5})], bullet="•", after=4),
-        P([("Model: ", {"size": 11.5, "font": "b", "color": NAVY}), ("gemini-3.7-flash, with gemini-2.5-flash as fallback.", {"size": 11.5})], bullet="•", after=4),
-        P([(f"Errors: {res['errors']}. False positives: {res['false_positives']}.", {"size": 11.5})], bullet="•", after=4),
-        P([("The first run found a real bug ", {"size": 11.5, "font": "b", "color": NAVY}), ("(the model did not know today's date); it was fixed and re-measured.", {"size": 11.5})], bullet="•"),
-    ])
+    tx(s, rx + 0.18, top + 0.12, rw - 0.36, 0.26, [P([("Read this honestly", {"size": 13, "font": "b", "color": BLUE})])])
+    cmp = EVAL / "run-gemini-3.8-flash.md"
+    c38 = read_results(cmp) if cmp.exists() else None
+    bullets = [P([(f"{n} cases, written by the authors: ", {"size": 11.5, "font": "b", "color": NAVY}), (f"a small test, not a guarantee; real traffic will differ. {ns} scams over 13 types, {ng} genuine.", {"size": 11.5})], bullet="•", after=4)]
+    if c38:
+        i95 = round(float(c38["latency"]["image"][1].split()[0]))
+        bullets.append(P([("Why gemini-3.7-flash: ", {"size": 11.5, "font": "b", "color": NAVY}),
+                          (f"an earlier run on gemini-3.8-flash scored {c38['accuracy']} accuracy with {c38['fpr']} false positives and image checks up to {i95} s. Fallback: 2.5-flash.", {"size": 11.5})], bullet="•", after=4))
+    else:
+        bullets.append(P([("Model: ", {"size": 11.5, "font": "b", "color": NAVY}), ("gemini-3.7-flash, with gemini-2.5-flash as fallback.", {"size": 11.5})], bullet="•", after=4))
+    bullets.append(P([("The first run found a real bug ", {"size": 11.5, "font": "b", "color": NAVY}), ("(the model did not know today's date); fixed and re-measured.", {"size": 11.5})], bullet="•"))
+    tx(s, rx + 0.18, top + 0.45, rw - 0.36, Y1 - top - 0.5, bullets)
     es = []
     es.append(f"English run ({res['date']}): accuracy {res['accuracy']}, scam recall {res['recall']}, false-positive rate {res['fpr']}, scam type correct {res['type']}, errors {res['errors']} (eval/results/latest.md).")
     if hi:
         es.append(f"Hindi run ({hi['date']}): accuracy {hi['accuracy']}, recall {hi['recall']}, false positives {hi['fpr']}, type correct {hi['type']} (eval/results/run-hindi.md).")
-    es.append("Both runs were made against the live app with 50 synthetic cases in eval/cases.jsonl (45 text, 4 image, 1 audio; 26 scams over 13 scam types, 24 genuine), concurrency 1. Latency is wall-clock from request to response.")
+    es.append("Both runs were made against the live app with 50 synthetic cases in eval/cases.jsonl (45 text, 4 image, 1 audio; 26 scams over 13 scam types, 24 genuine), concurrency 1. Latency is wall-clock from request to response. The cases are few and were written by the authors, so real traffic will differ.")
     es.append("The model for these runs was gemini-3.7-flash: eval/results/latest.md is identical to eval/results/run-gemini-3.7-flash-17oct.md, and gemini-3.7-flash is the API default (api/src/index.ts).")
-    cmp = EVAL / "run-gemini-3.8-flash.md"
-    if cmp.exists():
-        c = read_results(cmp)
-        i95 = c["latency"].get("image", ("", "?", ""))[1]
-        es.append(f"Earlier comparison on gemini-3.8-flash ({c['date']}): accuracy {c['accuracy']}, false-positive rate {c['fpr']}, image p95 {i95}; it was slower and rate-limited on this project, so the default is gemini-3.7-flash.")
+    if c38:
+        es.append(f"Earlier comparison on gemini-3.8-flash ({c38['date']}): accuracy {c38['accuracy']}, false-positive rate {c38['fpr']}, image p95 {c38['latency'].get('image', ('', '?', ''))[1]}; that is why the default is gemini-3.7-flash, with gemini-2.5-flash as fallback.")
     es.append("The first benchmark run exposed a real bug (the model did not know today's date and flagged 2026 dates as future); it was fixed and re-measured. This is a small synthetic sanity check, not a guarantee of real-world accuracy.")
     notes(s, " ".join(es))
 
@@ -816,19 +833,23 @@ def slide13(prs):  # Future development
         ("languages", "More Indian languages", "Tamil, Telugu, Marathi, Bengali and more."),
         ("landmark", "Bank & telecom partners", "Verified reports feed the shared scam list."),
         ("globe", "URL reputation feeds", "Add Google Web Risk next to the isolated scan."),
-        ("smartphone", "Android app", "Share SMS and notifications straight to a check."),
+        ("smartphone", "Android app", "Share SMS and notifications to a check."),
         ("search", "Google Search grounding", "Switch on for link checks once quota allows."),
-        ("phone", "Call-recording upload", "Extend today's voice-note check to recorded calls."),
+        ("phone", "Call-recording upload", "Check recorded calls, not just voice notes."),
+        ("brain", "Misinformation mode", "The same engine for \"is this forward real?\""),
     ]
-    cw, gap, ch = 2.93, 0.2, 1.2
+    cw, gap, ch = 2.15, 0.2, 1.2
     for i, (ic, t, b) in enumerate(items):
-        col, row = i % 3, i // 3
+        col, row = i % 4, i // 4
         x, y = MX + col * (cw + gap), Y0 + row * (ch + 0.12)
         card(s, x, y, cw, ch)
-        icon_chip(s, ic, x + 0.16, y + 0.14, 0.38)
-        tx(s, x + 0.66, y + 0.14, cw - 0.78, 0.38, [P([(t, {"size": 12.5, "font": "b", "color": NAVY})])], anchor=MSO_ANCHOR.MIDDLE)
-        tx(s, x + 0.16, y + 0.68, cw - 0.32, ch - 0.72, [P([(b, {"size": 12})])])
-    yb = Y0 + 2 * ch + 0.12 + 0.16
+        icon_chip(s, ic, x + 0.14, y + 0.14, 0.38)
+        tx(s, x + 0.62, y + 0.12, cw - 0.72, 0.42, [P([(t, {"size": 12, "font": "b", "color": NAVY})])], anchor=MSO_ANCHOR.MIDDLE)
+        tx(s, x + 0.16, y + 0.62, cw - 0.3, ch - 0.66, [P([(b, {"size": 11.5})])])
+    x, y = MX + 3 * (cw + gap), Y0 + (ch + 0.12)
+    card(s, x, y, cw, ch, fill=TINT2, line=None)
+    tx(s, x + 0.16, y, cw - 0.3, ch, [P([("Plans, not shipped. ", {"size": 11.5, "font": "b", "color": BLUE}), ("Search grounding is built but off by default.", {"size": 11.5, "color": INK})])], anchor=MSO_ANCHOR.MIDDLE)
+    yb = Y0 + 2 * ch + 0.12 + 0.14
     card(s, MX, yb, CW, Y1 - yb, fill=NAVY, line=None, radius=0.09)
     tx(s, MX + 0.22, yb + 0.12, CW - 0.44, 0.28, [P([("How it scales", {"size": 13, "font": "b", "color": CYAN})])])
     cols = [
@@ -839,10 +860,10 @@ def slide13(prs):  # Future development
     w3 = (CW - 0.44) / 3
     for i, (t, b) in enumerate(cols):
         x = MX + 0.22 + i * w3
-        tx(s, x, yb + 0.46, w3 - 0.18, Y1 - yb - 0.5, [P([(t, {"size": 12, "font": "b", "color": WHITE})], after=2), P([(b, {"size": 11.5, "color": rgb("#C9D6EA")})])])
+        tx(s, x, yb + 0.42, w3 - 0.18, Y1 - yb - 0.46, [P([(t, {"size": 12, "font": "b", "color": WHITE})], after=2), P([(b, {"size": 12, "color": rgb("#C9D6EA")})])])
     notes(s, "Roadmap items are plans, not shipped features. Scale story, from what is deployed today (scripts/deploy.sh): API on Cloud Run, stateless, concurrency 20, min 1 and max 5 instances; link scanner scales to zero (max 3); "
              "Firestore for the shared scam list; Firebase Hosting, Auth and Storage; per-user (30 per day), per-IP (60 per minute) and global (3,000 per day) limits; uploads auto-delete after 7 days. "
-             "Raising the cap or max instances is a configuration change. Hardening ideas: Firebase App Check and a stricter per-device limit (DETAILS.md). Google Search grounding is implemented but off by default because of quota errors on this project.")
+             "Misinformation mode ('is this forward real?') is an idea for the same engine, not built. Raising the cap or max instances is a configuration change. Hardening ideas: Firebase App Check and a stricter per-device limit (DETAILS.md). Google Search grounding is implemented but off by default because of quota errors on this project.")
 
 
 def slide14(prs):  # Links
@@ -880,8 +901,8 @@ def slide14(prs):  # Links
                 lat = rPr.find(qn("a:latin"))
                 lat.addprevious(hl)
                 r2 = p.add_run()
-                r2.text = "  (owner to fill in)"
-                style_run(r2, 11, None, AMBER, True)
+                r2.text = "  PLACEHOLDER: owner to fill in"
+                style_run(r2, 11.5, "b", AMBER)
         elif not t:
             for er in p._p.findall(qn("a:endParaRPr")):
                 er.set("sz", "800")
@@ -892,13 +913,17 @@ def slide14(prs):  # Links
     qr = qr_image(LIVE_URL)
     pic(s, qr, qx + 0.5, qy + 0.22, w=2.15)
     tx(s, qx + 0.15, qy + 2.5, qw - 0.3, 0.9, [P([("Scan to try the live app", {"size": 12.5, "font": "b", "color": NAVY})], align=PP_ALIGN.CENTER, after=2),
-                                               P([("Paste a suspicious message and see the verdict.", {"size": 11, "color": MUTED})], align=PP_ALIGN.CENTER)])
+                                               P([("Paste a suspicious message and see the verdict.", {"size": 12, "color": MUTED})], align=PP_ALIGN.CENTER)])
     yb = 4.62
     card(s, MX, yb, CW, Y1 - yb, fill=TINT2, line=None, radius=0.08)
     pic(s, IMG / "logo-lockup-horizontal.png", MX + 0.2, yb + 0.12, h=0.5)
     tx(s, MX + 3.0, yb, CW - 3.2, Y1 - yb, [P([("Pause. Check. ", {"size": 15, "font": "b", "color": NAVY}), ("Then act.", {"size": 15, "font": "b", "color": BLUE})], align=PP_ALIGN.RIGHT)], anchor=MSO_ANCHOR.MIDDLE)
-    notes(s, "GitHub (public): https://github.com/Namans12/scam-shield . Live product: https://project-91260b43-6705-4176-b71.web.app (the QR code points here). "
-             "The demo video link is a deliberate placeholder, highlighted in amber; the owner must replace the text '[add the public video link here]' in the PPTX and re-run scripts/build-deck.sh before submitting.")
+    if VIDEO == VIDEO_PLACEHOLDER:
+        vnote = ("The demo video link is a deliberate placeholder, highlighted in amber; before submitting, re-run the build with DECK_VIDEO_URL=https://... "
+                 "(DECK_VIDEO_URL=https://... bash scripts/build-deck.sh) or replace the text '[add the public video link here]' in the PPTX.")
+    else:
+        vnote = f"Demo video (3 minutes): {VIDEO}"
+    notes(s, "GitHub (public): https://github.com/Namans12/scam-shield . Live product: https://project-91260b43-6705-4176-b71.web.app (the QR code points here). " + vnote)
 
 
 def slide15(prs):  # closing content
@@ -915,7 +940,7 @@ def slide15(prs):  # closing content
         icon(s, ic, x + 0.2, 4.05 + 0.25, 0.3)
         tx(s, x + 0.65, 4.05, pw - 0.75, 0.8, [P([(t, {"size": 12.5, "font": "b", "color": NAVY})])], anchor=MSO_ANCHOR.MIDDLE)
     tx(s, MX, 5.0, CW, 0.3, [P([(LIVE_URL.replace("https://", ""), {"size": 11, "color": MUTED})], align=PP_ALIGN.CENTER)])
-    notes(s, "Closing slide. The template's final 'Thank you' slide follows.")
+    notes(s, "Closing slide: Scam Shield, 'Pause. Check. Then act.' The live app address is at the bottom. The template's final 'Thank you' slide follows.")
 
 
 def main(template: str, out: str) -> None:
@@ -937,6 +962,8 @@ def main(template: str, out: str) -> None:
     slide13(prs)
     slide14(prs)
     slide15(prs)
+    prs.slides[1].notes_slide.notes_text_frame.text = "Organisers' instruction slide, kept exactly as in the template. Nothing to present here; the next slide starts the pitch."
+    prs.slides[15].notes_slide.notes_text_frame.text = "Thank you. Team Scam Shield: Naman Shrimal. Live app: https://project-91260b43-6705-4176-b71.web.app ; code: https://github.com/Namans12/scam-shield ."
     cp = prs.core_properties
     cp.title = "Scam Shield - AI Builder Cup pitch deck"
     cp.author = "Scam Shield"
