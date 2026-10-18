@@ -6,7 +6,7 @@
 
 **Architecture:** React PWA on Firebase Hosting; `/api/**` rewritten to a Node/TypeScript Cloud Run service (Hono) that pre-processes input deterministically (entity extraction, QR decode, scam-list lookup, link scan), calls Gemini on Vertex AI for a structured verdict, applies hard-signal rules and stores results in Firestore. A second Cloud Run service (Playwright) opens suspicious links in an isolated browser. Firebase Auth (anonymous for checks, Google for reports) and Cloud Storage for Firebase (uploads).
 
-**Tech Stack:** Node 22, TypeScript, npm workspaces, Vitest, Hono + @hono/node-server, @google/genai (Vertex mode), firebase-admin, zod v4, tldts, jsqr + sharp, ipaddr.js, Playwright (pinned 1.55.0 to match the Docker image), React 18 + Vite + Tailwind v4 + Spotlight's UI kit, firebase JS SDK, vite-plugin-pwa, Docker + Artifact Registry, gcloud + firebase CLIs.
+**Tech Stack:** Node 22, TypeScript, npm workspaces, Vitest, Hono + @hono/node-server, @google/genai (Vertex mode), firebase-admin, zod v4, tldts, jsqr + sharp, ipaddr.js, Playwright (pinned 1.55.0 to match the Docker image), React 18 + Vite + Tailwind v4 + a UI kit adapted from the owner's earlier project, firebase JS SDK, vite-plugin-pwa, Docker + Artifact Registry, gcloud + firebase CLIs.
 
 **Spec:** `docs/superpowers/specs/2026-10-16-scam-shield-design.md`
 
@@ -25,7 +25,7 @@
 - Allowed upload MIME types: `image/png`, `image/jpeg`, `image/webp`, `audio/mpeg`, `audio/mp4`, `audio/aac`, `audio/ogg`, `audio/wav`, `audio/webm`.
 - Uploads live at `uploads/{uid}/…` and are deleted after 7 days (bucket lifecycle); reported evidence is copied to `evidence/{reportId}/…`.
 - No service-account key files; Cloud Run uses its runtime service account (ADC). Firebase web config is public and may be committed.
-- Spotlight code is the owner's; reuse it without attribution.
+- Code adapted from the owner's own earlier personal project is the owner's own work (see README Provenance).
 
 ## Review Focus
 
@@ -58,7 +58,7 @@ api/src/gemini.ts             VerdictModel + createGeminiModel
 api/src/combine.ts            applyHardSignals
 api/src/store.ts              Store interface + MemoryStore
 api/src/firestoreStore.ts     FirestoreStore
-api/src/rateLimit.ts          ported from Spotlight lib/rateLimit.ts
+api/src/rateLimit.ts          ported from the owner's earlier rate limiter
 api/src/linkscanClient.ts     LinkScanner + createLinkScanClient
 api/src/app.ts                createApp (routes)
 api/src/index.ts              wiring + server
@@ -67,7 +67,7 @@ linkscan/src/guard.ts         isPublicAddress, assertPublicUrl
 linkscan/src/scan.ts          scanUrl
 linkscan/src/server.ts        POST /scan
 linkscan/Dockerfile
-web/                          React app (from Spotlight UI kit)
+web/                          React app (general-purpose UI kit adapted from the owner's earlier project)
 eval/cases.jsonl  eval/run.ts  eval/metrics.ts  eval/results/
 docs/submission/              description.md, video-script.md, deck notes
 ```
@@ -91,7 +91,7 @@ No code. Verification by command output. Owner performs browser logins.
 
 **Files:** Create `package.json`, `tsconfig.base.json`, `.gitignore`, `README.md` (stub), `shared/package.json`, `api/package.json`, `linkscan/package.json`, `eval/package.json`, each package's `tsconfig.json` and `vitest.config.ts`, `.claude/launch.json`.
 
-- [ ] **Step 1:** `git init` in `D:\builder-cup`; root `package.json` with `"workspaces": ["shared","api","linkscan","web","eval"]`, scripts `test` (`npm test --workspaces --if-present`), `typecheck`. `.gitignore`: `node_modules`, `dist`, `.env*` except `.env.example` and `web/.env.production`, `eval/results/*.raw.json`.
+- [ ] **Step 1:** `git init` in the project folder; root `package.json` with `"workspaces": ["shared","api","linkscan","web","eval"]`, scripts `test` (`npm test --workspaces --if-present`), `typecheck`. `.gitignore`: `node_modules`, `dist`, `.env*` except `.env.example` and `web/.env.production`, `eval/results/*.raw.json`.
 - [ ] **Step 2:** `shared` package named `@scam-shield/shared`, `"type": "module"`, `exports` pointing at `src/index.ts` (consumed as TS source; api/linkscan bundle it with esbuild, web via Vite).
 - [ ] **Step 3:** Add a trivial test `shared/src/index.test.ts` asserting `1 + 1 === 2`; run `npm test -w shared` → PASS.
 - [ ] **Step 4:** Create public GitHub repo: `gh repo create Namans12/scam-shield --public --source . --remote origin`. Commit `chore: scaffold workspaces` and push.
@@ -302,7 +302,7 @@ expect((await s.bumpUsage("u1", "2026-10-16")).uidCount).toBe(2);
 
 ### Task 7: API routes
 
-**Files:** Create `api/src/rateLimit.ts` (port of Spotlight `lib/rateLimit.ts` keyed by a string instead of `IncomingMessage`; window 60 s, max 10), `api/src/linkscanClient.ts`, `api/src/app.ts`, `api/src/index.ts`; Test `api/src/app.test.ts`, `api/src/rateLimit.test.ts`. Dependencies: `hono`, `@hono/node-server`, `google-auth-library`.
+**Files:** Create `api/src/rateLimit.ts` (port of the owner's earlier rate limiter keyed by a string instead of `IncomingMessage`; window 60 s, max 10), `api/src/linkscanClient.ts`, `api/src/app.ts`, `api/src/index.ts`; Test `api/src/app.test.ts`, `api/src/rateLimit.test.ts`. Dependencies: `hono`, `@hono/node-server`, `google-auth-library`.
 
 **Interfaces:**
 - Consumes: Tasks 3–6.
@@ -351,7 +351,7 @@ it("report: 200 and counts entities for a google user")
 
 ### Task 8: Link scanner service
 
-**Files:** Create `linkscan/src/guard.ts`, `linkscan/src/scan.ts`, `linkscan/src/server.ts`, `linkscan/Dockerfile`; Tests `linkscan/src/guard.test.ts`, `linkscan/src/scan.test.ts`. Dependencies: `playwright@1.55.0` (exact), `ipaddr.js`, `hono`, `@hono/node-server`. Start from Scraper-sdk `apps/server/src/scraper.ts` (page text extraction).
+**Files:** Create `linkscan/src/guard.ts`, `linkscan/src/scan.ts`, `linkscan/src/server.ts`, `linkscan/Dockerfile`; Tests `linkscan/src/guard.test.ts`, `linkscan/src/scan.test.ts`. Dependencies: `playwright@1.55.0` (exact), `ipaddr.js`, `hono`, `@hono/node-server`. Planned starting point: the owner's earlier page text extraction code.
 
 **Interfaces — Produces:**
 
@@ -383,7 +383,7 @@ expect((await scanUrl("http://127.0.0.1:1/")).blockedReason).toBe("private_addre
 
 ### Task 9: Web app shell, Firebase client and text check
 
-**Files:** Create `web/` from Spotlight: copy `package.json` deps subset, `vite.config.ts` (keep VitePWA, drop TMDB caching rules, deny-list `/api/`), `index.html`, `src/index.css` (re-theme: keep structure, new palette — deep navy background, amber primary, red/amber/green verdict colours with AA contrast), `src/lib/utils.ts`, `src/components/ui/{button,dialog,input,segmented,separator,sheet,skeleton,sonner,tooltip}.tsx`, `src/components/layout/{AppShell,Sidebar,SidebarContext,Topbar,Footer}.tsx` (strip Spotlight nav/brand). New: `web/src/firebase.ts`, `web/src/api.ts`, `web/src/i18n/{en,hi,index}.ts`, `web/src/routes/{CheckPage,ResultPage,AboutPage}.tsx`, `web/src/components/{VerdictBanner,RedFlagList,EntityHits,LinkScanCard,Disclaimer}.tsx`, `web/.env.production` (Firebase config from Task 0). Tests `web/src/i18n/i18n.test.ts`, `web/src/components/VerdictBanner.test.tsx`.
+**Files:** Create `web/` from the owner's earlier project: copy `package.json` deps subset, `vite.config.ts` (keep VitePWA, drop TMDB caching rules, deny-list `/api/`), `index.html`, `src/index.css` (re-theme: keep structure, new palette — deep navy background, amber primary, red/amber/green verdict colours with AA contrast), `src/lib/utils.ts`, `src/components/ui/{button,dialog,input,segmented,separator,sheet,skeleton,sonner,tooltip}.tsx`, `src/components/layout/{AppShell,Sidebar,SidebarContext,Topbar,Footer}.tsx` (strip the old nav/brand). New: `web/src/firebase.ts`, `web/src/api.ts`, `web/src/i18n/{en,hi,index}.ts`, `web/src/routes/{CheckPage,ResultPage,AboutPage}.tsx`, `web/src/components/{VerdictBanner,RedFlagList,EntityHits,LinkScanCard,Disclaimer}.tsx`, `web/.env.production` (Firebase config from Task 0). Tests `web/src/i18n/i18n.test.ts`, `web/src/components/VerdictBanner.test.tsx`.
 
 **Interfaces — Produces:**
 
@@ -526,12 +526,12 @@ export function computeMetrics(rows: EvalRow[]): Metrics;   // "flagged" = scam 
 
 ### Task 18 (cut first): WebMCP agent tools
 
-**Files:** Create `web/src/webmcp/registerTools.ts`, `web/src/webmcp/modelContext.d.ts` (copy from Spotlight `src/webmcp/modelContext.d.ts`); Test `web/src/webmcp/registerTools.test.ts`.
+**Files:** Create `web/src/webmcp/registerTools.ts`, `web/src/webmcp/modelContext.d.ts` (copy from the owner's earlier project); Test `web/src/webmcp/registerTools.test.ts`.
 
 **Interfaces — Produces:** `export function registerScamShieldTools(mc: ModelContext | undefined): string[]` — registers `check_message` (`{ text: string; lang?: "en" | "hi" }` → `CheckResult` summary) and `report_scam` (`{ checkId: string }` → result, or an instruction to sign in with Google when anonymous); returns registered tool names; no-op returning `[]` when `mc` is undefined.
 
 - [ ] **Step 1: Failing test:** with a fake `modelContext`, returns `["check_message", "report_scam"]` and the `check_message` handler calls `checkContent` with the given text; with `undefined` returns `[]`.
-- [ ] **Step 2:** FAIL. **Step 3:** Implement following Spotlight `src/webmcp/registerTools.ts`. **Step 4:** PASS. **Step 5:** Deploy; commit `feat(web): WebMCP tools`.
+- [ ] **Step 2:** FAIL. **Step 3:** Implement following the owner's earlier WebMCP tool pattern. **Step 4:** PASS. **Step 5:** Deploy; commit `feat(web): WebMCP tools`.
 
 ### Task 19: Submission package (18 Oct afternoon, after deploy freeze)
 

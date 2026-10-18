@@ -33,7 +33,7 @@ Also: public **Trends** page, per-person **History**, one-click **examples** for
 - **Gemini on Vertex AI** (`gemini-3.7-flash`, with `gemini-2.5-flash` as an automatic fallback): one multimodal call per check returns a schema-validated verdict (structured JSON output) for text, images and audio, including audio transcription and the link-scan screenshot. Hard signals from our own checks can only raise a verdict, never lower it. If the first attempt is slow or rate-limited, the retry goes to the fallback model, which has its own quota. Google Search grounding is built in but switched off by default (see `GEMINI_SEARCH`) because of project quota.
 - **Cloud Run:** `scam-shield-api` (public API, Hono on Node) and `scam-shield-linkscan` (a private Playwright/Chromium service that opens suspicious links in isolation, with a validating proxy, DNS pinning and its own zero-role service account).
 - **Firestore:** `checks` (a person's own results), `entities` (the shared scam list: phones, UPI IDs, domains, accounts, with report counts and links between identifiers), `reports`, `stats` (public daily trend counters) and `usage` (per-user and global daily limits). Clients can read only their own checks and the public stats; everything else is server-only.
-- **Firebase:** Authentication (anonymous for checks, Google sign-in to report), Hosting (the web app and the `/api/**` rewrite to Cloud Run, plus the demo-bank site), Storage (uploads, deleted automatically after 7 days).
+- **Firebase:** Authentication (anonymous for checks, Google sign-in to report), Hosting (the web app and the `/api/**` rewrite to Cloud Run, plus the demo-bank site), Storage (uploads, which a lifecycle rule deletes after 7 days; see Privacy for what is kept longer).
 
 ## Architecture
 
@@ -41,7 +41,7 @@ Also: public **Trends** page, per-person **History**, one-click **examples** for
 flowchart LR
   U[Browser / installed app] -->|static app| H[Firebase Hosting]
   U -->|/api/** rewrite| A[Cloud Run: scam-shield-api]
-  U -->|upload screenshot or audio| S[(Firebase Storage, 7-day expiry)]
+  U -->|upload screenshot or audio| S[(Firebase Storage, uploads expire after 7 days)]
   U <-->|sign-in| F[Firebase Auth: anonymous + Google]
   A -->|verify ID token| F
   A -->|read upload| S
@@ -52,11 +52,11 @@ flowchart LR
   L -->|validated proxy only| W[(the suspicious website)]
 ```
 
-One check: the app sends the text or an uploaded file path to the API. The API verifies the user, applies per-user, per-IP and global limits, extracts phone numbers, UPI IDs, links and QR content, looks identifiers up in the scam list, scans any link in the isolated service, then asks Gemini for the verdict. Scam-list hits and QR-pay-versus-receive mismatches can raise the verdict. Text is stripped of OTPs, card and Aadhaar numbers before it is stored.
+One check: the app sends the text or an uploaded file path to the API. The API verifies the user, applies per-user, per-IP and global limits, extracts phone numbers, UPI IDs, links and QR content, looks identifiers up in the scam list, scans any link in the isolated service, then asks Gemini for the verdict. Scam-list hits and QR-pay-versus-receive mismatches can raise the verdict. Text is sent to Gemini as written and stripped of OTPs, card, Aadhaar and PAN numbers before it is stored. A step-by-step walkthrough, the trust boundaries and the known limits are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Evaluation
 
-50 synthetic cases (26 scams covering all 13 scam types, including Hinglish text, a fake receipt, a QR trick and a voice note; 24 genuine messages such as bank alerts, OTPs that say "do not share", delivery updates and a real payment receipt), run one at a time against the live app:
+50 synthetic cases (26 scams covering all 13 scam types, including Hinglish text, a fake receipt, a QR trick and a voice note; 24 genuine messages such as bank alerts, OTPs that say "do not share", delivery updates and a real payment receipt), written by the authors, and run one at a time against the live app:
 
 | Metric | Result |
 |---|---|
@@ -67,12 +67,14 @@ One check: the app sends the text or an uploaded file path to the API. The API v
 | Latency, text | p50 4.5 s, p95 20.8 s |
 | Latency, image / audio | p50 7.3 s / 10.3 s (image p95 8.7 s) |
 
-Details, cases and raw results: [`eval/`](eval/) and [`eval/results/latest.md`](eval/results/latest.md). The first run exposed a real bug (the model did not know today's date and flagged 2026 dates as "in the future"); it is fixed and the earlier result is kept in `eval/results/run1-before-date-fix.md`. The cases are synthetic and small, so treat the numbers as a sanity check, not a guarantee. An earlier run on `gemini-3.8-flash` scored 98.0% accuracy, 100% recall and 4.2% false positives, with image checks up to 34 s (kept in `eval/results/run-gemini-3.8-flash.md`); that model was slow and sometimes rate-limited on this project, so the default is now `gemini-3.7-flash` with a fallback. With only 50 cases the difference between 98% and 100% is a single case. The same 50 cases run with the interface in Hindi also scored 100% accuracy, 100% recall and 0% false positives, with no errors (`eval/results/run-hindi.md`).
+Details, cases and raw results: [`eval/`](eval/) and [`eval/results/latest.md`](eval/results/latest.md). The first run exposed a real bug (the model did not know today's date and flagged 2026 dates as "in the future"); it is fixed and the earlier result is kept in `eval/results/run1-before-date-fix.md`. The cases are synthetic, small and written by us, and a few of them (the demo examples, such as the fake KYC message and the QR case) contain identifiers that are also seeded in the demo scam list, so those are partly list-assisted. We also tuned the prompt and settings while working with these same cases, so this is not a held-out test. Treat the numbers as a sanity check, not a guarantee. How the benchmark is run and its limits are described in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#evaluation-method). An earlier run on `gemini-3.8-flash` scored 98.0% accuracy, 100% recall and 4.2% false positives, with image checks up to 34 s (kept in `eval/results/run-gemini-3.8-flash.md`); that model was slow and sometimes rate-limited on this project, so the default is now `gemini-3.7-flash` with a fallback. With only 50 cases the difference between 98% and 100% is a single case. The same 50 cases run with the interface in Hindi also scored 100% accuracy, 100% recall and 0% false positives, with no errors (`eval/results/run-hindi.md`).
 
 ## Privacy and safety
 
 - Guidance only: every result says so and points to **1930** and cybercrime.gov.in. "No scam signs found" is never a promise.
-- Uploads auto-delete after 7 days. OTPs, card and Aadhaar numbers are blanked before any text is stored. Reports on the scam list carry no name, email or account.
+- What you send is processed by Gemini on Vertex AI as written, **before** any redaction. OTP, CVV and PIN numbers, card numbers, Aadhaar and PAN numbers are blanked in the text before a check is stored (pattern-based, so it can miss things); the scammer's own phone, UPI ID and links stay readable.
+- Storage: the lifecycle rule in [`scripts/storage-lifecycle.json`](scripts/storage-lifecycle.json) deletes files under `uploads/` (your screenshots and voice notes, stored as uploaded) after 7 days. It does **not** cover two other folders: link-scan screenshots (`screenshots/`) and the copy of an uploaded file that is kept under `reports/` when you report a scam. Stored check results in Firestore (redacted) have no automatic expiry configured in this repository.
+- Reports on the scam list carry no name, email or user ID in the report record, and the public list shows only masked identifiers and counts. The server keeps a private record of which user already reported an identifier so that one person cannot count twice.
 - Scam-list wording is "Reported N times", never "confirmed scammer". A single report cannot make a scam verdict on its own.
 - Link scanning is isolated and private: every request and redirect hop goes through a validating proxy that blocks private and internal addresses; the scanner has no cloud permissions. See [`linkscan/SECURITY.md`](linkscan/SECURITY.md).
 - All names, numbers and IDs in examples and tests are fictional ("Bharat National Bank").
@@ -91,7 +93,7 @@ Scam Shield was designed and built for the AI Builder Cup (first commit 16 Oct 2
 | `shared/` | Types, schema, masking and complaint template used by web and api |
 | `eval/` | 50-case benchmark and results |
 | `scripts/` | Deploy, smoke test, example-asset generators, seed data, screenshots |
-| `docs/` | Design, plan, setup notes, submission material, screenshots |
+| `docs/` | [Architecture for judges](docs/ARCHITECTURE.md), design, plan, setup notes, submission material, screenshots |
 
 ## Run it yourself
 
@@ -117,3 +119,4 @@ Important settings (API environment): `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `
 - English and Hindi only; no native app or SMS interception.
 - Gemini latency varies (typically 4 to 20 s); on this project Google Search grounding hit quota limits, so it is off by default.
 - The shared scam list is only as good as its reports; demo data is included for the examples (see the note on the Trends page).
+- More limits (prompt injection, privacy, abuse limits, link-scan scope) are listed in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#known-limits).

@@ -1,6 +1,6 @@
 # Setup notes (Task 0)
 
-- GCP project: `project-91260b43-6705-4176-b71` ("My First Project", number 494852004380), billing account `01F164-CA107B-D85742`, owner `namans1201@gmail.com`.
+- GCP project: `project-91260b43-6705-4176-b71` ("My First Project", number 494852004380), billing enabled, owned by the project owner.
 - Regions: Firestore + Artifact Registry (`scam-shield` docker repo) in `asia-south1`; Cloud Run `asia-south1` unless the Hosting rewrite check below says otherwise; Gemini via the `global` endpoint.
 - Runtime service account: `494852004380-compute@developer.gserviceaccount.com` has `aiplatform.user`, `datastore.user`, `storage.objectAdmin`, `run.invoker`, `firebaseauth.viewer`.
 - APIs enabled: run, aiplatform, firestore, storage, artifactregistry, cloudbuild, firebase, firebasehosting, identitytoolkit, texttospeech.
@@ -14,7 +14,7 @@
 | `gemini-3.5-flash` | works | not tested | ~4.6 s |
 | `gemini-2.5-flash` | works | **fails**: "controlled generation is not supported with Search tool" | ~5 s |
 
-Decision: `GEMINI_MODEL=gemini-3.8-flash`, `GEMINI_COMBINED_GROUNDING=true` (single call with structured output + Search). Fallback if it misbehaves in production: `gemini-3.7-flash` with `GEMINI_COMBINED_GROUNDING=false` (two-call path: search first, then JSON). Only add the search tool when the content names a URL/brand/organisation (keeps most checks at ~5 s).
+Decision on 16 Oct (superseded on 17 Oct: the default is now `gemini-3.7-flash` with a `gemini-2.5-flash` fallback and Search grounding off, see `DETAILS.md`): `GEMINI_MODEL=gemini-3.8-flash`, `GEMINI_COMBINED_GROUNDING=true` (single call with structured output + Search). Fallback if it misbehaves in production: `gemini-3.7-flash` with `GEMINI_COMBINED_GROUNDING=false` (two-call path: search first, then JSON). Only add the search tool when the content names a URL/brand/organisation (keeps most checks at ~5 s).
 
 ## Firebase
 
@@ -32,7 +32,7 @@ Decision: `GEMINI_MODEL=gemini-3.8-flash`, `GEMINI_COMBINED_GROUNDING=true` (sin
 ## Deploy pipeline (Task 10, 16 Oct)
 
 - `scripts/deploy.sh [api|linkscan|web|rules|all]`: images are built with Cloud Build (`cloudbuild.yaml`, repo root as context, `_SVC=api|linkscan`), tagged with the git short sha (`-dirty` suffix when the image inputs have uncommitted changes), then `gcloud run deploy`. `scripts/smoke.sh <base-url>` is the post-deploy check. Env flags: `LINKSCAN_NO_SANDBOX=1` (linkscan), `DEBUG_XFF=1` (api: `/api/health` also returns `xff` = number of X-Forwarded-For entries received and `hops`; default off, never logs addresses).
-- Rules, indexes and the 7-day `uploads/` lifecycle were deployed 16 Oct (`scripts/deploy.sh rules`): Firestore `checks` owner-read, `stats` public read, everything else denied; Storage `uploads/{uid}` owner create/read/delete (size < 15 MB, image/audio types only), `linkscans/{uid}` owner read, everything else denied. NOTE: the API actually stores screenshots under `screenshots/{uid}/...`, which the spec'd rules deny to clients; the web app does not read them from Storage, so this is harmless.
+- Rules, indexes and the 7-day `uploads/` lifecycle were deployed 16 Oct (`scripts/deploy.sh rules`): Firestore `checks` owner-read, `stats` public read, everything else denied; Storage `uploads/{uid}` owner create/read/delete (size < 15 MB, image/audio types only), `linkscans/{uid}` owner read, everything else denied. NOTE: the API stores link-scan screenshots under `screenshots/{uid}/...`; the current `storage.rules` let the owner read them (and deny all writes), and the 7-day lifecycle does NOT cover that prefix.
 - Services: `scam-shield-api` (public, gen2, 1 CPU / 1 GiB, concurrency 20, min 1 / max 5, runs as the default compute SA) and `scam-shield-linkscan` (private, gen2, 2 CPU / 2 GiB, concurrency 4, min 0 / max 3, dedicated zero-role SA `linkscan-sa@project-91260b43-6705-4176-b71.iam.gserviceaccount.com`, no VPC; `run.invoker` on that service granted to the API's SA).
 - The API image bundles `api/src/index.ts` with esbuild; `@scam-shield/shared` is inlined with `--alias:@scam-shield/shared=./shared/src/index.ts`, everything else stays external and comes from `npm ci --omit=dev -w api`.
 - Cloud Build runs as the default compute SA, which needs `roles/artifactregistry.writer` (on the `scam-shield` repo) and `roles/logging.logWriter` to push images / write build logs. Both are missing: see the Task 10 report. Status of the first deploy is recorded below once images can be pushed.
@@ -40,13 +40,13 @@ Decision: `GEMINI_MODEL=gemini-3.8-flash`, `GEMINI_COMBINED_GROUNDING=true` (sin
 ## Deploy status, 16 Oct 2026 (evening, redeploy from a second machine)
 - Redeployed `linkscan`, `api` (both from `dfbe36f`, clean tree), Hosting, and rules (Storage audio <= 15 MB / image <= 10 MB, `screenshots/{uid}` owner-read, lifecycle verified). `scripts/smoke.sh` against the Hosting URL: SMOKE OK (scam text -> scam in ~14-20 s).
 - Chromium sandbox: a real URL scan (`https://example.com/`) through Hosting returns title and text on Cloud Run gen2 **without** `LINKSCAN_NO_SANDBOX`. Keep it off.
-- Still open: X-Forwarded-For hop count (`TRUSTED_PROXY_HOPS=2` assumed, not measured), budget alert (owner), polish batch in HANDOFF.md section 5.
+- Still open: X-Forwarded-For hop count (`TRUSTED_PROXY_HOPS=2` assumed, not measured), budget alert (owner), polish batch (done later, see `DETAILS.md`).
 - Mac setup: `brew install --cask gcloud-cli` (add `/opt/homebrew/share/google-cloud-sdk/bin` to PATH), `npm i -g firebase-tools`, `npx playwright install chromium` in `linkscan/` (Playwright 1.55.0 needs chromium build 1187).
 
 ## Hardening checks, 16 Oct 2026 (Task 17)
 - **X-Forwarded-For through Hosting -> Cloud Run:** 2 entries (client, then the Google front end). Hosting overwrites a client-supplied header (a forged `X-Forwarded-For: 1.2.3.4, 5.6.7.8` still arrived as 2 entries). `TRUSTED_PROXY_HOPS=2` therefore picks the real client IP. Calling the `run.app` URL directly gives 1 entry (the client), also handled (fewer entries than hops uses the first). Caveat: a caller who hits `run.app` directly can prepend fake entries and choose the per-IP limiter key; the per-user daily limit (30) and the global daily cap (3000) still apply. Measured with `DEBUG_XFF=1`, since removed.
 - **Cloud Run:** `scam-shield-api` minScale 1, max 5, concurrency 20, 1 CPU / 1 GiB, gen2, startup CPU boost on. `scam-shield-linkscan` private (unauthenticated call returns 403), `run.invoker` only for the API service account, runs as `linkscan-sa` with no roles, minScale 0, max 3, concurrency 4.
-- **Gemini:** thinking level LOW, Google Search grounding off by default (`GEMINI_SEARCH=true` to enable), first attempt capped at 15 s with one retry (see HANDOFF.md section 10).
-- **Budget alert (owner):** billing account `01F164-CA107B-D85742`. Command: `gcloud billing budgets create --billing-account=01F164-CA107B-D85742 --display-name="Scam Shield" --budget-amount=1000INR --filter-projects=projects/project-91260b43-6705-4176-b71 --threshold-rule=percent=0.5 --threshold-rule=percent=0.9 --threshold-rule=percent=1.0`. Console route: Billing > Budgets & alerts > Create budget.
+- **Gemini:** thinking level LOW, Google Search grounding off by default (`GEMINI_SEARCH=true` to enable), first attempt capped at 15 s with one retry (see `DETAILS.md`, section 1, "Gemini reliability").
+- **Budget alert (owner):** needs the billing account ID from the console. Command: `gcloud billing budgets create --billing-account=<BILLING_ACCOUNT_ID> --display-name="Scam Shield" --budget-amount=1000INR --filter-projects=projects/project-91260b43-6705-4176-b71 --threshold-rule=percent=0.5 --threshold-rule=percent=0.9 --threshold-rule=percent=1.0`. Console route: Billing > Budgets & alerts > Create budget.
 
 - **Budget alert: created by the owner on 18 Oct 2026** (Billing > Budgets): name "Scam Shield", monthly, Rs 1,000, alerts at 50%, 90% and 100%, applies to project "My First Project" (`project-91260b43-6705-4176-b71`).

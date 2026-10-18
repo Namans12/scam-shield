@@ -4,18 +4,19 @@
 > - **Production = branch `build` = `main`** (kept identical). API image tag = commit on `build`; web deployed from the same commit. Verified live: smoke test, the four examples, 12 parallel checks, benchmark re-run.
 > - **New UI:** brand logo (option A, blue), landing page at `/`, checker at `/check`, polished Result/Trends/History/About/Complaint pages, centred-aware carousel, scroll-linked timelines (rail exactly first-to-last node), counting benchmark numbers, plain-text technology names with a trademark and non-affiliation note in English and Hindi (no Google logos on the website; the icon files live in `docs/brand/third-party/`, sources in `docs/brand/third-party-logos.md`, and are used only in deck slides 8-9 and the video architecture scene, each with a footnote). Hindi/English layouts are position-stable (both languages stacked in one grid cell: `web/src/components/landing/LangStack.tsx`).
 > - **Benchmark (latest, 18 Oct, production, gemini-3.7-flash default):** accuracy 100%, scam recall 100%, false positives 0%, scam type 100%, text p50 4.5 s / p95 20.8 s (`eval/results/latest.md`). The landing page numbers live in `web/src/benchmark.ts` and a test fails if they drift from that file. Older runs are kept in `eval/results/`.
-> - **API changes:** per-IP check limit raised to 60/min (user 30/day, global 3000/day unchanged), Gemini thinking level LOW, Search grounding off (`GEMINI_SEARCH`), one retry without search. Details in `HANDOFF.md` section 10.
+> - **API changes:** per-IP check limit raised to 60/min (user 30/day, global 3000/day unchanged), Gemini thinking level LOW, Search grounding off (`GEMINI_SEARCH`), one retry without search. Details in section 1 below ("Gemini reliability").
 > - **Claims:** the "victims recover about 2%" claim was UNSUPPORTED and removed everywhere. Sources and status of every statistic: `docs/submission/sources.md`.
 > - **Deck:** rebuilt on the organisers' template (the original template file is gone; `docs/submission/template-base.pptx` was reconstructed from the old deck). Rebuild + PDF export with PowerPoint: `DECK_STAGE=<readable folder> bash scripts/build-deck.sh` (`DECK_VIDEO_URL=https://... ` fills the video link on slide 14). PDF 16 pages, about 2.6 MB. Budget alert is created (Rs 1,000/month, 50/90/100%).
 > - **Logos decision (18 Oct, done):** website text-only + trademark note (deployed); deck slides 8-9 and the video Architecture scene keep product icons with a footnote; the video closing card is text-only; the Google Cloud mark was removed from the video title. Deck and video were rebuilt after this change.
-- **Video:** built by code in `video/` (Remotion + real Playwright footage of the live site + Google Cloud TTS voice, 2:48, under the 3-minute limit). Final mp4 is NOT in git (size): `video/out/scam-shield-demo.mp4` (re-rendered 18 Oct after the logo change, 168.5 s) and also in the worktree `/Users/naman/scam-shield-wt/video/video/out/`. See `video/README.md` to re-record, re-voice, or use the owner's own voice, and to drop in an owner clip for the Report scene.
-> - **Branches/worktrees (local only):** `track/landing`, `track/pages`, `track/carousel`, `track/video`, `track/deck` were merged into `build`; the extra worktrees are in `/Users/naman/scam-shield-wt/` and can be removed with `git worktree remove`.
+> - **Video:** built by code in `video/` (Remotion + real Playwright footage of the live site + Google Cloud TTS voice, 2:48, under the 3-minute limit). Final mp4 is NOT in git (size): `video/out/scam-shield-demo.mp4` (re-rendered 18 Oct after the logo change, 168.5 s) and also in the local `track/video` worktree. See `video/README.md` to re-record, re-voice, or use the owner's own voice, and to drop in an owner clip for the Report scene.
+> - **Branches/worktrees (local only):** `track/landing`, `track/pages`, `track/carousel`, `track/video`, `track/deck` were merged into `build`; the extra local worktrees can be removed with `git worktree remove`.
 > - **Still the owner's:** upload the video (Public) and add its link (README, slide 14 via `DECK_VIDEO_URL`); real Google sign-in + report test; Android share/install test; confirm the README "Provenance" paragraph; submit the form (`docs/submission/description.md`).
 > - **Known risks:** Gemini latency varies (4 to 21 s, rare slower); the share-target run where a result page did not open once is unexplained; 18 Firestore-emulator tests need Java (not installed on this Mac).
+> - **Docs cleaned (18 Oct):** private data (personal addresses, billing and account identifiers, local paths, unrelated projects) removed from current files; `HANDOFF.md` rewritten as a short current-state note; `docs/ARCHITECTURE.md` added for judges; README privacy, evaluation and storage statements corrected; video script rewritten to match the shipped video.
 
 
 
-Written for the next agent. State as of 17 Oct 2026. Companion docs: `HANDOFF.md` (original handoff plus findings), `docs/setup-notes.md` (cloud facts, deploy and hardening notes), `eval/results/latest.md` (benchmark), `README.md` (public description).
+Written for the next agent. State as of 17 Oct 2026. Companion docs: `HANDOFF.md` (short current-state note), `docs/ARCHITECTURE.md` (how a check works, for judges), `docs/setup-notes.md` (cloud facts, deploy and hardening notes), `eval/results/latest.md` (benchmark), `README.md` (public description).
 
 - Repo (public): https://github.com/Namans12/scam-shield. Branches `build` and `main` are at the same commit; **`main` is the default branch and is what judges see**. Work on `build`, then fast-forward `main` (`git checkout main && git merge --ff-only build && git push origin main`).
 - Live app: https://project-91260b43-6705-4176-b71.web.app . Demo bank page: https://bnb-kyc-update.web.app . GCP project `project-91260b43-6705-4176-b71`, region `asia-south1`.
@@ -41,7 +42,7 @@ Problem found and fixed: Gemini model reliability
 - README, `docs/submission/description.md` (248 words) and `docs/submission/deck-outline.md` updated with the new model and numbers.
 
 Done in this session
-- **Budget alert created**: Rs 1,000 per month on billing account `01F164-CA107B-D85742`, alerts at 50%, 90% and 100% (Budget API enabled on the project for this).
+- **Budget alert created**: Rs 1,000 per month on the project's billing account, alerts at 50%, 90% and 100% (Budget API enabled on the project for this).
 - **Deck built on the organisers' template**: `docs/submission/Scam-Shield-deck.pptx` and `docs/submission/Scam-Shield-deck.pdf` (16 pages, 1.15 MB, under the 5 MB limit). All 16 template slides kept; slides 1 and 3 to 14 filled; rendered with PowerPoint and checked slide by slide for overflow. Regenerate with `python scripts/build-deck.py <template.pptx> <out.pptx>` (the template is the organisers' Google Slides export, not stored in the repo; numbers are read from `eval/results/latest.md`). Export the PDF from PowerPoint (File > Export) after any change.
 
 Needs the owner before submitting
@@ -82,7 +83,7 @@ Task 14: trends, history, About, share target
 - `TrendsPage` (reads `stats/*`), `HistoryPage` (own checks), About with privacy, Google stack and helplines (1930, cybercrime.gov.in, Chakshu).
 - Own service worker `web/src/sw.ts` (vite-plugin-pwa `injectManifest`) handles `POST /share-target`; `web/src/share-target/sw-share.ts` parks the share in Cache Storage and `CheckPage` consumes `/?shared=1`. Manifest has `share_target`. Firestore and Storage chunks are excluded from precache.
 
-Gemini reliability (the biggest finding; details in `HANDOFF.md` section 10)
+Gemini reliability (the biggest finding)
 - Cause of `analysis_failed` on checks that contain a link: those inputs attach Google Search grounding, which on this project returns 429 after about 4 calls and sometimes hangs 40 s or more.
 - Shipped: thinking level `LOW` by default (about 3x faster; `GEMINI_THINKING_LEVEL`), first attempt capped at 15 s and total at 40 s, one retry that always drops search, failure cause logged (`gemini_attempt_failed attempt=N kind=... status=...`, no user content), and `GEMINI_SEARCH` switch (**default off**; deploy with `GEMINI_SEARCH=true` to enable).
 - Result: 16 of 16 link and plain checks passed sequentially (5 to 16 s) after search was turned off, then 12 of 12 more after the final deploy.
@@ -94,7 +95,7 @@ Task 15, 16, 17, 18, 19
 - 18: WebMCP tools `check_message` and `report_scam` (`web/src/webmcp/`), registered through `navigator.modelContext` (`registerTool`, falling back to `provideContext`). Loaded and executed against the live site with a stub context.
 - 19: `README.md`, `docs/submission/description.md` (245 words), `video-script.md`, `deck-outline.md`.
 
-## 2. Tests and results (latest, 17 Oct)
+## 2. Tests and results (17 Oct; the benchmark numbers here are superseded by section 0 and `eval/results/latest.md`)
 
 `npm run typecheck`: 0 errors in all workspaces. `npm test`:
 
@@ -115,12 +116,12 @@ Task 15, 16, 17, 18, 19
 ## 3. What is left
 
 Owner only (an agent cannot do these)
-1. Budget alert: `gcloud billing budgets create --billing-account=01F164-CA107B-D85742 --display-name="Scam Shield" --budget-amount=1000INR --filter-projects=projects/project-91260b43-6705-4176-b71 --threshold-rule=percent=0.5 --threshold-rule=percent=0.9 --threshold-rule=percent=1.0` (or Billing > Budgets & alerts).
+1. Budget alert: `gcloud billing budgets create --billing-account=<BILLING_ACCOUNT_ID> --display-name="Scam Shield" --budget-amount=1000INR --filter-projects=projects/project-91260b43-6705-4176-b71 --threshold-rule=percent=0.5 --threshold-rule=percent=0.9 --threshold-rule=percent=1.0` (or Billing > Budgets & alerts).
 2. Test a real Google sign-in and report on the live site (count 3 to 4), and the Android share menu and install on a real phone.
 3. Record the demo video (`docs/submission/video-script.md`), upload it, and put the link in `README.md` (placeholder "add link before submitting") and deck slide 14.
 4. Build the deck on the organisers' template (`docs/submission/deck-outline.md`, screenshots in `docs/submission/screenshots/`), export a PDF under 5 MB. Verify the cost slide in the billing console (estimates only).
 5. Fill and submit the form (`docs/submission/description.md`).
-6. Optional: delete `HANDOFF.md` (and this file) before submitting if the project ID and URLs should not be public. None of it is secret.
+6. Optional: delete `HANDOFF.md` and this file before submitting if you prefer a leaner repo. They contain no secrets and no private data (scrubbed 18 Oct); git history is unchanged.
 
 Agent-doable, optional
 - Run the 18 skipped Firestore tests: they need `FIRESTORE_EMULATOR_HOST` and Java (not installed on this Mac; `/usr/bin/java` is a stub). `firebase emulators:exec --only firestore --project demo-scam-shield "npm test -w api"` once a JDK exists. They passed on the owner's Windows machine earlier (see `docs/handoff/sdd-ledger.md`).
@@ -136,7 +137,6 @@ Agent-doable, optional
 - Search grounding is off, so link checks rely on the model's own knowledge plus the isolated link scan.
 - Only 50 benchmark cases (5 of them media), all synthetic: a sanity check, not a guarantee.
 - Anonymous auth is free to mint; the global daily cap (3000 checks) bounds Gemini spend.
-- Off-limits (from the handoff): `Namans12/stocks` (real statements), `Personal-Money-Manager` (leaked Atlas password in history; rotate it), project `coral-mile-t3tp7`.
 
 ## 5. Summary of the last two responses given to the owner (pointers)
 
@@ -145,7 +145,7 @@ Response A: "Is the app fully done and all tested?" (an honest audit)
 - Not verified: real Google sign-in and report, Android share and install, browser voice recording, the 18 Firestore emulator tests (no Java), the live-Gemini test file, dark mode.
 - Not done at that time: redacting stored QR and link-scan text, a reload on stale chunks, link-preview tags, Playwright bump, prompt wording ("opened safely").
 - Known risks: Gemini latency 4 to 40 s, search grounding off, direct `run.app` calls can spoof the per-IP limiter, synthetic benchmark.
-- Owner to-do list: video link, deck, recording, budget alert, optional `HANDOFF.md` deletion, one real Google report test.
+- Owner to-do list: video link, deck, recording, budget alert, optional deletion of `HANDOFF.md` and this file, one real Google report test.
 
 Response B: polish finished, then final benchmark and merge
 - All polish items above were finished with tests, deployed (api, web, linkscan), smoke and examples passed, real link scans passed 12/12 sequentially.

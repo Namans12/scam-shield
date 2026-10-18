@@ -57,7 +57,7 @@ It is being built for the AI Builder Cup hackathon, **BFSI: Intelligent Risk, Fr
 - Solo developer (with Claude), ~2.5 days.
 - Owner has a GCP project with billing enabled.
 - Deliverables besides the app: public GitHub repo, 16-slide deck on the prescribed template (PDF ≤ 5 MB), 3–4 min demo video, brief description.
-- Copy/text from Spotlight is the owner's own work; reuse it without attribution.
+- Code and text adapted from the owner's own earlier personal project is the owner's own work; the README Provenance paragraph states this.
 
 ### Submission rules (from the organisers)
 
@@ -69,8 +69,8 @@ It is being built for the AI Builder Cup hackathon, **BFSI: Intelligent Risk, Fr
 
 ### Existing code to start from
 
-- Spotlight (owner's app): local copy at `C:\Users\naman\Desktop\Spotlight`, also `github.com/Namans12/Spotlight`. Reuse UI kit, layout, rate limiting, guest-session flow, WebMCP tool pattern.
-- Scraper-sdk: `github.com/namans1201/Scraper-sdk` (GitHub only, not on this machine). Reuse `apps/server/src/scraper.ts` (Playwright capture) and `extractor.ts` for the link scanner.
+- The owner's own earlier personal project (not part of this submission): general-purpose UI kit, layout, rate limiting, guest-session flow and the WebMCP tool pattern were planned to be adapted from it.
+- An earlier page-capture helper by the owner (Playwright capture and text extraction) was the planned starting point for the link scanner.
 
 ### Environment as of 16 Oct
 
@@ -91,7 +91,7 @@ It is being built for the AI Builder Cup hackathon, **BFSI: Intelligent Risk, Fr
 | Agent tools | Yes if time allows |
 | Cut order if late | 1st agent tools, 2nd voice notes |
 | Examples | Yes, one-click examples |
-| UI | Reuse Spotlight's look and components (no credit) |
+| UI | Adapt general-purpose building blocks from the owner's earlier personal project |
 | Team | Solo |
 
 ## 8. How it works
@@ -114,9 +114,9 @@ Cloud Run: "linkscan" service (Playwright/Chromium container)
      redirect chain, page title/text and a screenshot; never runs downloads
 ```
 
-- **Frontend:** React + Vite + Tailwind, starting from Spotlight's UI kit (`src/components/ui/*`), app shell (`src/components/layout/*`) and toast setup. Hosted on **Firebase Hosting**, which rewrites `/api/**` to the Cloud Run service (same origin, no CORS).
-- **API:** Node + TypeScript on **Cloud Run**, stateless. Reuse Spotlight's `lib/rateLimit.ts` approach for per-user/IP limits.
-- **Link scanner:** separate Cloud Run service so the heavy browser image does not slow the main API. Starts from Scraper-sdk's page capture/extraction code (`apps/server/src/scraper.ts`, `extractor.ts`).
+- **Frontend:** React + Vite + Tailwind, starting from general-purpose building blocks of the owner's earlier project (`src/components/ui/*`), app shell (`src/components/layout/*`) and toast setup. Hosted on **Firebase Hosting**, which rewrites `/api/**` to the Cloud Run service (same origin, no CORS).
+- **API:** Node + TypeScript on **Cloud Run**, stateless. Reuse the owner's earlier rate-limiting approach for per-user/IP limits.
+- **Link scanner:** separate Cloud Run service so the heavy browser image does not slow the main API. Planned to start from the owner's earlier page capture/extraction code.
 - **AI:** **Gemini on Vertex AI** via the Google Gen AI SDK. A fast Gemini Flash-class model for every check; structured output with a fixed JSON schema; Google Search grounding when the content names a company, bank, government scheme or URL. Exact model IDs are chosen at build time from what Vertex AI offers.
 - **Data:** **Firestore** (Native mode). Uploads in Cloud Storage for Firebase.
 - **Auth:** **Firebase Auth** — anonymous sign-in happens silently on first visit (gives every user an ID for rate limits and history); Google sign-in is prompted only when reporting.
@@ -181,7 +181,7 @@ Rules: only the server writes `entities`, `reports`, `stats`; users can read the
 - Uploaded images/audio are deleted after 7 days unless attached to a report (Cloud Storage lifecycle rule).
 - Stored text is redacted of non-scam personal details (names, addresses, OTPs) before saving.
 - Disclaimer on results: guidance only; when money is lost, call 1930 immediately.
-- Link scanner: blocks private/internal IPs and metadata endpoints after DNS resolution and after every redirect, http/https only, hard timeout (~15s), page size cap, no file downloads, no persistent browser profile. (Same class of SSRF risk Spotlight's `api/agent-relay.ts` guards against.)
+- Link scanner: blocks private/internal IPs and metadata endpoints after DNS resolution and after every redirect, http/https only, hard timeout (~15s), page size cap, no file downloads, no persistent browser profile. 
 - Rate limits per uid and per IP on checks and reports; Firebase App Check is the builder's option.
 
 ### 8.8 Example scams (for "Try an example")
@@ -204,7 +204,7 @@ A few of these identifiers are pre-seeded in the scam list so the "reported N ti
 
 | When | Work |
 |---|---|
-| **16 Oct (today)** | Repo + GCP/Firebase setup; Spotlight UI shell trimmed to Scam Shield; text check end-to-end with Gemini + Firestore; **deploy to Cloud Run + Firebase Hosting on day one**. |
+| **16 Oct (today)** | Repo + GCP/Firebase setup; UI shell trimmed to Scam Shield; text check end-to-end with Gemini + Firestore; **deploy to Cloud Run + Firebase Hosting on day one**. |
 | **17 Oct** | Screenshots + QR; link scanner service; scam list + Google sign-in reports; complaint draft; share card; Hindi; examples; PWA + share target. |
 | **18 Oct AM** | Voice notes; trends page; evaluation run; fixes; (agent tools only if ahead). |
 | **18 Oct PM** | Freeze deploy by ~2 PM. README, brief description, deck (template), demo video, submit by ~8 PM. |
@@ -228,8 +228,8 @@ Cut order if behind: agent tools → voice notes.
 
 - Exact Gemini model IDs and prompt wording.
 - Backend framework (Express/Fastify/Hono) and project layout.
-- Which Spotlight components to keep, and the visual polish.
+- Which earlier components to keep, and the visual polish.
 - QR library, regexes, redaction method.
 - Whether to add Web Risk and App Check.
 - Warning-card rendering approach.
-- Test framework details (Vitest already in Spotlight).
+- Test framework details (Vitest).

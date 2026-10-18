@@ -23,8 +23,9 @@ install if you see `EACCES`.
   Nothing in the UI is mocked or edited. Each window carries a "Real recording of the live app" tag.
 * Waiting for Gemini is sped up exactly 4x and a "Sped up 4x" badge is on screen the whole time (it is derived from the playback
   rate, so it cannot be forgotten). A failed check aborts the recording (`record.mjs` throws), so it is recorded again.
-* The deployed landing page still has a statistics strip with a recovery percentage that `docs/submission/sources.md` removed.
-  `record.mjs` jumps past it before scrolling, so it is never on screen. The video never mentions recovery.
+* The live landing page no longer carries a recovery percentage (`docs/submission/sources.md` explains why the claim was removed).
+  `record.mjs` still contains a guard that jumps past a "recovered" statistics strip if one ever comes back; on the current site it
+  simply scrolls. The video never mentions recovery (`npm run verify` checks the narration and captions).
 * Verdict words are Scam, Suspicious, No scam signs found; the word "safe" is not used as a verdict (`verify` checks the script).
 * Benchmark numbers are read from `eval/results/latest.md` when you run `npm run prep` (`scripts/bench.mjs`); the narration
   sentence that quotes them is generated from the same numbers, and the caveat ("a small test, not a guarantee") is on screen.
